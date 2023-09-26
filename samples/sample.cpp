@@ -1,0 +1,85 @@
+﻿#define _USE_MATH_DEFINES
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include "FDTD.h"
+
+void initial_filling(FDTD& test, int size_N[2], double size_d[2], double size_x[2], double size_y[2])
+{
+    double x = 0;
+    for (int i = 0; i < size_N[0]; x += size_d[0], ++i)
+    {
+        for (int j = 0; j < size_N[1]; ++j)
+        {
+            test.get_field(EY)(i, j) = sin(2 * M_PI * (x - size_x[0]) / (size_x[1] - size_x[0]));
+            test.get_field(BZ)(i, j) = sin(2 * M_PI * (x - size_x[0]) / (size_x[1] - size_x[0]));
+        }
+    }
+}
+
+void write(Field& this_field, std::ofstream& fout)
+{
+    for (int j = this_field.get_Nj() - 1; j >= 0; --j)
+    {
+        for (int i = 0; i < this_field.get_Ni(); ++i)
+        {
+            fout << this_field(i, j);
+            if (i == this_field.get_Ni() - 1)
+            {
+                fout << std::endl;
+            }
+            else
+            {
+                fout << ";";
+            }
+        }
+    }
+    fout << std::endl << std::endl;
+}
+
+void write_all(FDTD& test)
+{
+    std::ofstream test_fout;
+    test_fout.open("/FDTD_Method/PlotScript/OutFile.csv");
+    write(test.get_field(EX), test_fout);
+    write(test.get_field(EY), test_fout);
+    write(test.get_field(EZ), test_fout);
+    write(test.get_field(BX), test_fout);
+    write(test.get_field(BY), test_fout);
+    write(test.get_field(BZ), test_fout);
+    
+    test_fout.close();
+}
+
+int main()
+{
+    std::vector<double> numbers;
+    std::ifstream source_fin;
+    source_fin.open("/FDTD_Method/src/Source.txt");
+
+    if (!source_fin.is_open()) 
+    {
+        return 1;
+    }
+
+    double number;
+    while (source_fin >> number) {
+        numbers.push_back(number);
+    }
+    
+    int arr_N[2] = { numbers[0], numbers[1] };
+    double arr_x[2] = { numbers[2], numbers[3] };
+    double arr_y[2] = { numbers[4], numbers[5] };
+    double arr_d[2] = { (arr_x[1] - arr_x[0]) / arr_N[0], (arr_y[1] - arr_y[0]) / arr_N[1] };
+    
+    FDTD test_1(arr_N, arr_x, arr_y, numbers[6]);
+
+    initial_filling(test_1, arr_N, arr_d, arr_x, arr_y);
+    test_1.update_field(numbers[7]);
+    write_all(test_1);
+
+    source_fin.close();
+
+    return 0;
+}
