@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Build Dijkstra
+    - name: Build FDTD
       shell: bash
       run: |
         export CMAKE_BUILD_PARALLEL_LEVEL=4
@@ -19,4 +19,4 @@ jobs:
     - name: Run tests
       shell: bash
       run: |
-        ${PWD}/build/test/Release/dijkstra_test.exe --gtest_repeat=2 --gtest_break_on_failure
+        ${PWD}/build/test/Release/FDTD_test.exe --gtest_repeat=2 --gtest_break_on_failure
