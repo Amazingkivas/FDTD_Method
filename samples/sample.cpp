@@ -12,8 +12,8 @@ void initial_filling(FDTD& test, int size_N[2], double size_d[2], double size_x[
     {
         for (int j = 0; j < size_N[1]; ++j)
         {
-            test.get_field(EY)(i, j) = sin(2 * M_PI * (x - size_x[0]) / (size_x[1] - size_x[0]));
-            test.get_field(BZ)(i, j) = sin(2 * M_PI * (x - size_x[0]) / (size_x[1] - size_x[0]));
+            test.get_field(Component::EY)(i, j) = sin(2 * M_PI * (x - size_x[0]) / (size_x[1] - size_x[0]));
+            test.get_field(Component::BZ)(i, j) = sin(2 * M_PI * (x - size_x[0]) / (size_x[1] - size_x[0]));
         }
     }
 }
@@ -42,12 +42,12 @@ void write_all(FDTD& test)
 {
     std::ofstream test_fout;
     test_fout.open("../../../PlotScript/OutFile.csv");
-    write(test.get_field(EX), test_fout);
-    write(test.get_field(EY), test_fout);
-    write(test.get_field(EZ), test_fout);
-    write(test.get_field(BX), test_fout);
-    write(test.get_field(BY), test_fout);
-    write(test.get_field(BZ), test_fout);
+    write(test.get_field(Component::EX), test_fout);
+    write(test.get_field(Component::EY), test_fout);
+    write(test.get_field(Component::EZ), test_fout);
+    write(test.get_field(Component::BX), test_fout);
+    write(test.get_field(Component::BY), test_fout);
+    write(test.get_field(Component::BZ), test_fout);
     
     test_fout.close();
 }
@@ -60,6 +60,7 @@ int main()
 
     if (!source_fin.is_open()) 
     {
+        std::cout << "ERROR: Failed to open the file!" << std::endl;
         return 1;
     }
 

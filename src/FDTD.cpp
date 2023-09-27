@@ -2,7 +2,8 @@
 
 Field::Field(const int _Ni = 1, const int _Nj = 1) : Ni(_Ni), Nj(_Nj)
 {
-    field = std::vector<double>(Ni * Nj, 0.0);
+    int size = Ni * Nj;
+    field = std::vector<double>(size, 0.0);
 }
 
 Field& Field::operator= (const Field& other)
@@ -14,6 +15,42 @@ Field& Field::operator= (const Field& other)
         Nj = other.Nj;
     }
     return *this;
+}
+
+void Borders::neighborhood(int _i, int _j)
+{
+    if (_i - 1 < 0)
+    {
+        I_prev = border_i - 1;
+        I_next = _i + 1;
+    }
+    else if (_i + 1 >= border_i)
+    {
+        I_next = 0;
+        I_prev = _i - 1;
+    }
+    else
+    {
+        I_next = _i + 1;
+        I_prev = _i - 1;
+    }
+
+    if (_j + 1 >= border_j)
+    {
+        J_prev = 0;
+        J_next = _j - 1;
+
+    }
+    else if (_j - 1 < 0)
+    {
+        J_prev = _j + 1;
+        J_next = border_j - 1;
+    }
+    else
+    {
+        J_next = _j - 1;
+        J_prev = _j + 1;
+    }
 }
 
 FDTD::FDTD(int size_grid[2], double size_x[2], double size_y[2], double _dt) : dt(_dt)
@@ -33,26 +70,23 @@ Field& FDTD::get_field(Component this_field)
 {
     switch (this_field)
     {
-    case EX: return Ex;
+    case Component::EX: return Ex;
 
-    case EY: return Ey;
+    case Component::EY: return Ey;
 
-    case EZ: return Ez;
+    case Component::EZ: return Ez;
 
-    case BX: return Bx;
+    case Component::BX: return Bx;
 
-    case BY: return By;
+    case Component::BY: return By;
 
-    case BZ: return Bz;
+    case Component::BZ: return Bz;
     }
 }
 
 void FDTD::update_field(const double& time)
 {
-    int I_next = 0;
-    int J_next = 0;
-    int I_prev = 0;
-    int J_prev = 0;
+    Borders bord(Ni, Nj);
 
     for (double t = 0; t < time; t += dt)
     {
@@ -60,87 +94,26 @@ void FDTD::update_field(const double& time)
         {
             for (int i = 0; i < Ni; ++i)
             {
-                if (i - 1 < 0)
-                {
-                    I_prev = Ni - 1;
-                    I_next = i + 1;
-                }
-                else if (i + 1 >= Ni)
-                {
-                    I_next = 0;
-                    I_prev = i - 1;
-                }
-                else
-                {
-                    I_next = i + 1;
-                    I_prev = i - 1;
-                }
-                if (j + 1 >= Nj)
-                {
-                    J_prev = 0;
-                    J_next = j - 1;
+                bord.neighborhood(i, j);
 
-                }
-                else if (j - 1 < 0)
-                {
-                    J_prev = j + 1;
-                    J_next = Nj - 1;
-                }
-                else
-                {
-                    J_next = j - 1;
-                    J_prev = j + 1;
-                }
+                Ex(i, j) += FDTD_Const::C * dt * (Bz(i, bord.j_next()) - Bz(i, bord.j_prev())) / (2.0 * dy);
 
-                Ex(i, j) += C * dt * (Bz(i, J_next) - Bz(i, J_prev)) / (2 * dy);
+                Ey(i, j) -= FDTD_Const::C * dt * (Bz(bord.i_next(), j) - Bz(bord.i_prev(), j)) / (2.0 * dx);
 
-                Ey(i, j) -= C * dt * (Bz(I_next, j) - Bz(I_prev, j)) / (2 * dx);
-
-                Ez(i, j) += C * dt * ((By(I_next, j) - By(I_prev, j)) / (2 * dx) - (Bx(i, J_next) - Bx(i, J_prev)) / (2 * dy));
+                Ez(i, j) += FDTD_Const::C * dt * ((By(bord.i_next(), j) - By(bord.i_prev(), j)) / (2.0 * dx) - (Bx(i, bord.j_next()) - Bx(i, bord.j_prev())) / (2.0 * dy));
             }
         }
-    
         for (int j = Nj - 1; j >= 0; --j)
         {
             for (int i = 0; i < Ni; ++i)
             {
-                if (i - 1 < 0)
-                {
-                    I_prev = Ni - 1;
-                    I_next = i + 1;
-                }
-                else if (i + 1 >= Ni)
-                {
-                    I_next = 0;
-                    I_prev = i - 1;
-                }
-                else
-                {
-                    I_next = i + 1;
-                    I_prev = i - 1;
-                }
-                if (j + 1 >= Nj)
-                {
-                    J_prev = 0;
-                    J_next = j - 1;
+                bord.neighborhood(i, j);
 
-                }
-                else if (j - 1 < 0)
-                {
-                    J_prev = j + 1;
-                    J_next = Nj - 1;
-                }
-                else
-                {
-                    J_next = j - 1;
-                    J_prev = j + 1;
-                }
+                Bx(i, j) -= FDTD_Const::C * dt * (Ez(i, bord.j_next()) - Ez(i, bord.j_prev())) / (2.0 * dy);
 
-                Bx(i, j) -= C * dt * (Ez(i, J_next) - Ez(i, J_prev)) / (2 * dy);
+                By(i, j) += FDTD_Const::C * dt * (Ez(bord.i_next(), j) - Ez(bord.i_prev(), j)) / (2.0 * dx);
 
-                By(i, j) += C * dt * (Ez(I_next, j) - Ez(I_prev, j)) / (2 * dx);
-
-                Bz(i, j) -= C * dt * ((Ey(I_next, j) - Ey(I_prev, j)) / (2 * dx) - (Ex(i, J_next) - Ex(i, J_prev)) / (2 * dy));
+                Bz(i, j) -= FDTD_Const::C * dt * ((Ey(bord.i_next(), j) - Ey(bord.i_prev(), j)) / (2.0 * dx) - (Ex(i, bord.j_next()) - Ex(i, bord.j_prev())) / (2.0 * dy));
             }
         }
     }

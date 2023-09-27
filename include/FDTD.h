@@ -1,6 +1,10 @@
 #include <vector>
+#include <cmath>
 
-#define C 3e10
+namespace FDTD_Const
+{
+    const double C = 3e10;
+}
 
 class Field
 {
@@ -14,13 +18,34 @@ public:
 
     Field& operator= (const Field& other);
 
-    double& operator() (int _i, int _j) { return field[_i * Nj + _j]; }
+    double& operator() (int _i, int _j) { return field[_i * static_cast<double>(Nj) + _j]; }
 
     int get_Ni() { return Ni; }
     int get_Nj() { return Nj; }
 };
 
-enum Component { EX, EY, EZ, BX, BY, BZ };
+class Borders
+{
+private:
+    int I_prev = 0;
+    int I_next = 0;
+    int J_prev = 0;
+    int J_next = 0;
+    int border_i;
+    int border_j;
+
+public:
+    Borders(int _Ni, int _Nj) : border_i(_Ni), border_j(_Nj) {}
+
+    void neighborhood(int, int);
+
+    int i_next() { return I_next; }
+    int i_prev() { return I_prev; }
+    int j_next() { return J_next; }
+    int j_prev() { return J_prev; }
+};
+
+enum class Component { EX, EY, EZ, BX, BY, BZ };
 
 class FDTD
 {

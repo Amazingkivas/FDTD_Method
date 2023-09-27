@@ -39,6 +39,7 @@ if __name__ == '__main__':
           4 - Bx \n \
           5 - By \n \
           6 - Bz")
+
     select = int(input("Number: "))
     if not (0 < select < 7):
         print("Invalid input")
