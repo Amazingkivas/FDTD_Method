@@ -41,7 +41,7 @@ void write(Field& this_field, std::ofstream& fout)
 void write_all(FDTD& test)
 {
     std::ofstream test_fout;
-    test_fout.open("/FDTD_Method/PlotScript/OutFile.csv");
+    test_fout.open("../../../PlotScript/OutFile.csv");
     write(test.get_field(EX), test_fout);
     write(test.get_field(EY), test_fout);
     write(test.get_field(EZ), test_fout);
@@ -56,7 +56,7 @@ int main()
 {
     std::vector<double> numbers;
     std::ifstream source_fin;
-    source_fin.open("/FDTD_Method/src/Source.txt");
+    source_fin.open("../../../PlotScript/Source.txt");
 
     if (!source_fin.is_open()) 
     {

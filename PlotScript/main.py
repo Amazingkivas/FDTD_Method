@@ -26,7 +26,7 @@ def get_plot(num, data, size_N, size_x):
 
 
 if __name__ == '__main__':
-    with open('/FDTD_Method/src/Source.txt', 'r') as file:
+    with open('Source.txt', 'r') as file:
         numbers = [float(line.strip()) for line in file]
 
     arr_N = (int(numbers[0]), int(numbers[1]))
