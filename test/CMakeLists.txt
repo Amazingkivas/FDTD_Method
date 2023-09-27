@@ -1,4 +1,4 @@
-set(target dijkstra_test)
+set(target FDTD_test)
 
 #file(GLOB hdrs "*.h*" "../include/*.h" "../gtest/*.h")
 file(GLOB hdrs "*.h*")
