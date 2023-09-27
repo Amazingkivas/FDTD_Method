@@ -1,6 +1,7 @@
 file(GLOB hdrs "*.h*" "../include/*.h")
 file(GLOB srcs "*.cpp" "../src/*.cpp")
 
-add_compile_definitions(_PATH_=${"/FDTD_Method/PlotScript/"})
+set(RELATIVE_PATH_TO_FILE "FDTD_Method/src")
+add_definitions(-DRELATIVE_PATH="${RELATIVE_PATH_TO_FILE}")
 
 add_executable(FDTD ${srcs} ${hdrs})
