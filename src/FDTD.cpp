@@ -1,5 +1,45 @@
 #include "FDTD.h"
 
+int Cell_number::operator+ (int number) const
+{
+    if (current + number >= border)
+    {
+        return 0;
+    }
+    else
+    {
+        return current + number;
+    }
+}
+int Cell_number::operator- (int number) const
+{
+    if (current - number < 0)
+    {
+        return border - 1;
+    }
+    else
+    {
+        return current - number;
+    }
+}
+int Cell_number::operator* ()
+{
+    return current;
+}
+Cell_number& Cell_number::operator++ ()
+{
+    ++current;
+    if (current > border)
+    {
+        current = 0;
+    }
+    return *this;
+}
+bool Cell_number::operator< (int other)
+{
+    return current < other;
+}
+
 Field::Field(const int _Ni = 1, const int _Nj = 1) : Ni(_Ni), Nj(_Nj)
 {
     int size = Ni * Nj;
@@ -17,40 +57,10 @@ Field& Field::operator= (const Field& other)
     return *this;
 }
 
-void Borders::neighborhood(int _i, int _j)
+double& Field::operator() (int _i, int _j)
 {
-    if (_i - 1 < 0)
-    {
-        I_prev = border_i - 1;
-        I_next = _i + 1;
-    }
-    else if (_i + 1 >= border_i)
-    {
-        I_next = 0;
-        I_prev = _i - 1;
-    }
-    else
-    {
-        I_next = _i + 1;
-        I_prev = _i - 1;
-    }
-
-    if (_j + 1 >= border_j)
-    {
-        J_prev = 0;
-        J_next = _j - 1;
-
-    }
-    else if (_j - 1 < 0)
-    {
-        J_prev = _j + 1;
-        J_next = border_j - 1;
-    }
-    else
-    {
-        J_next = _j - 1;
-        J_prev = _j + 1;
-    }
+    int index = _j + _i * Nj;
+    return field[index];
 }
 
 FDTD::FDTD(int size_grid[2], double size_x[2], double size_y[2], double _dt) : dt(_dt)
@@ -62,8 +72,8 @@ FDTD::FDTD(int size_grid[2], double size_x[2], double size_y[2], double _dt) : d
     bx = size_x[1];
     ay = size_y[0];
     by = size_y[1];
-    dx = (bx - ax) / Ni;
-    dy = (by - ay) / Nj;
+    dx = (bx - ax) / static_cast<double>(Ni);
+    dy = (by - ay) / static_cast<double>(Nj);
 }
 
 Field& FDTD::get_field(Component this_field)
@@ -86,34 +96,28 @@ Field& FDTD::get_field(Component this_field)
 
 void FDTD::update_field(const double& time)
 {
-    Borders bord(Ni, Nj);
-
     for (double t = 0; t < time; t += dt)
     {
-        for (int j = Nj - 1; j >= 0; --j)
+        for (Cell_number j(Nj); j < Nj; ++j)
         {
-            for (int i = 0; i < Ni; ++i)
+            for (Cell_number i(Ni); i < Ni; ++i)
             {
-                bord.neighborhood(i, j);
+                Ex(*i, *j) += FDTD_Const::C * dt * (Bz(*i, j + 1) - Bz(*i, j - 1)) / (2.0 * dy);
 
-                Ex(i, j) += FDTD_Const::C * dt * (Bz(i, bord.j_next()) - Bz(i, bord.j_prev())) / (2.0 * dy);
+                Ey(*i, *j) -= FDTD_Const::C * dt * (Bz(i + 1, *j) - Bz(i - 1, *j)) / (2.0 * dx);
 
-                Ey(i, j) -= FDTD_Const::C * dt * (Bz(bord.i_next(), j) - Bz(bord.i_prev(), j)) / (2.0 * dx);
-
-                Ez(i, j) += FDTD_Const::C * dt * ((By(bord.i_next(), j) - By(bord.i_prev(), j)) / (2.0 * dx) - (Bx(i, bord.j_next()) - Bx(i, bord.j_prev())) / (2.0 * dy));
+                Ez(*i, *j) += FDTD_Const::C * dt * ((By(i + 1, *j) - By(i - 1, *j)) / (2.0 * dx) - (Bx(*i, j + 1) - Bx(*i, j - 1)) / (2.0 * dy));
             }
         }
-        for (int j = Nj - 1; j >= 0; --j)
+        for (Cell_number j(Nj); j < Nj; ++j)
         {
-            for (int i = 0; i < Ni; ++i)
+            for (Cell_number i(Ni); i < Ni; ++i)
             {
-                bord.neighborhood(i, j);
+                Bx(*i, *j) -= FDTD_Const::C * dt * (Ez(*i, j + 1) - Ez(*i, j - 1)) / (2.0 * dy);
 
-                Bx(i, j) -= FDTD_Const::C * dt * (Ez(i, bord.j_next()) - Ez(i, bord.j_prev())) / (2.0 * dy);
+                By(*i, *j) += FDTD_Const::C * dt * (Ez(i + 1, *j) - Ez(i - 1, *j)) / (2.0 * dx);
 
-                By(i, j) += FDTD_Const::C * dt * (Ez(bord.i_next(), j) - Ez(bord.i_prev(), j)) / (2.0 * dx);
-
-                Bz(i, j) -= FDTD_Const::C * dt * ((Ey(bord.i_next(), j) - Ey(bord.i_prev(), j)) / (2.0 * dx) - (Ex(i, bord.j_next()) - Ex(i, bord.j_prev())) / (2.0 * dy));
+                Bz(*i, *j) -= FDTD_Const::C * dt * ((Ey(i + 1, *j) - Ey(i - 1, *j)) / (2.0 * dx) - (Ex(*i, j + 1) - Ex(*i, j - 1)) / (2.0 * dy));
             }
         }
     }

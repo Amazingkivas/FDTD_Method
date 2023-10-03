@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import csv
+import subprocess
 
 
 def get_plot(num, data, size_N, size_x):
@@ -9,23 +10,37 @@ def get_plot(num, data, size_N, size_x):
     V = []
     dx = (size_x[1] - size_x[0]) / size_N[0]
     while round(x, len(str(dx)) - 2) < size_x[1]:
+        X.append(x)
         x += dx
-        X.append(round(x, len(str(dx)) - 2))
 
     with open(data, 'r') as datafile:
         plotting = list(csv.reader(datafile, delimiter=';'))
 
-        V.extend([float(value) for value in plotting[(num - 1) * (size_N[1] + 2) + 1]])
+        V.extend([float(value) for value in plotting[(num - 1) * (size_N[1] + 2)]])
 
     plt.plot(X, V)
     plt.xlabel('X')
-    plt.ylabel('V')
+    plt.ylabel(components[num])
     plt.title('Plot ' + components[num])
     plt.grid(True)
     plt.show()
 
 
 if __name__ == '__main__':
+    input_list = ["Ni", "Nj", "ax", "bx", "ay", "by", "dt", "max_t"]
+
+    with open("Source.txt", "w") as file:
+        for component in input_list:
+            file.write(input(component + ": ") + "\n")
+
+    cpp_executable = "../sln/FDTD/x64/Release/sample.exe"
+    try:
+        subprocess.run(cpp_executable, check=True)
+    except subprocess.CalledProcessError:
+        print("Произошла ошибка при запуске проекта C++.")
+    except FileNotFoundError:
+        print("Файл не найден. Проверьте путь к исполняемому файлу.")
+
     with open('Source.txt', 'r') as file:
         numbers = [float(line.strip()) for line in file]
 
