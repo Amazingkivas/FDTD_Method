@@ -1,5 +1,4 @@
-﻿//#define __DEBUG__
-#define _USE_MATH_DEFINES
+﻿#define _USE_MATH_DEFINES
 
 #include <iostream>
 #include <iomanip>
@@ -39,7 +38,7 @@ void write(Field& this_field, std::ofstream& fout)
     fout << std::endl << std::endl;
 }
 
-#ifdef __DEBUG__
+
 double min_abs_error(Field& this_field, int size_N[2], double size_x[2], double size_d[2], double t)
 {
     double extr_n = 0.0;
@@ -53,7 +52,7 @@ double min_abs_error(Field& this_field, int size_N[2], double size_x[2], double 
     }
     return extr_n;
 }
-#endif
+
 
 void write_all(FDTD& test)
 {
@@ -101,11 +100,8 @@ int main()
     initial_filling(test_1, arr_N, arr_d, arr_x, arr_y);
     test_1.update_field(numbers[7]);
     
-#if defined __DEBUG__
-    std::cout << "Minimum absolute error: " << min_abs_error(test_1.get_field(Component::EY), arr_N, arr_x, arr_d, numbers[7]);
-#else
+    std::cout << "Minimum absolute error: " << min_abs_error(test_1.get_field(Component::EY), arr_N, arr_x, arr_d, numbers[7]) << std::endl;
     write_all(test_1);
-#endif
 
     source_fin.close();
 
