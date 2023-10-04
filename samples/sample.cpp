@@ -58,7 +58,7 @@ double min_abs_error(Field& this_field, int size_N[2], double size_x[2], double 
 void write_all(FDTD& test)
 {
     std::ofstream test_fout;
-    test_fout.open("OutFile.csv"); //../../../../../PlotScript/
+    test_fout.open("OutFile.csv");
     if (!test_fout.is_open())
     {
         std::cout << "ERROR: Failed to open the file!" << std::endl;
@@ -78,7 +78,7 @@ int main()
 {
     std::vector<double> numbers;
     std::ifstream source_fin;
-    source_fin.open("Source.txt"); //../../
+    source_fin.open("Source.txt");
 
     if (!source_fin.is_open()) 
     {
@@ -108,6 +108,8 @@ int main()
 #endif
 
     source_fin.close();
+
+    std::cout << "The work of sample.exe is completed without errors" << std::endl;
 
     return 0;
 }

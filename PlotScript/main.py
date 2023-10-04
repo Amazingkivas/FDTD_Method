@@ -3,7 +3,7 @@ import csv
 import subprocess
 
 
-def get_plot(num, data, size_N, size_x):
+def get_plot(num, data, size_N, size_x, time):
     components = {1: "Ex", 2: "Ey", 3: "Ez", 4: "Bx", 5: "By", 6: "Bz"}
     x = 0.
     X = []
@@ -21,7 +21,7 @@ def get_plot(num, data, size_N, size_x):
     plt.plot(X, V)
     plt.xlabel('X')
     plt.ylabel(components[num])
-    plt.title('Plot ' + components[num])
+    plt.title('Plot ' + components[num] + " (Max time: " + str(time) + ")")
     plt.grid(True)
     plt.show()
 
@@ -33,13 +33,13 @@ if __name__ == '__main__':
         for component in input_list:
             file.write(input(component + ": ") + "\n")
 
-    cpp_executable = "../sln/FDTD/x64/Release/sample.exe"
+    cpp_executable = "src/sample.exe"
     try:
         subprocess.run(cpp_executable, check=True)
     except subprocess.CalledProcessError:
-        print("Произошла ошибка при запуске проекта C++.")
+        print("Error when starting a C++ project")
     except FileNotFoundError:
-        print("Файл не найден. Проверьте путь к исполняемому файлу.")
+        print("sample.exe not found")
 
     with open('Source.txt', 'r') as file:
         numbers = [float(line.strip()) for line in file]
@@ -61,4 +61,4 @@ if __name__ == '__main__':
         exit(1)
 
     file = 'OutFile.csv'
-    get_plot(select, file, arr_N, arr_x)
+    get_plot(select, file, arr_N, arr_x, numbers[7])
