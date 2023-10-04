@@ -7,7 +7,7 @@
 
 void initial_filling(FDTD& test, int size_N[2], double size_d[2], double size_x[2], double size_y[2])
 {
-    double x = size_d[0];
+    double x = 0;
     for (int i = 0; i < size_N[0]; x += size_d[0], ++i)
     {
         for (int j = 0; j < size_N[1]; ++j)
