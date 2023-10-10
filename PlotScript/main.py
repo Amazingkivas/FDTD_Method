@@ -8,10 +8,12 @@ def get_plot(num, data, size_N, size_x, time):
     x = 0.
     X = []
     V = []
-    dx = (size_x[1] - size_x[0]) / size_N[0]
-    while round(x, len(str(dx)) - 2) < size_x[1]:
+    dx = (float(size_x[1]) - float(size_x[0])) / float(size_N[0])
+    cnt = 0
+    while cnt < size_N[0]:
         X.append(x)
         x += dx
+        cnt += 1
 
     with open(data, 'r') as datafile:
         plotting = list(csv.reader(datafile, delimiter=';'))
@@ -79,10 +81,10 @@ if __name__ == '__main__':
 
     if (field_1 == 0 and field_2 == 5 or field_1 == 2 and field_2 == 3):
         arr_N = (int(numbers[1]), int(numbers[0]))
-        arr_x = (int(numbers[4]), int(numbers[5]))
+        arr_x = (float(numbers[4]), float(numbers[5]))
     elif (field_1 == 1 and field_2 == 5 or field_1 == 2 and field_2 == 4):
         arr_N = (int(numbers[0]), int(numbers[1]))
-        arr_x = (int(numbers[2]), int(numbers[3]))
+        arr_x = (float(numbers[2]), float(numbers[3]))
     else:
         print("Invalid selected fields")
         exit(1)
