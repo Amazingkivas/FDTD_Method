@@ -12,7 +12,6 @@ class Cell_number
 private:
     int border;
     int current;
-
 public:
     explicit Cell_number(int max_num, int start_num = 0) : border(max_num), current(start_num) {}
     int operator+ (int) const;
@@ -34,7 +33,6 @@ public:
     Field& operator= (const Field& other);
 
     double& operator() (int _i, int _j);
-    //double& operator() (int _i, int _j);
 
     int get_Ni() { return Ni; }
     int get_Nj() { return Nj; }
