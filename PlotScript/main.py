@@ -3,14 +3,17 @@ import csv
 import subprocess
 
 
-def get_plot(num, data, size_N, size_x, time):
-    components = {1: "Ex", 2: "Ey", 3: "Ez", 4: "Bx", 5: "By", 6: "Bz"}
+components = {1: "Ex", 2: "Ey", 3: "Ez", 4: "Bx", 5: "By", 6: "Bz"}
+nums_com = {"Ex": 0, "Ey": 1, "Ez": 2, "Bx": 3, "By": 4, "Bz": 5}
+
+
+def get_plot(num, data, size_n, size_x, time):
     x = 0.
     X = []
     V = []
-    dx = (float(size_x[1]) - float(size_x[0])) / float(size_N[0])
+    dx = (float(size_x[1]) - float(size_x[0])) / float(size_n[0])
     cnt = 0
-    while cnt < size_N[0]:
+    while cnt < size_n[0]:
         X.append(x)
         x += dx
         cnt += 1
@@ -18,20 +21,52 @@ def get_plot(num, data, size_N, size_x, time):
     with open(data, 'r') as datafile:
         plotting = list(csv.reader(datafile, delimiter=';'))
 
-        V.extend([float(value) for value in plotting[(num - 1) * (size_N[1] + 2)]])
+        V.extend([float(value) for value in plotting[(num - 1) * (size_n[1] + 2)]])
 
     plt.plot(X, V)
     plt.xlabel('X')
     plt.ylabel(components[num])
     plt.title('Plot ' + components[num] + " (Time: " + str(time) + ")")
     plt.grid(True)
+    plt.savefig(f"Plots/plt_{components[num]}")
     plt.show()
+
+
+def execute_cpp(field_1, field_2, field_to_plot, source_nums):
+    num_field_1 = nums_com[field_1]
+    num_field_2 = nums_com[field_2]
+    num_field_to_plot = nums_com[field_to_plot]
+
+    print("\n" + field_to_plot + ":\n")
+
+    cpp_executable = "src/sample.exe"
+    args = [cpp_executable, str(num_field_1), str(num_field_2), str(num_field_to_plot)]
+    try:
+        subprocess.run(args, check=True)
+    except subprocess.CalledProcessError:
+        print("Error when starting a C++ project")
+    except FileNotFoundError:
+        print("sample.exe not found")
+
+    if (num_field_1 == 0 and num_field_2 == 5 or num_field_1 == 2 and num_field_2 == 3):
+        arr_n = (int(source_nums[1]), int(source_nums[0]))
+        arr_x = (float(source_nums[4]), float(source_nums[5]))
+
+    elif (num_field_1 == 1 and num_field_2 == 5 or num_field_1 == 2 and num_field_2 == 4):
+        arr_n = (int(source_nums[0]), int(source_nums[1]))
+        arr_x = (float(source_nums[2]), float(source_nums[3]))
+    else:
+        print("Invalid selected fields")
+        exit(1)
+
+    file = 'OutFile.csv'
+    get_plot(num_field_to_plot + 1, file, arr_n, arr_x, source_nums[7])
 
 
 if __name__ == '__main__':
     input_list = ["Ni", "Nj", "ax", "bx", "ay", "by", "dt", "t"]
 
-    print("Update parameters?  \n \
+    print("Update parameters? \n \
                       1 - Yes \n \
                       2 - No")
     select_update = int(input("Number: ")) * (-1) + 2
@@ -51,52 +86,12 @@ if __name__ == '__main__':
             file.writelines(lines)
             file.truncate()
 
-    print("Select the active fields:  \n \
-                  1 - Ex \n \
-                  2 - Ey \n \
-                  3 - Ez \n \
-                  4 - Bx \n \
-                  5 - By \n \
-                  6 - Bz")
-    field_1 = -1 + int(input("Number: "))
-    field_2 = -1 + int(input("Number: "))
-    if not (0 <= field_1 < 6 and 0 <= field_2 < 6):
-        print("Invalid input")
-        exit(1)
-
-    print("Select field for plotting:  \n \
-              1 - Ex \n \
-              2 - Ey \n \
-              3 - Ez \n \
-              4 - Bx \n \
-              5 - By \n \
-              6 - Bz")
-    select_to_plot = -1 + int(input("Number: "))
-    if not (0 <= select_to_plot < 6 and (select_to_plot in (field_1, field_2))):
-        print("Invalid input")
-        exit(1)
-
     with open('Source.txt', 'r') as file:
         numbers = [float(line.strip()) for line in file]
 
-    if (field_1 == 0 and field_2 == 5 or field_1 == 2 and field_2 == 3):
-        arr_N = (int(numbers[1]), int(numbers[0]))
-        arr_x = (float(numbers[4]), float(numbers[5]))
-    elif (field_1 == 1 and field_2 == 5 or field_1 == 2 and field_2 == 4):
-        arr_N = (int(numbers[0]), int(numbers[1]))
-        arr_x = (float(numbers[2]), float(numbers[3]))
-    else:
-        print("Invalid selected fields")
-        exit(1)
-
-    cpp_executable = "src/sample.exe"
-    args = [cpp_executable, str(field_1), str(field_2), str(select_to_plot)]
-    try:
-        subprocess.run(args, check=True)
-    except subprocess.CalledProcessError:
-        print("Error when starting a C++ project")
-    except FileNotFoundError:
-        print("sample.exe not found")
-
-    file = 'OutFile.csv'
-    get_plot(select_to_plot + 1, file, arr_N, arr_x, numbers[7])
+    execute_cpp("Ex", "Bz", "Ex", numbers)
+    execute_cpp("Ey", "Bz", "Ey", numbers)
+    execute_cpp("Ez", "Bx", "Ez", numbers)
+    execute_cpp("Ez", "Bx", "Bx", numbers)
+    execute_cpp("Ez", "By", "By", numbers)
+    execute_cpp("Ey", "Bz", "Bz", numbers)
