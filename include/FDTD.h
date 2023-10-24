@@ -12,8 +12,9 @@ class Cell_number
 private:
     int border;
     int current;
+    int start;
 public:
-    explicit Cell_number(int max_num, int start_num = 0) : border(max_num), current(start_num) {}
+    explicit Cell_number(int max_num, int start_num = 0) : border(max_num), current(start_num), start(start_num) {}
     int operator+ (int) const;
     int operator- (int) const;
     int operator* ();
@@ -53,4 +54,5 @@ public:
     Field& get_field(Component);
 
     void update_field(const double&);
+    void shifted_update_field(const double&);
 };

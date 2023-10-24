@@ -5,7 +5,7 @@ import subprocess
 
 components = {1: "Ex", 2: "Ey", 3: "Ez", 4: "Bx", 5: "By", 6: "Bz"}
 nums_com = {"Ex": 0, "Ey": 1, "Ez": 2, "Bx": 3, "By": 4, "Bz": 5}
-
+shift_flag = "1"
 
 def get_plot(num, data, size_n, size_x, time):
     x = 0.
@@ -26,7 +26,7 @@ def get_plot(num, data, size_n, size_x, time):
     plt.plot(X, V)
     plt.xlabel('X')
     plt.ylabel(components[num])
-    plt.title('Plot ' + components[num] + " (Time: " + str(time) + ")")
+    plt.title(f"Plot {components[num]} (Time: {str(time)})")
     plt.grid(True)
     plt.savefig(f"Plots/plt_{components[num]}")
     plt.show()
@@ -40,7 +40,7 @@ def execute_cpp(field_1, field_2, field_to_plot, source_nums):
     print("\n" + field_to_plot + ":\n")
 
     cpp_executable = "src/sample.exe"
-    args = [cpp_executable, str(num_field_1), str(num_field_2), str(num_field_to_plot)]
+    args = [cpp_executable, str(num_field_1), str(num_field_2), str(num_field_to_plot), shift_flag]
     try:
         subprocess.run(args, check=True)
     except subprocess.CalledProcessError:
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     execute_cpp("Ex", "Bz", "Ex", numbers)
     execute_cpp("Ey", "Bz", "Ey", numbers)
-    execute_cpp("Ez", "Bx", "Ez", numbers)
+    execute_cpp("Ez", "By", "Ez", numbers)
     execute_cpp("Ez", "Bx", "Bx", numbers)
     execute_cpp("Ez", "By", "By", numbers)
-    execute_cpp("Ey", "Bz", "Bz", numbers)
+    execute_cpp("Ex", "Bz", "Bz", numbers)

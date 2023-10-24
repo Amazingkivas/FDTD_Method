@@ -4,7 +4,7 @@ int Cell_number::operator+ (int number) const
 {
     if (current + number >= border)
     {
-        return 0;
+        return -1 + number;
     }
     else
     {
@@ -22,23 +22,27 @@ int Cell_number::operator- (int number) const
         return current - number;
     }
 }
+
 int Cell_number::operator* ()
 {
     return current;
 }
+
 Cell_number& Cell_number::operator++ ()
 {
     ++current;
     if (current > border)
     {
-        current = 0;
+        current = start;
     }
     return *this;
 }
+
 bool Cell_number::operator< (int other)
 {
     return current < other;
 }
+
 
 Field::Field(const int _Ni = 1, const int _Nj = 1) : Ni(_Ni), Nj(_Nj)
 {
@@ -62,6 +66,7 @@ double& Field::operator() (int _i, int _j)
     int index = _j + _i * Nj;
     return field[index];
 }
+
 
 FDTD::FDTD(int size_grid[2], double size_x[2], double size_y[2], double _dt) : dt(_dt)
 {
@@ -118,6 +123,34 @@ void FDTD::update_field(const double& time)
                 By(*i, *j) += FDTD_Const::C * dt * (Ez(i + 1, *j) - Ez(i - 1, *j)) / (2.0 * dx);
 
                 Bz(*i, *j) -= FDTD_Const::C * dt * ((Ey(i + 1, *j) - Ey(i - 1, *j)) / (2.0 * dx) - (Ex(*i, j + 1) - Ex(*i, j - 1)) / (2.0 * dy));
+            }
+        }
+    }
+}
+void FDTD::shifted_update_field(const double& time)
+{
+    for (double t = 0; t < time; t += dt)
+    {
+        for (Cell_number j(Nj); j < Nj; ++j)
+        {
+            for (Cell_number i(Ni); i < Ni; ++i)
+            {
+                Ex(*i, *j) += FDTD_Const::C * dt * (Bz(*i, *j) - Bz(*i, j - 1)) / dy;
+
+                Ey(*i, *j) -= FDTD_Const::C * dt * (Bz(*i, *j) - Bz(i - 1, *j)) / dx;
+
+                Ez(*i, *j) += FDTD_Const::C * dt * ((By(*i, *j) - By(i - 1, *j)) / dx - (Bx(*i, *j) - Bx(*i, j - 1)) / dy);
+            }
+        }
+        for (Cell_number j(Nj); j < Nj; ++j)
+        {
+            for (Cell_number i(Ni); i < Ni; ++i)
+            {
+                Bx(*i, *j) -= FDTD_Const::C * dt * (Ez(*i, j + 1) - Ez(*i, *j)) / dy;
+
+                By(*i, *j) += FDTD_Const::C * dt * (Ez(i + 1, *j) - Ez(*i, *j)) / dx;
+
+                Bz(*i, *j) -= FDTD_Const::C * dt * ((Ey(i + 1, *j) - Ey(*i, *j)) / dx - (Ex(*i, j + 1) - Ex(*i, *j)) / dy);
             }
         }
     }
