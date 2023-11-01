@@ -11,6 +11,3 @@ endif()
 add_compile_options(/wd4996)
 
 target_link_libraries(${target} ${pthread})
-
-set_target_properties(${target} PROPERTIES
-    FOLDER "sln")
