@@ -135,6 +135,17 @@ void FDTD::shifted_update_field(const double& time)
         {
             for (Cell_number i(Ni); i < Ni; ++i)
             {
+                Bx(*i, *j) -= FDTD_Const::C * dt/2 * (Ez(*i, j + 1) - Ez(*i, *j)) / dy;
+
+                By(*i, *j) += FDTD_Const::C * dt/2 * (Ez(i + 1, *j) - Ez(*i, *j)) / dx;
+
+                Bz(*i, *j) -= FDTD_Const::C * dt/2 * ((Ey(i + 1, *j) - Ey(*i, *j)) / dx - (Ex(*i, j + 1) - Ex(*i, *j)) / dy);
+            }
+        }
+        for (Cell_number j(Nj); j < Nj; ++j)
+        {
+            for (Cell_number i(Ni); i < Ni; ++i)
+            {
                 Ex(*i, *j) += FDTD_Const::C * dt * (Bz(*i, *j) - Bz(*i, j - 1)) / dy;
 
                 Ey(*i, *j) -= FDTD_Const::C * dt * (Bz(*i, *j) - Bz(i - 1, *j)) / dx;
@@ -146,11 +157,11 @@ void FDTD::shifted_update_field(const double& time)
         {
             for (Cell_number i(Ni); i < Ni; ++i)
             {
-                Bx(*i, *j) -= FDTD_Const::C * dt * (Ez(*i, j + 1) - Ez(*i, *j)) / dy;
+                Bx(*i, *j) -= FDTD_Const::C * dt/2 * (Ez(*i, j + 1) - Ez(*i, *j)) / dy;
 
-                By(*i, *j) += FDTD_Const::C * dt * (Ez(i + 1, *j) - Ez(*i, *j)) / dx;
+                By(*i, *j) += FDTD_Const::C * dt/2 * (Ez(i + 1, *j) - Ez(*i, *j)) / dx;
 
-                Bz(*i, *j) -= FDTD_Const::C * dt * ((Ey(i + 1, *j) - Ey(*i, *j)) / dx - (Ex(*i, j + 1) - Ex(*i, *j)) / dy);
+                Bz(*i, *j) -= FDTD_Const::C * dt/2 * ((Ey(i + 1, *j) - Ey(*i, *j)) / dx - (Ex(*i, j + 1) - Ex(*i, *j)) / dy);
             }
         }
     }

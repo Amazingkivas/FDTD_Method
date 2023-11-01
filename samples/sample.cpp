@@ -106,7 +106,7 @@ double max_abs_error_x(Field& this_field, int size_N[2], double size_x[2], doubl
     int j = 0;
     for (int i = 0; i < this_field.get_Ni(); ++i, x += size_d[0])
     {
-        double this_n = fabs(this_field(i, j) - sign * sin(2.0 * M_PI * (x - size_x[0] - FDTD_Const::C * t) / (size_x[1] - size_x[0])));
+        double this_n = fabs(sign * this_field(i, j) - sin(2.0 * M_PI * (x - size_x[0] - FDTD_Const::C * t) / (size_x[1] - size_x[0])));
         if (this_n > extr_n)
             extr_n = this_n;
     }
@@ -119,7 +119,7 @@ double max_abs_error_y(Field& this_field, int size_N[2], double size_y[2], doubl
     int i = 0;
     for (int j = 0; j < this_field.get_Nj(); ++j, y += size_d[1])
     {
-        double this_n = fabs(this_field(i, j) - sign * sin(2.0 * M_PI * (y - size_y[0] - FDTD_Const::C * t) / (size_y[1] - size_y[0])));
+        double this_n = fabs(sign * this_field(i, j) - sin(2.0 * M_PI * (y - size_y[0] - FDTD_Const::C * t) / (size_y[1] - size_y[0])));
         if (this_n > extr_n)
             extr_n = this_n;
     }
