@@ -39,7 +39,7 @@ def execute_cpp(field_1, field_2, field_to_plot, source_nums):
 
     print("\n" + field_to_plot + ":\n")
 
-    cpp_executable = "src/sample.exe"
+    cpp_executable = "src/Release/sample.exe"
     args = [cpp_executable, str(num_field_1), str(num_field_2), str(num_field_to_plot), shift_flag]
     try:
         subprocess.run(args, check=True)
