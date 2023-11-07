@@ -1,0 +1,10 @@
+^A:\FDTD_METHOD\FDTD_METHOD\SLN\SAMPLE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SA:/FDTD_Method/FDTD_Method/sln -BA:/FDTD_Method/FDTD_Method/sln --check-stamp-file A:/FDTD_Method/FDTD_Method/sln/sample/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -55,4 +55,7 @@ public:
 
     void update_field(const double&);
     void shifted_update_field(const double&);
+
+    int get_Ni() { return Ni; }
+    int get_Nj() { return Nj; }
 };
