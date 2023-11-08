@@ -12,7 +12,7 @@ jobs:
       run: |
         export CMAKE_BUILD_PARALLEL_LEVEL=4
         mkdir build
-        cd sln/CMakeLists.txt 
+        cd sln
         cmake \
             -A x64 \
             -B ${PWD}/build
