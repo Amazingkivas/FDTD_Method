@@ -1,5 +1,5 @@
 ﻿#define _USE_MATH_DEFINES
-//#define __DEBUG__
+#define __DEBUG__
 
 #include <iostream>
 #include <iomanip>

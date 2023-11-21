@@ -54,12 +54,16 @@ if __name__ == '__main__':
         numbers = [float(line.strip()) for line in file]
 
     convergences = []
-    for n in range(0, 10):
+    nums = []
+    for n in range(0, 5):
         with open("Source.txt", "w") as file:
-            tmp_n_0 = numbers[0] * (1.5 ** n)
+            mult_1 = 2
+            mult_2 = 4
+
+            tmp_n_0 = numbers[0] * (mult_1 ** n)
             file.write(str(tmp_n_0) + "\n")
 
-            tmp_n_1 = numbers[1] * (1.5 ** n)
+            tmp_n_1 = numbers[1] * (mult_1 ** n)
             file.write(str(tmp_n_1) + "\n")
 
             file.write(str(numbers[2]) + "\n")
@@ -67,9 +71,20 @@ if __name__ == '__main__':
             file.write(str(numbers[4]) + "\n")
             file.write(str(numbers[5]) + "\n")
 
-            tmp_n_6 = numbers[6] / (1.5 ** n)
+            tmp_n_6 = numbers[6] / (mult_2 ** n)
             file.write(str(tmp_n_6) + "\n")
 
             file.write(str(numbers[7]) + "\n")
 
-        convergences.append(execute_cpp("Ex", "Bz", "Ex"))
+        convergences.append(float(execute_cpp("Ex", "Bz", "Ex")))
+    convers = []
+    for n in range(0, 4):
+        convers.append(convergences[n] / convergences[n+1])
+        nums.append(n)
+    print(convers)
+    plt.plot(nums,  convers)
+    plt.xlabel('n')
+    plt.ylabel('E/mult')
+    plt.title("Plot")
+    plt.grid(True)
+    plt.show()

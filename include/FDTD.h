@@ -1,26 +1,12 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <omp.h>
 
 namespace FDTD_Const
 {
     const double C = 3e10;
 }
-
-class Cell_number
-{
-private:
-    int border;
-    int current;
-    int start;
-public:
-    explicit Cell_number(int max_num, int start_num = 0) : border(max_num), current(start_num), start(start_num) {}
-    int operator+ (int) const;
-    int operator- (int) const;
-    int operator* ();
-    Cell_number& operator++ ();
-    bool operator< (int);
-};
 
 class Field
 {
