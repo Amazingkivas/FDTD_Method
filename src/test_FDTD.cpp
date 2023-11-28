@@ -5,37 +5,39 @@ void Test_FDTD::initial_filling(FDTD& _test, Component field_1, Component field_
 {
 	if (axis == Axis::X)
 	{
-		double x = 0.0;
 		double x_b = 0.0;
-		for (int i = 0; i < _test.get_Ni(); x += size_d, ++i)
+		if (shifted)
 		{
+			x_b = size_d / 2.0;
+		}
+		#pragma omp parallel for
+		for (int i = 0; i < _test.get_Ni(); ++i)
+		{
+			double x = static_cast<double>(i) * size_d;
+			#pragma ivdep
 			for (int j = 0; j < _test.get_Nj(); ++j)
 			{
 				_test.get_field(field_1)(i, j) = sign * _init_function(x, size_wave);
-				if (shifted)
-				{
-					x_b = x + size_d / 2.0;
-				}
-				else x_b = x;
-				_test.get_field(field_2)(i, j) = _init_function(x_b, size_wave);
+				_test.get_field(field_2)(i, j) = _init_function(x_b + x, size_wave);
 			}
 		}
 	}
 	else
 	{
-		double y = 0.0;
 		double y_b = 0.0;
-		for (int j = 0; j < _test.get_Nj(); y += size_d, ++j)
+		if (shifted)
 		{
+			y_b = size_d / 2.0;
+		}
+		#pragma omp parallel for
+		for (int j = 0; j < _test.get_Nj(); ++j)
+		{
+			double y = static_cast<double>(j) * size_d;
+			#pragma ivdep
 			for (int i = 0; i < _test.get_Ni(); ++i)
 			{
 				_test.get_field(field_1)(i, j) = sign * _init_function(y, size_wave);
-				if (shifted)
-				{
-					y_b = y + size_d / 2.0;
-				}
-				else y_b = y;
-				_test.get_field(field_2)(i, j) = _init_function(y_b, size_wave);
+				_test.get_field(field_2)(i, j) = _init_function(y_b + y, size_wave);
 			}
 		}
 	}

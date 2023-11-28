@@ -39,6 +39,11 @@ public:
 
     Field& get_field(Component);
 
+    void periodical_boundary_conditions_E();
+    void periodical_boundary_conditions_B();
+    void periodical_boundary_conditions_shiftedE();
+    void periodical_boundary_conditions_shiftedB();
+
     void update_field(const double&);
     void shifted_update_field(const double&);
 
