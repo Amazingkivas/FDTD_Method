@@ -17,10 +17,10 @@ private:
 	bool shifted;
 	double max_abs_error = 0.0;
 
-	void initial_filling(FDTD& _test, Component field_1, Component field_2, double size_d, double size_wave[2],
+	void initial_filling(FDTD& _test, Component fields[2], double size_d, double size_wave[2],
 		std::function<double(double, double[2])>& _init_function);
 
-	void start(FDTD& _test, double _t);
+	void start_test(FDTD& _test, double _t);
 
 	double get_shift(Component _field, double step);
 
@@ -28,8 +28,8 @@ private:
 		std::function<double(double, double, double[2])>& _true_function, double _t);
 
 public:
-	Test_FDTD(FDTD& test, Component field_1, Component field_2, Component field_3,
-		double size_x[2], double size_y[2], double size_d[2], double t,
+	Test_FDTD(FDTD& test, Component fields[2], Component field_3,
+		double size_x[2], double size_y[2], double size_d[2], double time, int iters,
 		std::function<double(double, double[2])>& init_function,
 		std::function<double(double, double, double[2])>& true_function, bool _shifted);
 

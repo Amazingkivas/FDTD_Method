@@ -72,15 +72,6 @@ void write_all(FDTD& test, char axis)
     test_fout.close();
 }
 
-double func_1(double x, double size[2])
-{
-    return sin(2.0 * M_PI * (x - size[0]) / (size[1] - size[0]));
-}
-double func_2(double x, double t, double size[2])
-{
-    return sin(2.0 * M_PI * (x - size[0] - FDTD_Const::C * t) / (size[1] - size[0]));
-}
-
 #ifndef __DEBUG__
 int main(int argc, char* argv[])
 #else
@@ -103,7 +94,7 @@ int main()
     }
 
 #ifdef __DEBUG__
-    const char* argv[5] = {"0", "0", "5", "0", "1"};
+    const char* argv[5] = {"1", "2", "3", "2", "1"};
 #endif
 
     double number;
@@ -117,32 +108,52 @@ int main()
     double arr_y[2] = { numbers[4], numbers[5] };
     double arr_d[2] = { (arr_x[1] - arr_x[0]) / arr_N[0], (arr_y[1] - arr_y[0]) / arr_N[1] };
 
-    FDTD test_1(arr_N, arr_x, arr_y, numbers[6]);
+    double courant_condtition = 0.25;
+    double dt;
+    double t;
 
-    Component fld_1 = static_cast<Component>(std::atoi(argv[1]));
-    Component fld_2 = static_cast<Component>(std::atoi(argv[2]));
-    Component fld_3 = static_cast<Component>(std::atoi(argv[3]));
+    Component flds_selected[2] = { static_cast<Component>(std::atoi(argv[1])), static_cast<Component>(std::atoi(argv[2])) };
+    Component fld_tested = static_cast<Component>(std::atoi(argv[3]));
+    bool shifted_flag = static_cast<bool>(std::atoi(argv[4]));
 
-    std::function<double(double, double[2])> initial_func = func_1;
-    std::function<double(double, double, double[2])> true_func = func_2;
 
-    Test_FDTD test(test_1, fld_1, fld_2, fld_3, arr_x, arr_y, arr_d, numbers[7], initial_func, true_func, static_cast<bool>(std::atoi(argv[4])));
-    std::cout << test.get_max_abs_error() << std::endl;
+    std::function<double(double, double[2])> initial_func =
+        [](double x, double size[2]) { return sin(2.0 * M_PI * (x - size[0]) / (size[1] - size[0])); };
+
+    std::function<double(double, double, double[2])> true_func =
+        [](double x, double t, double size[2]) { return sin(2.0 * M_PI * (x - size[0] - FDTD_Const::C * t) / (size[1] - size[0])); };
+
 
     char selected_axis;
-    if (fld_1 == Component::EY && fld_2 == Component::BZ || fld_1 == Component::EZ && fld_2 == Component::BY)
+    if (flds_selected[0] == Component::EY && flds_selected[1] == Component::BZ ||
+        flds_selected[0] == Component::EZ && flds_selected[1] == Component::BY)
     {
         selected_axis = 'x';
+        dt = courant_condtition * arr_d[0] / FDTD_Const::C;
+        t = courant_condtition * (arr_x[1] - arr_x[0]) / FDTD_Const::C;
     }
-    else if (fld_1 == Component::EX && fld_2 == Component::BZ || fld_1 == Component::EZ && fld_2 == Component::BX)
+    else if (flds_selected[0] == Component::EX && flds_selected[1] == Component::BZ ||
+        flds_selected[0] == Component::EZ && flds_selected[1] == Component::BX)
     {
         selected_axis = 'y';
+        dt = courant_condtition * arr_d[1] / FDTD_Const::C;
+        t = courant_condtition * (arr_y[1] - arr_y[0]) / FDTD_Const::C;
     }
     else
     {
         std::cout << "ERROR" << std::endl;
         exit(1);
     }
+
+
+    FDTD test_1(arr_N, arr_x, arr_y, dt);
+
+
+    int iter_nums = static_cast<int>(numbers[6]);
+    Test_FDTD test(test_1, flds_selected, fld_tested, arr_x, arr_y, arr_d, t, iter_nums, initial_func, true_func, shifted_flag);
+    std::cout << test.get_max_abs_error() << std::endl;
+
+
     write_all(test_1, selected_axis);
 
     source_fin.close();
