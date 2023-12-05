@@ -92,12 +92,12 @@ void FDTD::update_field(const int time)
 
 void FDTD::shifted_update_field(const int time)
 {
-    for (double t = 0; t <= time; ++t)
+    for (double t = 0; t < time; t++)
     {
         #pragma omp parallel for collapse(2)
-        for (int j = 0; j < Nj; ++j)
+        for (int i = 0; i < Ni; i++)
         {
-            for (int i = 0; i < Ni; ++i)
+            for (int j = 0; j < Nj; j++)
             {
                 Bx(i, j) -= FDTD_Const::C * dt / 2.0 * (Ez(i, j + 1) - Ez(i, j)) / dy;
                 By(i, j) += FDTD_Const::C * dt / 2.0 * (Ez(i + 1, j) - Ez(i, j)) / dx;
@@ -106,9 +106,9 @@ void FDTD::shifted_update_field(const int time)
         }
 
         #pragma omp parallel for collapse(2)
-        for (int j = 0; j < Nj; ++j)
+        for (int i = 0; i < Ni; i++)
         {
-            for (int i = 0; i < Ni; ++i)
+            for (int j = 0; j < Nj; j++)
             {
                 Ex(i, j) += FDTD_Const::C * dt * (Bz(i, j) - Bz(i, j - 1)) / dy;
                 Ey(i, j) -= FDTD_Const::C * dt * (Bz(i, j) - Bz(i - 1, j)) / dx;
@@ -117,9 +117,9 @@ void FDTD::shifted_update_field(const int time)
         }
 
         #pragma omp parallel for collapse(2)
-        for (int j = 0; j < Nj; ++j)
+        for (int i = 0; i < Ni; i++)
         {
-            for (int i = 0; i < Ni; ++i)
+            for (int j = 0; j < Nj; j++)
             {
                 Bx(i, j) -= FDTD_Const::C * dt / 2.0 * (Ez(i, j + 1) - Ez(i, j)) / dy;
                 By(i, j) += FDTD_Const::C * dt / 2.0 * (Ez(i + 1, j) - Ez(i, j)) / dx;

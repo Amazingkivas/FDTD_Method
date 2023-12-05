@@ -20,7 +20,7 @@ private:
 	void initial_filling(FDTD& _test, Component fields[2], double size_d, double size_wave[2],
 		std::function<double(double, double[2])>& _init_function);
 
-	void start_test(FDTD& _test, double _t);
+	void start_test(FDTD& _test, int _t);
 
 	double get_shift(Component _field, double step);
 

@@ -10,10 +10,10 @@ void Test_FDTD::initial_filling(FDTD& _test, Component fields[2], double size_d,
 		{
 			x_b = size_d / 2.0;
 		}
-		for (int i = 0; i < _test.get_Ni(); ++i)
+		for (int i = 0; i < _test.get_Ni(); i++)
 		{
 			double x = static_cast<double>(i) * size_d;
-			for (int j = 0; j < _test.get_Nj(); ++j)
+			for (int j = 0; j < _test.get_Nj(); j++)
 			{
 				_test.get_field(fields[0])(i, j) = sign * _init_function(x, size_wave);
 				_test.get_field(fields[1])(i, j) = _init_function(x_b + x, size_wave);
@@ -27,10 +27,10 @@ void Test_FDTD::initial_filling(FDTD& _test, Component fields[2], double size_d,
 		{
 			y_b = size_d / 2.0;
 		}
-		for (int j = 0; j < _test.get_Nj(); ++j)
+		for (int j = 0; j < _test.get_Nj(); j++)
 		{
 			double y = static_cast<double>(j) * size_d;
-			for (int i = 0; i < _test.get_Ni(); ++i)
+			for (int i = 0; i < _test.get_Ni(); i++)
 			{
 				_test.get_field(fields[0])(i, j) = sign * _init_function(y, size_wave);
 				_test.get_field(fields[1])(i, j) = _init_function(y_b + y, size_wave);
@@ -39,7 +39,7 @@ void Test_FDTD::initial_filling(FDTD& _test, Component fields[2], double size_d,
 	}
 }
 
-void Test_FDTD::start_test(FDTD& _test, double _t)
+void Test_FDTD::start_test(FDTD& _test, int _t)
 {
 	if (shifted)
 	{
