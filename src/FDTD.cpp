@@ -62,14 +62,13 @@ Field& FDTD::get_field(Component this_field)
     }
 }
 
-void FDTD::update_field(const int& time)
+void FDTD::update_field(const int time)
 {
     for (double t = 0; t <= time; ++t)
     {
-        #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for (int j = 0; j < Nj; ++j)
         {
-            #pragma ivdep
             for (int i = 0; i < Ni; ++i)
             {
                 Ex(i, j) += FDTD_Const::C * dt * (Bz(i, j + 1) - Bz(i, j - 1)) / (2.0 * dy);
@@ -78,10 +77,9 @@ void FDTD::update_field(const int& time)
             }
         }
 
-        #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for (int j = 0; j < Nj; ++j)
         {
-            #pragma ivdep
             for (int i = 0; i < Ni; ++i)
             {
                 Bx(i, j) -= FDTD_Const::C * dt * (Ez(i, j + 1) - Ez(i, j - 1)) / (2.0 * dy);
@@ -92,14 +90,13 @@ void FDTD::update_field(const int& time)
     }
 }
 
-void FDTD::shifted_update_field(const int& time)
+void FDTD::shifted_update_field(const int time)
 {
     for (double t = 0; t <= time; ++t)
     {
-        #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for (int j = 0; j < Nj; ++j)
         {
-            #pragma ivdep
             for (int i = 0; i < Ni; ++i)
             {
                 Bx(i, j) -= FDTD_Const::C * dt / 2.0 * (Ez(i, j + 1) - Ez(i, j)) / dy;
@@ -108,10 +105,9 @@ void FDTD::shifted_update_field(const int& time)
             }
         }
 
-        #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for (int j = 0; j < Nj; ++j)
         {
-            #pragma ivdep
             for (int i = 0; i < Ni; ++i)
             {
                 Ex(i, j) += FDTD_Const::C * dt * (Bz(i, j) - Bz(i, j - 1)) / dy;
@@ -120,10 +116,9 @@ void FDTD::shifted_update_field(const int& time)
             }
         }
 
-        #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for (int j = 0; j < Nj; ++j)
         {
-            #pragma ivdep
             for (int i = 0; i < Ni; ++i)
             {
                 Bx(i, j) -= FDTD_Const::C * dt / 2.0 * (Ez(i, j + 1) - Ez(i, j)) / dy;

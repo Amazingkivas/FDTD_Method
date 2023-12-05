@@ -39,8 +39,8 @@ public:
 
     Field& get_field(Component);
 
-    void update_field(const int&);
-    void shifted_update_field(const int&);
+    void update_field(const int);
+    void shifted_update_field(const int);
 
     int get_Ni() { return Ni; }
     int get_Nj() { return Nj; }
