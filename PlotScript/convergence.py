@@ -40,14 +40,6 @@ def update_sources():
         with open("Source.txt", "w") as file:
             for component in input_list:
                 file.write(input(component + ": ") + "\n")
-    else:
-        with open("Source.txt", "r+") as file:
-            lines = file.readlines()
-            lines[-1] = input("t : ") + "\n"
-            file.seek(0)
-            file.writelines(lines)
-            file.truncate()
-
 
 def save_source_into_reserve():
     with open('Source.txt', 'r') as file1, open('Reserve.txt', 'w') as file2:
@@ -84,9 +76,8 @@ def analyze_convergence(numbers, mult_2, iterations, shifts):
             file.write(str(numbers[4]) + "\n")
             file.write(str(numbers[5]) + "\n")
 
-            tmp_n_6 = numbers[6] / (mult_2 ** n)
+            tmp_n_6 = numbers[6] * (mult_2 ** n)
             file.write(str(tmp_n_6) + "\n")
-
             file.write(str(numbers[7]) + "\n")
 
         convergences.append(float(execute_cpp("Ex", "Bz", "Ex", flag)))
@@ -101,7 +92,7 @@ def analyze_convergence(numbers, mult_2, iterations, shifts):
 if __name__ == '__main__':
     update_sources()
     loaded_numbers = save_source_into_reserve()
-    nums, convergence = analyze_convergence(loaded_numbers, 2, 6, True)
+    nums, convergence = analyze_convergence(loaded_numbers, 4, 4, False)
     reload_source()
 
     print(convergence)

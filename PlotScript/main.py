@@ -64,7 +64,7 @@ def execute_cpp(field_1, field_2, field_to_plot, source_nums):
 
 
 if __name__ == '__main__':
-    input_list = ["Ni", "Nj", "ax", "bx", "ay", "by", "dt", "t"]
+    input_list = ["Ni", "Nj", "ax", "bx", "ay", "by", "Nt", "t"]
 
     print("Update parameters? \n \
                       1 - Yes \n \
@@ -78,13 +78,6 @@ if __name__ == '__main__':
         with open("Source.txt", "w") as file:
             for component in input_list:
                 file.write(input(component + ": ") + "\n")
-    else:
-        with open("Source.txt", "r+") as file:
-            lines = file.readlines()
-            lines[-1] = input("t : ") + "\n"
-            file.seek(0)
-            file.writelines(lines)
-            file.truncate()
 
     with open('Source.txt', 'r') as file:
         numbers = [float(line.strip()) for line in file]

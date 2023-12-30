@@ -1,5 +1,5 @@
 ﻿#define _USE_MATH_DEFINES
-#define __DEBUG__
+//#define __DEBUG__
 
 #include <iostream>
 #include <iomanip>
@@ -108,9 +108,9 @@ int main()
     double arr_y[2] = { numbers[4], numbers[5] };
     double arr_d[2] = { (arr_x[1] - arr_x[0]) / arr_N[0], (arr_y[1] - arr_y[0]) / arr_N[1] };
 
-    double courant_condtition = 0.25;
-    double dt;
-    double t;
+    double t = numbers[7];
+    int iter_nums = static_cast<int>(numbers[6]);
+    double dt = t / static_cast<double>(iter_nums);
 
     Component flds_selected[2] = { static_cast<Component>(std::atoi(argv[1])), static_cast<Component>(std::atoi(argv[2])) };
     Component fld_tested = static_cast<Component>(std::atoi(argv[3]));
@@ -129,15 +129,15 @@ int main()
         flds_selected[0] == Component::EZ && flds_selected[1] == Component::BY)
     {
         selected_axis = 'x';
-        dt = courant_condtition * arr_d[0] / FDTD_Const::C;
-        t = courant_condtition * (arr_x[1] - arr_x[0]) / FDTD_Const::C;
+        //dt = courant_condtition * arr_d[0] / FDTD_Const::C;
+        //t = courant_condtition * (arr_x[1] - arr_x[0]) / FDTD_Const::C;
     }
     else if (flds_selected[0] == Component::EX && flds_selected[1] == Component::BZ ||
         flds_selected[0] == Component::EZ && flds_selected[1] == Component::BX)
     {
         selected_axis = 'y';
-        dt = courant_condtition * arr_d[1] / FDTD_Const::C;
-        t = courant_condtition * (arr_y[1] - arr_y[0]) / FDTD_Const::C;
+        //dt = courant_condtition * arr_d[1] / FDTD_Const::C;
+        //t = courant_condtition * (arr_y[1] - arr_y[0]) / FDTD_Const::C;
     }
     else
     {
@@ -149,7 +149,7 @@ int main()
     FDTD test_1(arr_N, arr_x, arr_y, dt);
 
 
-    int iter_nums = static_cast<int>(numbers[6]);
+   
     Test_FDTD test(test_1, flds_selected, fld_tested, arr_x, arr_y, arr_d, t, iter_nums, initial_func, true_func, shifted_flag);
     std::cout << test.get_max_abs_error() << std::endl;
 
