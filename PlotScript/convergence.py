@@ -35,11 +35,11 @@ def update_sources():
     if not (select_update == 0 or select_update == 1):
         print("Invalid input")
         exit(1)
-
-    if (select_update):
+    elif (select_update == 1):
         with open("Source.txt", "w") as file:
             for component in input_list:
                 file.write(input(component + ": ") + "\n")
+
 
 def save_source_into_reserve():
     with open('Source.txt', 'r') as file1, open('Reserve.txt', 'w') as file2:
@@ -92,7 +92,7 @@ def analyze_convergence(numbers, mult_2, iterations, shifts):
 if __name__ == '__main__':
     update_sources()
     loaded_numbers = save_source_into_reserve()
-    nums, convergence = analyze_convergence(loaded_numbers, 4, 4, False)
+    nums, convergence = analyze_convergence(loaded_numbers, 4, 5, False)
     reload_source()
 
     print(convergence)
