@@ -64,7 +64,7 @@ Field& FDTD::get_field(Component this_field)
 
 void FDTD::update_field(const int time)
 {
-    for (double t = 0; t <= time; ++t)
+    for (double t = 0; t < time; ++t)
     {
         #pragma omp parallel for collapse(2)
         for (int j = 0; j < Nj; ++j)

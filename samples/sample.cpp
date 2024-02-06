@@ -6,71 +6,7 @@
 #include <fstream>
 
 #include "test_FDTD.h"
-
-void write_x(Field& this_field, std::ofstream& fout)
-{
-    for (int j = 0; j < this_field.get_Nj(); ++j)
-    {
-        for (int i = 0; i < this_field.get_Ni(); ++i)
-        {
-            fout << this_field(i, j);
-            if (i == this_field.get_Ni() - 1)
-            {
-                fout << std::endl;
-            }
-            else
-            {
-                fout << ";";
-            }
-        }
-    }
-    fout << std::endl << std::endl;
-}
-void write_y(Field& this_field, std::ofstream& fout)
-{
-    for (int i = 0; i < this_field.get_Ni(); ++i)
-    {
-        for (int j = 0; j < this_field.get_Nj(); ++j)
-        {
-            fout << this_field(i, j);
-            if (j == this_field.get_Nj() - 1)
-            {
-                fout << std::endl;
-            }
-            else
-            {
-                fout << ";";
-            }
-        }
-    }
-    fout << std::endl << std::endl;
-}
-
-void write_all(FDTD& test, char axis)
-{
-    std::ofstream test_fout;
-
-#ifndef __DEBUG__
-    test_fout.open("OutFile.csv");
-#else
-    test_fout.open("../../PlotScript/OutFile.csv");
-#endif
-
-    if (!test_fout.is_open())
-    {
-        std::cout << "ERROR: Failed to open OutFile.csv" << std::endl;
-        exit(1);
-    }
-    for (int i = static_cast<int>(Component::EX); i <= static_cast<int>(Component::BZ); ++i)
-    {
-        if (axis == 'x')
-        {
-            write_x(test.get_field(static_cast<Component>(i)), test_fout);
-        }
-        else write_y(test.get_field(static_cast<Component>(i)), test_fout);
-    }
-    test_fout.close();
-}
+#include "Writer.h"
 
 #ifndef __DEBUG__
 int main(int argc, char* argv[])
@@ -94,50 +30,55 @@ int main()
     }
 
 #ifdef __DEBUG__
-    const char* argv[5] = {"1", "2", "3", "2", "1"};
+    const char* argv[5] = { "1", "2", "3", "2", "1" };
 #endif
 
+    // Saving data from the console
+    Component selected_field_1 = static_cast<Component>(std::atoi(argv[1]));
+    Component selected_field_2 = static_cast<Component>(std::atoi(argv[2]));
+    Component fld_tested = static_cast<Component>(std::atoi(argv[3]));
+    bool version_flag = static_cast<bool>(std::atoi(argv[4]));
+
+    Component flds_selected[2] = { selected_field_1, selected_field_2 };
+
+    // Saving data from the txt file
     double number;
-    while (source_fin >> number) 
+    while (source_fin >> number)
     {
         numbers.push_back(number);
     }
+    int grid_sizes[2] = { numbers[0], numbers[1] };   // { Nx, Ny }
+    double sizes_x[2] = { numbers[2], numbers[3] };   // { ax, bx }
+    double sizes_y[2] = { numbers[4], numbers[5] };   // { ay, by }
+    double step_sizes[2] = { (sizes_x[1] - sizes_x[0]) / grid_sizes[0],
+                             (sizes_y[1] - sizes_y[0]) / grid_sizes[1] };   // { dx, dy }
+    int iterations_num = static_cast<int>(numbers[6]);
+    double time = numbers[7];
+    double time_step = time / static_cast<double>(iterations_num);   // dt
 
-    int arr_N[2] = { numbers[0], numbers[1] };
-    double arr_x[2] = { numbers[2], numbers[3] };
-    double arr_y[2] = { numbers[4], numbers[5] };
-    double arr_d[2] = { (arr_x[1] - arr_x[0]) / arr_N[0], (arr_y[1] - arr_y[0]) / arr_N[1] };
+    source_fin.close();
 
-    double t = numbers[7];
-    int iter_nums = static_cast<int>(numbers[6]);
-    double dt = t / static_cast<double>(iter_nums);
-
-    Component flds_selected[2] = { static_cast<Component>(std::atoi(argv[1])), static_cast<Component>(std::atoi(argv[2])) };
-    Component fld_tested = static_cast<Component>(std::atoi(argv[3]));
-    bool shifted_flag = static_cast<bool>(std::atoi(argv[4]));
-
-
+    // Initialization of the initializing function and the true solution function
     std::function<double(double, double[2])> initial_func =
-        [](double x, double size[2]) { return sin(2.0 * M_PI * (x - size[0]) / (size[1] - size[0])); };
-
+        [](double x, double size[2]) {
+        return sin(2.0 * M_PI * (x - size[0]) / (size[1] - size[0]));
+    };
     std::function<double(double, double, double[2])> true_func =
-        [](double x, double t, double size[2]) { return sin(2.0 * M_PI * (x - size[0] - FDTD_Const::C * t) / (size[1] - size[0])); };
+        [](double x, double t, double size[2]) {
+        return sin(2.0 * M_PI * (x - size[0] - FDTD_Const::C * t) / (size[1] - size[0]));
+    };
 
-
+    // Determination of the wave propagation axis
     char selected_axis;
     if (flds_selected[0] == Component::EY && flds_selected[1] == Component::BZ ||
         flds_selected[0] == Component::EZ && flds_selected[1] == Component::BY)
     {
         selected_axis = 'x';
-        //dt = courant_condtition * arr_d[0] / FDTD_Const::C;
-        //t = courant_condtition * (arr_x[1] - arr_x[0]) / FDTD_Const::C;
     }
     else if (flds_selected[0] == Component::EX && flds_selected[1] == Component::BZ ||
         flds_selected[0] == Component::EZ && flds_selected[1] == Component::BX)
     {
         selected_axis = 'y';
-        //dt = courant_condtition * arr_d[1] / FDTD_Const::C;
-        //t = courant_condtition * (arr_y[1] - arr_y[0]) / FDTD_Const::C;
     }
     else
     {
@@ -145,18 +86,38 @@ int main()
         exit(1);
     }
 
-
-    FDTD test_1(arr_N, arr_x, arr_y, dt);
-
-
-   
-    Test_FDTD test(test_1, flds_selected, fld_tested, arr_x, arr_y, arr_d, t, iter_nums, initial_func, true_func, shifted_flag);
+    // Meaningful calculations
+    FDTD test_1(grid_sizes, sizes_x, sizes_y, time_step);
+    SelectedFields current_fields{ 
+        flds_selected[0], 
+        flds_selected[1], 
+        fld_tested 
+    };
+    Parameters params{ 
+        sizes_x[0], 
+        sizes_x[1], 
+        sizes_y[0], 
+        sizes_y[1], 
+        step_sizes[0], 
+        step_sizes[1], 
+        time, 
+        iterations_num 
+    };
+    Functions funcs{
+        initial_func,
+        true_func
+    };
+    Test_FDTD test(test_1, current_fields, params, funcs, version_flag);
     std::cout << test.get_max_abs_error() << std::endl;
 
-
-    write_all(test_1, selected_axis);
-
-    source_fin.close();
+    // Writing the results to a file
+    char* file_path;
+#ifndef __DEBUG__
+    file_path = "OutFile.csv";
+#else
+    file_path = "../../PlotScript/OutFile.csv";
+#endif
+    write_all(test_1, selected_axis, file_path);
 
     return 0;
 }

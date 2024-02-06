@@ -1,0 +1,71 @@
+#pragma once
+
+#include <fstream>
+
+#include "FDTD.h"
+
+void write_x(Field& this_field, std::ofstream& fout)
+{
+    for (int j = 0; j < this_field.get_Nj(); ++j)
+    {
+        for (int i = 0; i < this_field.get_Ni(); ++i)
+        {
+            fout << this_field(i, j);
+            if (i == this_field.get_Ni() - 1)
+            {
+                fout << std::endl;
+            }
+            else
+            {
+                fout << ";";
+            }
+        }
+    }
+    fout << std::endl << std::endl;
+}
+void write_y(Field& this_field, std::ofstream& fout)
+{
+    for (int i = 0; i < this_field.get_Ni(); ++i)
+    {
+        for (int j = 0; j < this_field.get_Nj(); ++j)
+        {
+            fout << this_field(i, j);
+            if (j == this_field.get_Nj() - 1)
+            {
+                fout << std::endl;
+            }
+            else
+            {
+                fout << ";";
+            }
+        }
+    }
+    fout << std::endl << std::endl;
+}
+
+void write_all(FDTD& test, char axis, char* file_path)
+{
+    std::ofstream test_fout;
+    test_fout.open(file_path);
+
+    if (!test_fout.is_open())
+    {
+        std::cout << "ERROR: Failed to open OutFile.csv" << std::endl;
+        exit(1);
+    }
+    for (int i = static_cast<int>(Component::EX); i <= static_cast<int>(Component::BZ); ++i)
+    {
+        if (axis == 'x')
+        {
+            write_x(test.get_field(static_cast<Component>(i)), test_fout);
+        }
+        else write_y(test.get_field(static_cast<Component>(i)), test_fout);
+    }
+    test_fout.close();
+}
+
+//#ifndef __DEBUG__
+//test_fout.open("OutFile.csv");
+//#else
+//test_fout.open("../../PlotScript/OutFile.csv");
+//#endif

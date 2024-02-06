@@ -1,6 +1,6 @@
 #include "test_FDTD.h" 
 
-void Test_FDTD::initial_filling(FDTD& _test, Component fields[2], double size_d, double size_wave[2],
+void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, double size_d, double size_wave[2],
 	std::function<double(double, double[2])>& _init_function)
 {
 	if (axis == Axis::X)
@@ -15,8 +15,8 @@ void Test_FDTD::initial_filling(FDTD& _test, Component fields[2], double size_d,
 			double x = static_cast<double>(i) * size_d;
 			for (int j = 0; j < _test.get_Nj(); j++)
 			{
-				_test.get_field(fields[0])(i, j) = sign * _init_function(x, size_wave);
-				_test.get_field(fields[1])(i, j) = _init_function(x_b + x, size_wave);
+				_test.get_field(fields.selected_1)(i, j) = sign * _init_function(x, size_wave);
+				_test.get_field(fields.selected_2)(i, j) = _init_function(x_b + x, size_wave);
 			}
 		}
 	}
@@ -32,8 +32,8 @@ void Test_FDTD::initial_filling(FDTD& _test, Component fields[2], double size_d,
 			double y = static_cast<double>(j) * size_d;
 			for (int i = 0; i < _test.get_Ni(); i++)
 			{
-				_test.get_field(fields[0])(i, j) = sign * _init_function(y, size_wave);
-				_test.get_field(fields[1])(i, j) = _init_function(y_b + y, size_wave);
+				_test.get_field(fields.selected_1)(i, j) = sign * _init_function(y, size_wave);
+				_test.get_field(fields.selected_2)(i, j) = _init_function(y_b + y, size_wave);
 			}
 		}
 	}
@@ -91,13 +91,10 @@ void Test_FDTD::get_max_abs_error(Field& this_field, Component field, double _si
 	}
 }
 
-Test_FDTD::Test_FDTD(FDTD& test, Component fields[2], Component field_3,
-	double size_x[2], double size_y[2], double size_d[2], double time, int iters,
-	std::function<double(double, double[2])>& init_function,
-	std::function<double(double, double, double[2])>& true_function, bool _shifted) : shifted(_shifted)
+Test_FDTD::Test_FDTD(FDTD& test, SelectedFields fields, Parameters parameters, Functions functions, bool _shifted) : shifted(_shifted)
 {
-	Component field_E = fields[0];
-	Component field_B = fields[1];
+	Component field_E = fields.selected_1;
+	Component field_B = fields.selected_2;
 	if (field_E == Component::EY && field_B == Component::BZ || field_E == Component::EZ && field_B == Component::BX)
 	{
 		sign = 1.0;
@@ -107,23 +104,26 @@ Test_FDTD::Test_FDTD(FDTD& test, Component fields[2], Component field_3,
 		sign = -1.0;
 	}
 
+	double size_steps[2] = { parameters.dx, parameters.dy };
 	if (field_E == Component::EY && field_B == Component::BZ || field_E == Component::EZ && field_B == Component::BY)
 	{
 		axis = Axis::X;
-		initial_filling(test, fields, size_d[0], size_x, init_function);
+		double size_x[2] = { parameters.ax, parameters.bx };
+		initial_filling(test, fields, parameters.dx, size_x, functions.init_function);
 
-		start_test(test, iters);
+		start_test(test, parameters.iterations);
 
-		get_max_abs_error(test.get_field(field_3), field_3, size_d, size_x, true_function, time);
+		get_max_abs_error(test.get_field(fields.calculated), fields.calculated, size_steps, size_x, functions.true_function, parameters.time);
 	}
 	else if (field_E == Component::EX && field_B == Component::BZ || field_E == Component::EZ && field_B == Component::BX)
 	{
 		axis = Axis::Y;
-		initial_filling(test, fields, size_d[1], size_y, init_function);
+		double size_y[2] = { parameters.ay, parameters.by };
+		initial_filling(test, fields, parameters.dy, size_y, functions.init_function);
 
-		start_test(test, iters);
+		start_test(test, parameters.iterations);
 
-		get_max_abs_error(test.get_field(field_3), field_3, size_d, size_y, true_function, time);
+		get_max_abs_error(test.get_field(fields.calculated), fields.calculated, size_steps, size_y, functions.true_function, parameters.time);
 	}
 	else
 	{
