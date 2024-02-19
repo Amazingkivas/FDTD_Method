@@ -6,18 +6,21 @@
 
 void write_x(Field& this_field, std::ofstream& fout)
 {
-    for (int j = 0; j < this_field.get_Nj(); ++j)
+    for (int k = 0; k < this_field.get_Nk(); ++k)
     {
-        for (int i = 0; i < this_field.get_Ni(); ++i)
+        for (int j = 0; j < this_field.get_Nj(); ++j)
         {
-            fout << this_field(i, j);
-            if (i == this_field.get_Ni() - 1)
+            for (int i = 0; i < this_field.get_Ni(); ++i)
             {
-                fout << std::endl;
-            }
-            else
-            {
-                fout << ";";
+                fout << this_field(i, j, k);
+                if (i == this_field.get_Ni() - 1)
+                {
+                    fout << std::endl;
+                }
+                else
+                {
+                    fout << ";";
+                }
             }
         }
     }
@@ -25,18 +28,43 @@ void write_x(Field& this_field, std::ofstream& fout)
 }
 void write_y(Field& this_field, std::ofstream& fout)
 {
+    for (int k = 0; k < this_field.get_Nk(); ++k)
+    {
+        for (int i = 0; i < this_field.get_Ni(); ++i)
+        {
+            for (int j = 0; j < this_field.get_Nj(); ++j)
+            {
+                fout << this_field(i, j, k);
+                if (j == this_field.get_Nj() - 1)
+                {
+                    fout << std::endl;
+                }
+                else
+                {
+                    fout << ";";
+                }
+            }
+        }
+    }
+    fout << std::endl << std::endl;
+}
+void write_z(Field& this_field, std::ofstream& fout)
+{
     for (int i = 0; i < this_field.get_Ni(); ++i)
     {
         for (int j = 0; j < this_field.get_Nj(); ++j)
         {
-            fout << this_field(i, j);
-            if (j == this_field.get_Nj() - 1)
+            for (int k = 0; k < this_field.get_Nk(); ++k)
             {
-                fout << std::endl;
-            }
-            else
-            {
-                fout << ";";
+                fout << this_field(i, j, k);
+                if (k == this_field.get_Nk() - 1)
+                {
+                    fout << std::endl;
+                }
+                else
+                {
+                    fout << ";";
+                }
             }
         }
     }
@@ -59,13 +87,11 @@ void write_all(FDTD& test, char axis, char* file_path)
         {
             write_x(test.get_field(static_cast<Component>(i)), test_fout);
         }
-        else write_y(test.get_field(static_cast<Component>(i)), test_fout);
+        else if (axis == 'y')
+        {
+            write_y(test.get_field(static_cast<Component>(i)), test_fout);
+        }
+        else write_z(test.get_field(static_cast<Component>(i)), test_fout);
     }
     test_fout.close();
 }
-
-//#ifndef __DEBUG__
-//test_fout.open("OutFile.csv");
-//#else
-//test_fout.open("../../PlotScript/OutFile.csv");
-//#endif

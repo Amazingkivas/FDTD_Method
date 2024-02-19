@@ -21,11 +21,17 @@ char get_axis(Component field_E, Component field_B)
     {
         selected_axis = 'y';
     }
+    else if (field_E == Component::EX && field_B == Component::BY ||
+             field_E == Component::EY && field_B == Component::BX)
+    {
+        selected_axis = 'z';
+    }
     else
     {
         std::cout << "ERROR" << std::endl;
         exit(1);
     }
+    return selected_axis;
 }
 
 int main(int argc, char* argv[])
@@ -37,10 +43,10 @@ int main(int argc, char* argv[])
     if (argc == 1) 
     {
         source_fin.open("../../PlotScript/Source.txt");
-        outfile_path = "OutFile.csv";
+        outfile_path = "../../PlotScript/OutFile.csv";
 
         const size_t size_tmp = 5;
-        char* tmp[size_tmp]{ "1", "2", "3", "2", "1" };
+        char* tmp[size_tmp]{ "1", "2", "3", "3", "1" };
         
         arguments.clear();
         arguments.reserve(size_tmp);
@@ -49,7 +55,7 @@ int main(int argc, char* argv[])
     else
     {
         source_fin.open("Source.txt");
-        outfile_path = "../../PlotScript/OutFile.csv";
+        outfile_path = "OutFile.csv";
     }
     if (!source_fin.is_open())
     {
@@ -74,13 +80,17 @@ int main(int argc, char* argv[])
     {
         numbers.push_back(number);
     }
-    int grid_sizes[2] = { numbers[0], numbers[1] };   // { Nx, Ny }
-    double sizes_x[2] = { numbers[2], numbers[3] };   // { ax, bx }
-    double sizes_y[2] = { numbers[4], numbers[5] };   // { ay, by }
-    double step_sizes[2] = { (sizes_x[1] - sizes_x[0]) / grid_sizes[0],
-                             (sizes_y[1] - sizes_y[0]) / grid_sizes[1] };   // { dx, dy }
-    int iterations_num = static_cast<int>(numbers[6]);
-    double time = numbers[7];
+    int grid_sizes[3] = { numbers[0], numbers[1], numbers[2] };   // { Nx, Ny , Nz}
+    double sizes_x[2] = { numbers[3], numbers[4] };               // { ax, bx }
+    double sizes_y[2] = { numbers[5], numbers[6] };               // { ay, by }
+    double sizes_z[2] = { numbers[7], numbers[8] };               // { az, bz }
+
+    double step_sizes[3] = { (sizes_x[1] - sizes_x[0]) / grid_sizes[0],
+                             (sizes_y[1] - sizes_y[0]) / grid_sizes[1], 
+                             (sizes_z[1] - sizes_z[0]) / grid_sizes[2] };   // { dx, dy, dz }
+
+    int iterations_num = static_cast<int>(numbers[9]);
+    double time = numbers[10];
     double time_step = time / static_cast<double>(iterations_num);   // dt
 
     source_fin.close();
@@ -102,7 +112,7 @@ int main(int argc, char* argv[])
 
 
     // Meaningful calculations
-    FDTD test_1(grid_sizes, sizes_x, sizes_y, time_step);
+    FDTD test_1(grid_sizes, sizes_x, sizes_y, sizes_z, time_step);
     SelectedFields current_fields
     { 
         flds_selected[0], 
@@ -115,17 +125,21 @@ int main(int argc, char* argv[])
         sizes_x[1], 
         sizes_y[0], 
         sizes_y[1], 
+        sizes_z[0],
+        sizes_z[1],
         step_sizes[0], 
         step_sizes[1], 
+        step_sizes[2],
         time, 
         iterations_num 
     };
     Functions funcs
     {
-        initial_func,
-        true_func
+        &initial_func,
+        &true_func
     };
-    Test_FDTD test(test_1, current_fields, params, funcs, version_flag);
+    Test_FDTD test(current_fields, params, funcs);
+    test.run_test(test_1);
     std::cout << test.get_max_abs_error() << std::endl;
 
 

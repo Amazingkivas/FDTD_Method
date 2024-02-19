@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
-import csv
 import subprocess
 
 components = {1: "Ex", 2: "Ey", 3: "Ez", 4: "Bx", 5: "By", 6: "Bz"}
 nums_com = {"Ex": 0, "Ey": 1, "Ez": 2, "Bx": 3, "By": 4, "Bz": 5}
-input_list = ["Ni", "Nj", "ax", "bx", "ay", "by", "dt", "t"]
+input_list = ["Ni", "Nj", "Nk" "ax", "bx", "ay", "by", "az", "bz", "dt", "t"]
 
 
 def execute_cpp(field_1, field_2, field_to_plot, shift_flag):
@@ -35,7 +34,7 @@ def update_sources():
     if not (select_update == 0 or select_update == 1):
         print("Invalid input")
         exit(1)
-    elif (select_update == 1):
+    elif select_update == 1:
         with open("Source.txt", "w") as file:
             for component in input_list:
                 file.write(input(component + ": ") + "\n")
@@ -64,23 +63,18 @@ def analyze_convergence(numbers, mult_2, iterations, shifts):
     for n in range(0, iterations):
         with open("Source.txt", "w") as file:
             mult_1 = 2
+            for num in range(0, 3):
+                tmp = numbers[num] * (mult_1 ** n)
+                file.write(str(tmp) + "\n")
 
-            tmp_n_0 = numbers[0] * (mult_1 ** n)
-            file.write(str(tmp_n_0) + "\n")
+            for num in range(3, 9):
+                file.write(str(numbers[num]) + "\n")
 
-            tmp_n_1 = numbers[1] * (mult_1 ** n)
-            file.write(str(tmp_n_1) + "\n")
-
-            file.write(str(numbers[2]) + "\n")
-            file.write(str(numbers[3]) + "\n")
-            file.write(str(numbers[4]) + "\n")
-            file.write(str(numbers[5]) + "\n")
-
-            tmp_n_6 = numbers[6] * (mult_2 ** n)
+            tmp_n_6 = numbers[9] * (mult_2 ** n)
             file.write(str(tmp_n_6) + "\n")
-            file.write(str(numbers[7]) + "\n")
+            file.write(str(numbers[10]) + "\n")
 
-        convergences.append(float(execute_cpp("Ex", "Bz", "Ex", flag)))
+        convergences.append(float(execute_cpp("Ex", "By", "Ex", flag)))
 
     convers = []
     for n in range(0, iterations - 1):
@@ -92,13 +86,13 @@ def analyze_convergence(numbers, mult_2, iterations, shifts):
 if __name__ == '__main__':
     update_sources()
     loaded_numbers = save_source_into_reserve()
-    nums, convergence = analyze_convergence(loaded_numbers, 4, 5, False)
+    nums, convergence = analyze_convergence(loaded_numbers, 2, 5, True)
     reload_source()
 
     print(convergence)
     plt.plot(nums, convergence)
     plt.xlabel('n')
-    plt.ylabel('E/mult')
+    plt.ylabel('error reduction factor')
     plt.title("Plot")
     plt.grid(True)
     plt.show()
