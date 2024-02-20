@@ -71,7 +71,7 @@ void write_z(Field& this_field, std::ofstream& fout)
     fout << std::endl << std::endl;
 }
 
-void write_all(FDTD& test, char axis, char* file_path)
+void write_all(FDTD& test, Axis axis, char* file_path)
 {
     std::ofstream test_fout;
     test_fout.open(file_path);
@@ -83,15 +83,12 @@ void write_all(FDTD& test, char axis, char* file_path)
     }
     for (int i = static_cast<int>(Component::EX); i <= static_cast<int>(Component::BZ); ++i)
     {
-        if (axis == 'x')
-        {
+        if (axis == Axis::X)
             write_x(test.get_field(static_cast<Component>(i)), test_fout);
-        }
-        else if (axis == 'y')
-        {
+        else if (axis == Axis::Y)
             write_y(test.get_field(static_cast<Component>(i)), test_fout);
-        }
-        else write_z(test.get_field(static_cast<Component>(i)), test_fout);
+        else 
+            write_z(test.get_field(static_cast<Component>(i)), test_fout);
     }
     test_fout.close();
 }

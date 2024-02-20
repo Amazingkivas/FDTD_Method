@@ -1,32 +1,28 @@
 #pragma once
 
-#include "FDTD.h"
+namespace FDTDstruct
+{
+	enum class Component { EX, EY, EZ, BX, BY, BZ };
 
-struct SelectedFields {
-	Component selected_1;
-	Component selected_2;
-	Component calculated;
-};
+	enum class Axis { X, Y, Z };
 
-struct Parameters {
-	double ax;
-	double bx;
+	struct SelectedFields {
+		Component selected_E;
+		Component selected_B;
+	};
 
-	double ay;
-	double by;
+	struct Parameters {
+		double ax;
+		double bx;
 
-	double az;
-	double bz;
+		double ay;
+		double by;
 
-	double dx;
-	double dy;
-	double dz;
+		double az;
+		double bz;
 
-	double time;
-	int iterations;
-};
-
-struct Functions {
-	std::function<double(double, double[2])>* init_function = nullptr;
-	std::function<double(double, double, double[2])>* true_function = nullptr;
-};
+		double dx;
+		double dy;
+		double dz;
+	};
+}

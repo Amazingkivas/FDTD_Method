@@ -5,6 +5,10 @@
 #include <iostream>
 #include <omp.h>
 
+#include "Structures.h"
+
+using namespace FDTDstruct;
+
 namespace FDTD_Const
 {
     const double C = 3e10;
@@ -28,8 +32,6 @@ public:
     int get_Nj() { return Nj; }
     int get_Nk() { return Nk; }
 };
-
-enum class Component { EX, EY, EZ, BX, BY, BZ };
 
 class FDTD
 {
