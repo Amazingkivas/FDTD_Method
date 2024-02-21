@@ -6,3 +6,5 @@ file(GLOB srcs "*.cpp" "../../src/*.cpp" "../../test/*.cpp")
 
 add_executable(${target} ${srcs} ${hdrs})
 target_link_libraries(${target} gtest)
+
+add_compile_options(/wd4996)
