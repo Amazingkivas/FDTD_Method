@@ -38,6 +38,19 @@ double& Field::operator() (int i, int j, int k)
 
 FDTD::FDTD(Parameters _parameters, double _dt) : parameters(_parameters), dt(_dt)
 {
+    if (parameters.ax >= parameters.bx ||
+        parameters.ay >= parameters.by ||
+        parameters.az >= parameters.bz)
+    {
+        throw std::exception("ERROR: invalid parameters");
+    }
+    if (parameters.Ni <= 0 ||
+        parameters.Nj <= 0 ||
+        parameters.Nk <= 0 ||
+        dt <= 0)
+    {
+        throw std::exception("ERROR: invalid parameters");
+    }
     Ex = Ey = Ez = Bx = By = Bz = Field(parameters.Ni, parameters.Nj, parameters.Nk);
 }
 
@@ -61,6 +74,10 @@ Field& FDTD::get_field(Component this_field)
 
 void FDTD::shifted_update_field(const int time)
 {
+    if (time < 0)
+    {
+        throw std::exception("ERROR: Invalid update field argument");
+    }
     double dx = parameters.dx;
     double dy = parameters.dy;
     double dz = parameters.dz;
