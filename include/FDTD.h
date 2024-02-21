@@ -9,24 +9,22 @@
 
 using namespace FDTDstruct;
 
-namespace FDTD_Const
+namespace FDTDconst
 {
-    const double C = 3e10;
+    const double C = 3e10;  // light speed
 }
 
 class Field
 {
 private:
-    int Ni;
-    int Nj;
-    int Nk;
+    int Ni, Nj, Nk;
     std::vector<double> field;
 
 public:
-    Field(const int, const int, const int);
+    Field(const int _Ni, const int _Nj, const int _Nk);
     Field& operator= (const Field& other);
 
-    double& operator() (int _i, int _j, int _k);
+    double& operator() (int i, int j, int k);
 
     int get_Ni() { return Ni; }
     int get_Nj() { return Nj; }
@@ -37,18 +35,14 @@ class FDTD
 {
 private:
     Field Ex, Ey, Ez, Bx, By, Bz;
-    int Ni, Nj, Nk;
-    double ax, bx, ay, by, az, bz, dx, dy, dz, dt;
+    Parameters parameters;
+    double dt;
 
 public:
-    FDTD(int size_grid[3], double size_x[2], double size_y[2], double size_z[2], double _dt);
+    FDTD(Parameters _parameters, double _dt);
 
     Field& get_field(Component);
 
     //void update_field(const int);
-    void shifted_update_field(const int);
-
-    int get_Ni() { return Ni; }
-    int get_Nj() { return Nj; }
-    int get_Nk() { return Nk; }
+    void shifted_update_field(const int time);
 };

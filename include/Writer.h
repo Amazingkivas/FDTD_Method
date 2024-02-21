@@ -78,8 +78,7 @@ void write_all(FDTD& test, Axis axis, char* file_path)
 
     if (!test_fout.is_open())
     {
-        std::cout << "ERROR: Failed to open OutFile.csv" << std::endl;
-        exit(1);
+        throw std::runtime_error("ERROR: Failed to open " + static_cast<std::string>(file_path));
     }
     for (int i = static_cast<int>(Component::EX); i <= static_cast<int>(Component::BZ); ++i)
     {

@@ -12,6 +12,10 @@ namespace FDTDstruct
 	};
 
 	struct Parameters {
+		int Ni;
+		int Nj;
+		int Nk;
+
 		double ax;
 		double bx;
 
@@ -21,8 +25,8 @@ namespace FDTDstruct
 		double az;
 		double bz;
 
-		double dx;
-		double dy;
-		double dz;
+		double dx = (bx - ax) / static_cast<double>(Ni);
+		double dy = (by - ay) / static_cast<double>(Nj);
+		double dz = (bz - az) / static_cast<double>(Nk);
 	};
 }

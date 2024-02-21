@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
         outfile_path = "../../PlotScript/OutFile.csv";
 
         const size_t size_tmp = 5;
-        char* tmp[size_tmp]{ "1", "0", "5", "0", "1" };
+        char* tmp[size_tmp]{ "1", "1", "5", "5", "1" };
         
         arguments.clear();
         arguments.reserve(size_tmp);
@@ -80,14 +80,10 @@ int main(int argc, char* argv[])
     {
         numbers.push_back(number);
     }
-    int grid_sizes[3] = { numbers[0], numbers[1], numbers[2] };   // { Nx, Ny , Nz}
+    int grid_sizes[3] = { numbers[0], numbers[1], numbers[2] };   // { Nx, Ny , Nz }
     double sizes_x[2] = { numbers[3], numbers[4] };               // { ax, bx }
     double sizes_y[2] = { numbers[5], numbers[6] };               // { ay, by }
     double sizes_z[2] = { numbers[7], numbers[8] };               // { az, bz }
-
-    double step_sizes[3] = { (sizes_x[1] - sizes_x[0]) / grid_sizes[0],
-                             (sizes_y[1] - sizes_y[0]) / grid_sizes[1], 
-                             (sizes_z[1] - sizes_z[0]) / grid_sizes[2] };   // { dx, dy, dz }
 
     int iterations_num = static_cast<int>(numbers[9]);
 
@@ -98,20 +94,19 @@ int main(int argc, char* argv[])
 
 
     // Initialization of the initializing function and the true solution function
-    std::function<double(double, double[2])> initial_func =
-        [](double x, double size[2]) {
+    std::function<double(double, double[2])> initial_func = [](double x, double size[2]) 
+    {
         return sin(2.0 * M_PI * (x - size[0]) / (size[1] - size[0]));
     };
-    std::function<double(double, double, double[2])> true_func =
-        [](double x, double t, double size[2]) {
-        return sin(2.0 * M_PI * (x - size[0] - FDTD_Const::C * t) / (size[1] - size[0]));
+    std::function<double(double, double, double[2])> true_func = [](double x, double t, double size[2]) 
+    {
+        return sin(2.0 * M_PI * (x - size[0] - FDTDconst::C * t) / (size[1] - size[0]));
     };
 
     // Determination of the wave propagation axis
     Axis axis = get_axis(flds_selected[0], flds_selected[1]);
 
-    // Initialization of the method and structures
-    FDTD method(grid_sizes, sizes_x, sizes_y, sizes_z, time_step);
+    // Initialization of the structures and method
     SelectedFields current_fields
     { 
         flds_selected[0], 
@@ -119,16 +114,17 @@ int main(int argc, char* argv[])
     };
     Parameters params
     { 
+        grid_sizes[0],
+        grid_sizes[1],
+        grid_sizes[2],
         sizes_x[0], 
         sizes_x[1], 
         sizes_y[0], 
         sizes_y[1], 
         sizes_z[0],
         sizes_z[1],
-        step_sizes[0], 
-        step_sizes[1], 
-        step_sizes[2],
     };
+    FDTD method(params, time_step);
 
     // Meaningful calculations
     Test_FDTD test(params);
@@ -136,7 +132,7 @@ int main(int argc, char* argv[])
     {
         test.initial_filling(method, current_fields, initial_func);
     }
-    catch(const std::exception except)
+    catch(const std::exception& except)
     {
         std::cout << except.what() << std::endl;
     }
@@ -144,7 +140,14 @@ int main(int argc, char* argv[])
     std::cout << test.get_max_abs_error(method.get_field(fld_tested), fld_tested, true_func, time) << std::endl;
 
     // Writing the results to a file
-    write_all(method, axis, outfile_path);
+    try
+    {
+        write_all(method, axis, outfile_path);
+    }
+    catch (const std::exception& except)
+    {
+        std::cout << except.what() << std::endl;
+    }
 
     return 0;
 }

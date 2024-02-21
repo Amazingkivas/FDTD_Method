@@ -36,24 +36,9 @@ double& Field::operator() (int i, int j, int k)
 }
 
 
-FDTD::FDTD(int size_grid[3], double size_x[2], double size_y[2], double size_z[2], double _dt) : dt(_dt)
+FDTD::FDTD(Parameters _parameters, double _dt) : parameters(_parameters), dt(_dt)
 {
-    Ni = size_grid[0];
-    Nj = size_grid[1];
-    Nk = size_grid[2];
-
-    Ex = Ey = Ez = Bx = By = Bz = Field(Ni, Nj, Nk);
-
-    ax = size_x[0];
-    bx = size_x[1];
-    ay = size_y[0];
-    by = size_y[1];
-    az = size_z[0];
-    bz = size_z[1];
-
-    dx = (bx - ax) / static_cast<double>(Ni);
-    dy = (by - ay) / static_cast<double>(Nj);
-    dz = (bz - az) / static_cast<double>(Nk);
+    Ex = Ey = Ez = Bx = By = Bz = Field(parameters.Ni, parameters.Nj, parameters.Nk);
 }
 
 Field& FDTD::get_field(Component this_field)
@@ -76,46 +61,50 @@ Field& FDTD::get_field(Component this_field)
 
 void FDTD::shifted_update_field(const int time)
 {
+    double dx = parameters.dx;
+    double dy = parameters.dy;
+    double dz = parameters.dz;
+
     for (double t = 0; t < time; t++)
     {
         #pragma omp parallel for collapse(3)
-        for (int i = 0; i < Ni; i++)
+        for (int i = 0; i < parameters.Ni; i++)
         {
-            for (int j = 0; j < Nj; j++)
+            for (int j = 0; j < parameters.Nj; j++)
             {
-                for (int k = 0; k < Nk; k++)
+                for (int k = 0; k < parameters.Nk; k++)
                 {
-                    Bx(i, j, k) += FDTD_Const::C * dt / 2.0 * ((Ey(i, j, k + 1) - Ey(i, j, k)) / dz - (Ez(i, j + 1, k) - Ez(i, j, k)) / dy);
-                    By(i, j, k) += FDTD_Const::C * dt / 2.0 * ((Ez(i + 1, j, k) - Ez(i, j, k)) / dx - (Ex(i, j, k + 1) - Ex(i, j, k)) / dz);
-                    Bz(i, j, k) += FDTD_Const::C * dt / 2.0 * ((Ex(i, j + 1, k) - Ex(i, j, k)) / dy - (Ey(i + 1, j, k) - Ey(i, j, k)) / dx);
+                    Bx(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ey(i, j, k + 1) - Ey(i, j, k)) / dz - (Ez(i, j + 1, k) - Ez(i, j, k)) / dy);
+                    By(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ez(i + 1, j, k) - Ez(i, j, k)) / dx - (Ex(i, j, k + 1) - Ex(i, j, k)) / dz);
+                    Bz(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ex(i, j + 1, k) - Ex(i, j, k)) / dy - (Ey(i + 1, j, k) - Ey(i, j, k)) / dx);
                 }
             }
         }
 
         #pragma omp parallel for collapse(3)
-        for (int i = 0; i < Ni; i++)
+        for (int i = 0; i < parameters.Ni; i++)
         {
-            for (int j = 0; j < Nj; j++)
+            for (int j = 0; j < parameters.Nj; j++)
             {
-                for (int k = 0; k < Nk; k++)
+                for (int k = 0; k < parameters.Nk; k++)
                 {
-                    Ex(i, j, k) += FDTD_Const::C * dt * ((Bz(i, j, k) - Bz(i, j - 1, k)) / dy - (By(i, j, k) - By(i, j, k - 1)) / dz);
-                    Ey(i, j, k) += FDTD_Const::C * dt * ((Bx(i, j, k) - Bx(i, j, k - 1)) / dz - (Bz(i, j, k) - Bz(i - 1, j, k)) / dx);
-                    Ez(i, j, k) += FDTD_Const::C * dt * ((By(i, j, k) - By(i - 1, j, k)) / dx - (Bx(i, j, k) - Bx(i, j - 1, k)) / dy);
+                    Ex(i, j, k) += FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j - 1, k)) / dy - (By(i, j, k) - By(i, j, k - 1)) / dz);
+                    Ey(i, j, k) += FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k - 1)) / dz - (Bz(i, j, k) - Bz(i - 1, j, k)) / dx);
+                    Ez(i, j, k) += FDTDconst::C * dt * ((By(i, j, k) - By(i - 1, j, k)) / dx - (Bx(i, j, k) - Bx(i, j - 1, k)) / dy);
                 }
             }
         }
 
         #pragma omp parallel for collapse(3)
-        for (int i = 0; i < Ni; i++)
+        for (int i = 0; i < parameters.Ni; i++)
         {
-            for (int j = 0; j < Nj; j++)
+            for (int j = 0; j < parameters.Nj; j++)
             {
-                for (int k = 0; k < Nk; k++)
+                for (int k = 0; k < parameters.Nk; k++)
                 {
-                    Bx(i, j, k) += FDTD_Const::C * dt / 2.0 * ((Ey(i, j, k + 1) - Ey(i, j, k)) / dz - (Ez(i, j + 1, k) - Ez(i, j, k)) / dy);
-                    By(i, j, k) += FDTD_Const::C * dt / 2.0 * ((Ez(i + 1, j, k) - Ez(i, j, k)) / dx - (Ex(i, j, k + 1) - Ex(i, j, k)) / dz);
-                    Bz(i, j, k) += FDTD_Const::C * dt / 2.0 * ((Ex(i, j + 1, k) - Ex(i, j, k)) / dy - (Ey(i + 1, j, k) - Ey(i, j, k)) / dx);
+                    Bx(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ey(i, j, k + 1) - Ey(i, j, k)) / dz - (Ez(i, j + 1, k) - Ez(i, j, k)) / dy);
+                    By(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ez(i + 1, j, k) - Ez(i, j, k)) / dx - (Ex(i, j, k + 1) - Ex(i, j, k)) / dz);
+                    Bz(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ex(i, j + 1, k) - Ex(i, j, k)) / dy - (Ey(i + 1, j, k) - Ey(i, j, k)) / dx);
                 }
             }
         }
