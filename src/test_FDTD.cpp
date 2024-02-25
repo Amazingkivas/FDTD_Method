@@ -1,20 +1,22 @@
 #include "test_FDTD.h" 
 
-Test_FDTD::Test_FDTD(Parameters _parameters, bool _shifted) :
-	shifted(_shifted), parameters(_parameters) {}
+Test_FDTD::Test_FDTD(Parameters _parameters) : parameters(_parameters) {}
 
-void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields,
+void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	std::function<double(double, double[2])>& init_function)
 {
+	for (int n = 0; n < iters; n++)
+	{
+		_test.get_current(Component::JX).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+		_test.get_current(Component::JY).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+		_test.get_current(Component::JZ).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+	}
+
 	set_axis(fields.selected_E, fields.selected_B);
 	set_sign(fields.selected_E, fields.selected_B);
 	if (axis == Axis::X)
 	{
-		double x_b = 0.0;
-		if (shifted)
-		{
-			x_b = parameters.dx / 2.0;
-		}
+		double x_b = parameters.dx / 2.0;
 		double size_x[2] = { parameters.ax, parameters.bx };
 		for (int i = 0; i < parameters.Ni; i++)
 		{
@@ -31,11 +33,7 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields,
 	}
 	else if (axis == Axis::Y)
 	{
-		double y_b = 0.0;
-		if (shifted)
-		{
-			y_b = parameters.dy / 2.0;
-		}
+		double y_b = parameters.dy / 2.0;
 		double size_y[2] = { parameters.ay, parameters.by };
 		for (int j = 0; j < parameters.Nj; j++)
 		{
@@ -52,11 +50,7 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields,
 	}
 	else
 	{
-		double z_b = 0.0;
-		if (shifted)
-		{
-			z_b = parameters.dz / 2.0;
-		}
+		double z_b = parameters.dz / 2.0;
 		double size_z[2] = { parameters.az, parameters.bz };
 		for (int k = 0; k < parameters.Nk; k++)
 		{
@@ -70,6 +64,39 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields,
 				}
 			}
 		}
+	}
+}
+
+void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int iters, std::function<double(double, double, double)>& init_function)
+{
+	double Tx = cParams.period_x;
+	double Ty = cParams.period_y;
+	double T = cParams.period;
+
+	int start_i = std::floor((-Tx / 4.0 - parameters.ax) / parameters.dx);
+	int start_j = std::floor((-Ty / 4.0 - parameters.ay) / parameters.dy);
+
+	int max_i = std::floor((Tx / 4.0 - parameters.ax) / parameters.dx);
+	int max_j = std::floor((Ty / 4.0 - parameters.ay) / parameters.dy);
+
+	for (int n = 0; n < std::max(iters, cParams.iterations); n++)
+	{
+		_test.get_current(Component::JX).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+		_test.get_current(Component::JY).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+		_test.get_current(Component::JZ).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+	}
+	for (int iter = 1; iter <= cParams.iterations; iter++)
+	{
+		Field J(parameters.Ni, parameters.Nj, parameters.Nk);
+		
+		for (int i = start_i; i <= max_i; i++)
+		{
+			for (int j = start_j; j <= max_j; j++)
+			{				
+				J(i, j, 0) = init_function(static_cast<double>(i) * parameters.dx, static_cast<double>(j) * parameters.dy, static_cast<double>(iter) * cParams.dt);
+			}
+		}
+		_test.get_current(Component::JZ)[iter - 1] = J;
 	}
 }
 
@@ -125,7 +152,7 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	double max_abs_error = 0.0;
 	if (axis == Axis::X)
 	{
-		double x = (shifted) ? get_shift(field, parameters.dx) : 0.0;
+		double x = get_shift(field, parameters.dx);
 		double size_x[2] = { parameters.ax, parameters.bx };
 		int j = 0;
 		int k = 0;
@@ -138,7 +165,7 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	}
 	else if (axis == Axis::Y)
 	{
-		double y = (shifted) ? get_shift(field, parameters.dy) : 0.0;
+		double y = get_shift(field, parameters.dy);
 		double size_y[2] = { parameters.ay, parameters.by };
 		int i = 0;
 		int k = 0;
@@ -151,7 +178,7 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	}
 	else
 	{
-		double z = (shifted) ? get_shift(field, parameters.dz) : 0.0;
+		double z = get_shift(field, parameters.dz);
 		double size_z[2] = { parameters.az, parameters.bz };
 		int i = 0;
 		int j = 0;

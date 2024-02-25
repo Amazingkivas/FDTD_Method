@@ -1,4 +1,5 @@
 #include "FDTD.h"
+#include <iostream>
 
 Field::Field(const int _Ni = 1, const int _Nj = 1, const int _Nk = 1) : Ni(_Ni), Nj(_Nj), Nk(_Nk)
 {
@@ -38,9 +39,9 @@ double& Field::operator() (int i, int j, int k)
 
 FDTD::FDTD(Parameters _parameters, double _dt) : parameters(_parameters), dt(_dt)
 {
-    if (parameters.ax >= parameters.bx ||
-        parameters.ay >= parameters.by ||
-        parameters.az >= parameters.bz)
+    if (parameters.ax > parameters.bx ||
+        parameters.ay > parameters.by ||
+        parameters.az > parameters.bz)
     {
         throw std::exception("ERROR: invalid parameters");
     }
@@ -69,10 +70,26 @@ Field& FDTD::get_field(Component this_field)
     case Component::BY: return By;
 
     case Component::BZ: return Bz;
+
+    default: throw std::exception("ERROR: Invalid field component");
     }
 }
 
-void FDTD::shifted_update_field(const int time)
+std::vector<Field>& FDTD::get_current(Component this_current)
+{
+    switch (this_current)
+    {
+    case Component::JX: return Jx;
+
+    case Component::JY: return Jy;
+
+    case Component::JZ: return Jz;
+
+    default: throw std::exception("ERROR: Invalid current component");
+    }
+}
+
+void FDTD::update_fields(const int time)
 {
     if (time < 0)
     {
@@ -105,9 +122,9 @@ void FDTD::shifted_update_field(const int time)
             {
                 for (int k = 0; k < parameters.Nk; k++)
                 {
-                    Ex(i, j, k) += FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j - 1, k)) / dy - (By(i, j, k) - By(i, j, k - 1)) / dz);
-                    Ey(i, j, k) += FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k - 1)) / dz - (Bz(i, j, k) - Bz(i - 1, j, k)) / dx);
-                    Ez(i, j, k) += FDTDconst::C * dt * ((By(i, j, k) - By(i - 1, j, k)) / dx - (Bx(i, j, k) - Bx(i, j - 1, k)) / dy);
+                    Ex(i, j, k) = Ex(i, j, k) - 4.0 * M_PI * dt * Jx[t](i, j, k) + FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j - 1, k)) / dy - (By(i, j, k) - By(i, j, k - 1)) / dz);
+                    Ey(i, j, k) = Ey(i, j, k) - 4.0 * M_PI * dt * Jy[t](i, j, k) + FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k - 1)) / dz - (Bz(i, j, k) - Bz(i - 1, j, k)) / dx);
+                    Ez(i, j, k) = Ez(i, j, k) - 4.0 * M_PI * dt * Jz[t](i, j, k) + FDTDconst::C * dt * ((By(i, j, k) - By(i - 1, j, k)) / dx - (Bx(i, j, k) - Bx(i, j - 1, k)) / dy);
                 }
             }
         }
@@ -127,37 +144,3 @@ void FDTD::shifted_update_field(const int time)
         }
     }
 }
-
-//void FDTD::update_field(const int time)
-//{
-//    for (double t = 0; t < time; ++t)
-//    {
-//        #pragma omp parallel for collapse(2)
-//        for (int j = 0; j < Nj; ++j)
-//        {
-//            for (int i = 0; i < Ni; ++i)
-//            {
-//                for (int k = 0; k < Nk; k++)
-//                {
-//                    Ex(i, j, k) += FDTD_Const::C * dt * (Bz(i, j + 1) - Bz(i, j - 1)) / (2.0 * dy);
-//                    Ey(i, j, k) -= FDTD_Const::C * dt * (Bz(i + 1, j) - Bz(i - 1, j)) / (2.0 * dx);
-//                    Ez(i, j, k) += FDTD_Const::C * dt * ((By(i + 1, j) - By(i - 1, j)) / (2.0 * dx) - (Bx(i, j + 1) - Bx(i, j - 1)) / (2.0 * dy));
-//                }
-//            }
-//        }
-//
-//        #pragma omp parallel for collapse(2)
-//        for (int j = 0; j < Nj; ++j)
-//        {
-//            for (int i = 0; i < Ni; ++i)
-//            {
-//                for (int k = 0; k < Nk; k++)
-//                {
-//                    Bx(i, j, k) -= FDTD_Const::C * dt * (Ez(i, j + 1) - Ez(i, j - 1)) / (2.0 * dy);
-//                    By(i, j, k) += FDTD_Const::C * dt * (Ez(i + 1, j) - Ez(i - 1, j)) / (2.0 * dx);
-//                    Bz(i, j, k) -= FDTD_Const::C * dt * ((Ey(i + 1, j) - Ey(i - 1, j)) / (2.0 * dx) - (Ex(i, j + 1) - Ex(i, j - 1)) / (2.0 * dy));
-//                }
-//            }
-//        }
-//    }
-//}

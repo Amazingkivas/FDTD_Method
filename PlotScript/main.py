@@ -90,11 +90,11 @@ if __name__ == '__main__':
     with open('Source.txt', 'r') as file:
         numbers = [float(line.strip()) for line in file]
 
-    field_E = 'Ex'
-    field_B = 'Bz'
-    field_to_plot = 'Ex'
+    field_E = 'Ez'
+    field_B = 'Bx'
+    field_to_plot = 'Ez'
 
     execute_cpp(field_E, field_B, field_to_plot)
     size_axis, axis_boundaries, block_size = select_parameters(field_E, field_B, numbers)
     file = 'OutFile.csv'
-    get_plot(field_to_plot, file, size_axis, block_size, axis_boundaries, numbers[7])
+    get_plot(field_to_plot, file, size_axis, block_size, axis_boundaries, numbers[10])

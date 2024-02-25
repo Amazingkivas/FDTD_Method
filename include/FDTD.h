@@ -1,18 +1,13 @@
 #pragma once
 
+#define _USE_MATH_DEFINES
+
 #include <vector>
-#include <cmath>
-#include <iostream>
 #include <omp.h>
 
 #include "Structures.h"
 
 using namespace FDTDstruct;
-
-namespace FDTDconst
-{
-    const double C = 3e10;  // light speed
-}
 
 class Field
 {
@@ -35,6 +30,9 @@ class FDTD
 {
 private:
     Field Ex, Ey, Ez, Bx, By, Bz;
+    std::vector<Field> Jx;
+    std::vector<Field> Jy;
+    std::vector<Field> Jz;
     Parameters parameters;
     double dt;
 
@@ -42,7 +40,7 @@ public:
     FDTD(Parameters _parameters, double _dt);
 
     Field& get_field(Component);
+    std::vector<Field>& get_current(Component);
 
-    //void update_field(const int);
-    void shifted_update_field(const int time);
+    void update_fields(const int time);
 };

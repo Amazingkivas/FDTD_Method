@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <string>
 
 #include "FDTD.h"
 
@@ -71,7 +72,34 @@ void write_z(Field& this_field, std::ofstream& fout)
     fout << std::endl << std::endl;
 }
 
-void write_all(FDTD& test, Axis axis, char* file_path)
+void write_spherical(FDTD& test, Axis axis, int iteration, std::string base_path)
+{
+    std::ofstream test_fout;
+    
+    for (int i = static_cast<int>(Component::EX); i <= static_cast<int>(Component::BZ); ++i)
+    {
+        if (axis == Axis::X)
+        {
+            test_fout.open(base_path + "OutFiles_" + std::to_string(i + 1) + "/" + std::to_string(iteration) + ".csv");
+            write_x(test.get_field(static_cast<Component>(i)), test_fout);
+            test_fout.close();
+        }
+        else if (axis == Axis::Y)
+        {
+            test_fout.open(base_path + "OutFiles_" + std::to_string(i + 1) + "/" + std::to_string(iteration) + ".csv");
+            write_y(test.get_field(static_cast<Component>(i)), test_fout);
+            test_fout.close();
+        }
+        else
+        {
+            test_fout.open(base_path + "OutFiles_" + std::to_string(i + 1) + "/" + std::to_string(iteration) + ".csv");
+            write_z(test.get_field(static_cast<Component>(i)), test_fout);
+            test_fout.close();
+        }
+    }
+}
+
+void write_plane(FDTD& test, Axis axis, char* file_path)
 {
     std::ofstream test_fout;
     test_fout.open(file_path);
@@ -86,7 +114,7 @@ void write_all(FDTD& test, Axis axis, char* file_path)
             write_x(test.get_field(static_cast<Component>(i)), test_fout);
         else if (axis == Axis::Y)
             write_y(test.get_field(static_cast<Component>(i)), test_fout);
-        else 
+        else
             write_z(test.get_field(static_cast<Component>(i)), test_fout);
     }
     test_fout.close();
