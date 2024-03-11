@@ -35,19 +35,21 @@ TEST(Convergence, x_axis_EY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
-
 
 	//---------------------
 	Parameters params_2
@@ -60,15 +62,18 @@ TEST(Convergence, x_axis_EY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(32),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -96,15 +101,18 @@ TEST(Convergence, x_axis_BZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -121,15 +129,18 @@ TEST(Convergence, x_axis_BZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(32),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -157,15 +168,18 @@ TEST(Convergence, x_axis_EZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -182,15 +196,18 @@ TEST(Convergence, x_axis_EZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(32),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -218,15 +235,18 @@ TEST(Convergence, x_axis_BY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -243,15 +263,18 @@ TEST(Convergence, x_axis_BY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(32),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -279,15 +302,18 @@ TEST(Convergence, y_axis_EX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -304,15 +330,18 @@ TEST(Convergence, y_axis_EX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(32),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -340,15 +369,18 @@ TEST(Convergence, y_axis_BZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -365,15 +397,18 @@ TEST(Convergence, y_axis_BZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(32),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -401,15 +436,18 @@ TEST(Convergence, y_axis_EZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -426,15 +464,18 @@ TEST(Convergence, y_axis_EZ)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(32),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -462,15 +503,18 @@ TEST(Convergence, y_axis_BX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(4)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -487,15 +531,18 @@ TEST(Convergence, y_axis_BX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(16),
+		(2 - 0) / static_cast<double>(32),
+		(3 - 0) / static_cast<double>(8)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -523,15 +570,18 @@ TEST(Convergence, z_axis_EX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(4),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(16)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -548,15 +598,18 @@ TEST(Convergence, z_axis_EX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(32)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -584,15 +637,18 @@ TEST(Convergence, z_axis_BY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(4),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(16)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -609,15 +665,18 @@ TEST(Convergence, z_axis_BY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(32)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -645,15 +704,18 @@ TEST(Convergence, z_axis_EY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(4),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(16)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -670,15 +732,18 @@ TEST(Convergence, z_axis_EY)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(32)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -706,15 +771,18 @@ TEST(Convergence, z_axis_BX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(4),
+		(2 - 0) / static_cast<double>(8),
+		(3 - 0) / static_cast<double>(16)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
-	test_1.initial_filling(method_1, current_fields, initial_func);
-	method_1.shifted_update_field(iters_1);
+	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
+	method_1.update_fields(iters_1);
 
 	double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
@@ -731,15 +799,18 @@ TEST(Convergence, z_axis_BX)
 		0.0,
 		2.0,
 		0.0,
-		3.0
+		3.0,
+		(1 - 0) / static_cast<double>(8),
+		(2 - 0) / static_cast<double>(16),
+		(3 - 0) / static_cast<double>(32)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
-	test_2.initial_filling(method_2, current_fields, initial_func);
-	method_2.shifted_update_field(iters_2);
+	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
+	method_2.update_fields(iters_2);
 
 	double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func, default_time);
 	//---------------------
