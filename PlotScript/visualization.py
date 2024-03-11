@@ -12,8 +12,6 @@ def get_animation(component):
     file_names_base = sorted(glob.glob(folder_path + '/*.csv'))
     file_names = sorted(file_names_base, key=lambda x: int(x.split('\\')[-1].split('.')[0]))
 
-    data_frames = [pd.read_csv(file) for file in file_names]
-
     fig, ax = plt.subplots()
 
     def update(frame):
@@ -23,14 +21,25 @@ def get_animation(component):
         ax.imshow(data, cmap='viridis', interpolation='nearest')
         ax.set_title('Frame {}'.format(frame + 1))
 
-    ani = FuncAnimation(fig, update, frames=len(file_names), interval=20)
+    ani = FuncAnimation(fig, update, frames=len(file_names), interval=50)
+
     plt.show()
     ani.save(f'animations/animation_{component}.gif', writer='imagemagick')
 
 
-def execute_cpp(grid_size, iters_num):
+def get_heatmap(component, iteration):
+    data = pd.read_csv(f'OutFiles_{components_num[component]}/{iteration}.csv', sep=';')
+
+    data = data.applymap(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+
+    plt.imshow(data, cmap='viridis', interpolation='nearest')
+    plt.colorbar()
+    plt.show()
+
+
+def execute_cpp(grid_size, iters_num, single_iteration_flag=True):
     cpp_executable = 'src/Release/sample.exe'
-    args = [cpp_executable, str(grid_size), str(iters_num)]
+    args = [cpp_executable, str(grid_size), str(iters_num), str(int(single_iteration_flag))]
     try:
         subprocess.run(args, check=True)
     except subprocess.CalledProcessError:
@@ -40,5 +49,6 @@ def execute_cpp(grid_size, iters_num):
 
 
 if __name__ == '__main__':
-    execute_cpp(100, 12)
-    get_animation("By")
+    #execute_cpp(50, 100, False)
+    get_animation("Ey")
+    #get_heatmap("Bx", 100)

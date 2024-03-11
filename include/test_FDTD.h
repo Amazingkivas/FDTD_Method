@@ -20,10 +20,11 @@ private:
 public:
 	Test_FDTD(Parameters);
 
+	void initiialize_current(FDTD& _test, CurrentParameters, int iters,
+		std::function<double(double, double, double, double)>& init_function);
+
 	void initial_filling(FDTD& _test, SelectedFields, int iters,
 		std::function<double(double, double[2])>& init_function);
-
-	void initiialize_current(FDTD& _test, CurrentParameters, int iters, std::function<double(double, double, double)>& init_function);
 
 	double get_max_abs_error(Field& this_field, Component field,
 		std::function<double(double, double, double[2])>& true_function, double time);

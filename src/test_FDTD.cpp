@@ -2,6 +2,51 @@
 
 Test_FDTD::Test_FDTD(Parameters _parameters) : parameters(_parameters) {}
 
+void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int iters,
+	std::function<double(double, double, double, double)>& init_function)
+{
+	double Tx = cParams.period_x;
+	double Ty = cParams.period_y;
+	double Tz = cParams.period_z;
+	double T = cParams.period;
+
+	int start_i = std::floor((-Tx / 4.0 - parameters.ax) / parameters.dx);
+	int start_j = std::floor((-Ty / 4.0 - parameters.ay) / parameters.dy);
+	int start_k = std::floor((-Tz / 4.0 - parameters.ay) / parameters.dy);
+
+	int max_i = std::floor((Tx / 4.0 - parameters.ax) / parameters.dx);
+	int max_j = std::floor((Ty / 4.0 - parameters.ay) / parameters.dy);
+	int max_k = std::floor((Tz / 4.0 - parameters.az) / parameters.dz);
+
+	for (int n = 0; n < std::max(iters, cParams.iterations); n++)
+	{
+		_test.get_current(Component::JX).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+		_test.get_current(Component::JY).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+		_test.get_current(Component::JZ).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
+	}
+	for (int iter = 1; iter <= cParams.iterations; iter++)
+	{
+		Field J(parameters.Ni, parameters.Nj, parameters.Nk);
+
+		for (int i = start_i; i <= max_i; i++)
+		{
+			for (int j = start_j; j <= max_j; j++)
+			{
+				for (int k = start_k; k <= max_k; k++)
+				{
+					J(i, j, k) = init_function(static_cast<double>(i) * parameters.dx,
+						static_cast<double>(j) * parameters.dy,
+						static_cast<double>(k) * parameters.dz,
+						static_cast<double>(iter) * cParams.dt);
+				}
+			}
+		}
+		_test.get_current(Component::JX)[iter - 1] = J;
+		_test.get_current(Component::JY)[iter - 1] = J;
+		_test.get_current(Component::JZ)[iter - 1] = J;
+	}
+}
+
 void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	std::function<double(double, double[2])>& init_function)
 {
@@ -64,39 +109,6 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 				}
 			}
 		}
-	}
-}
-
-void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int iters, std::function<double(double, double, double)>& init_function)
-{
-	double Tx = cParams.period_x;
-	double Ty = cParams.period_y;
-	double T = cParams.period;
-
-	int start_i = std::floor((-Tx / 4.0 - parameters.ax) / parameters.dx);
-	int start_j = std::floor((-Ty / 4.0 - parameters.ay) / parameters.dy);
-
-	int max_i = std::floor((Tx / 4.0 - parameters.ax) / parameters.dx);
-	int max_j = std::floor((Ty / 4.0 - parameters.ay) / parameters.dy);
-
-	for (int n = 0; n < std::max(iters, cParams.iterations); n++)
-	{
-		_test.get_current(Component::JX).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-		_test.get_current(Component::JY).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-		_test.get_current(Component::JZ).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-	}
-	for (int iter = 1; iter <= cParams.iterations; iter++)
-	{
-		Field J(parameters.Ni, parameters.Nj, parameters.Nk);
-		
-		for (int i = start_i; i <= max_i; i++)
-		{
-			for (int j = start_j; j <= max_j; j++)
-			{				
-				J(i, j, 0) = init_function(static_cast<double>(i) * parameters.dx, static_cast<double>(j) * parameters.dy, static_cast<double>(iter) * cParams.dt);
-			}
-		}
-		_test.get_current(Component::JZ)[iter - 1] = J;
 	}
 }
 

@@ -4,7 +4,7 @@
 
 #include <gtest.h>
 
-const double default_time = 5e-3;
+const double default_time = 5e-13;
 
 std::function<double(double, double[2])> initial_func = [](double x, double size[2])
 {
@@ -42,7 +42,7 @@ TEST(Convergence, x_axis_EY)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -69,7 +69,7 @@ TEST(Convergence, x_axis_EY)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -108,7 +108,7 @@ TEST(Convergence, x_axis_BZ)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -136,7 +136,7 @@ TEST(Convergence, x_axis_BZ)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -175,7 +175,7 @@ TEST(Convergence, x_axis_EZ)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -203,7 +203,7 @@ TEST(Convergence, x_axis_EZ)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -242,7 +242,7 @@ TEST(Convergence, x_axis_BY)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -270,7 +270,7 @@ TEST(Convergence, x_axis_BY)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -309,7 +309,7 @@ TEST(Convergence, y_axis_EX)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -337,7 +337,7 @@ TEST(Convergence, y_axis_EX)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -376,7 +376,7 @@ TEST(Convergence, y_axis_BZ)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -404,7 +404,7 @@ TEST(Convergence, y_axis_BZ)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -443,7 +443,7 @@ TEST(Convergence, y_axis_EZ)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -471,7 +471,7 @@ TEST(Convergence, y_axis_EZ)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -510,7 +510,7 @@ TEST(Convergence, y_axis_BX)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -538,7 +538,7 @@ TEST(Convergence, y_axis_BX)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -577,7 +577,7 @@ TEST(Convergence, z_axis_EX)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -605,7 +605,7 @@ TEST(Convergence, z_axis_EX)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -644,7 +644,7 @@ TEST(Convergence, z_axis_BY)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -672,7 +672,7 @@ TEST(Convergence, z_axis_BY)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -711,7 +711,7 @@ TEST(Convergence, z_axis_EY)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -739,7 +739,7 @@ TEST(Convergence, z_axis_EY)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);
@@ -778,7 +778,7 @@ TEST(Convergence, z_axis_BX)
 	};
 	int iters_1 = 16;
 	double dt_1 = default_time / static_cast<double>(iters_1);
-	FDTD method_1(params_1, dt_1);
+	FDTD method_1(params_1, dt_1, 0.0);
 
 	Test_FDTD test_1(params_1);
 	test_1.initial_filling(method_1, current_fields, iters_1, initial_func);
@@ -806,7 +806,7 @@ TEST(Convergence, z_axis_BX)
 	};
 	int iters_2 = 32;
 	double dt_2 = default_time / static_cast<double>(iters_2);
-	FDTD method_2(params_2, dt_2);
+	FDTD method_2(params_2, dt_2, 0.0);
 
 	Test_FDTD test_2(params_2);
 	test_2.initial_filling(method_2, current_fields, iters_2, initial_func);

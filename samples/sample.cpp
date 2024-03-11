@@ -47,7 +47,6 @@ void plane_wave(std::vector<char*> arguments, std::vector<double> numbers, char*
     Component flds_selected[2] = { selected_field_1, selected_field_2 };
 
     // Saving data from the txt file
-    
     int grid_sizes[3] = { numbers[0], numbers[1], numbers[2] };   // { Nx, Ny , Nz }
     double sizes_x[2] = { numbers[3], numbers[4] };               // { ax, bx }
     double sizes_y[2] = { numbers[5], numbers[6] };               // { ay, by }
@@ -90,7 +89,7 @@ void plane_wave(std::vector<char*> arguments, std::vector<double> numbers, char*
         (sizes_y[1] - sizes_y[0]) / static_cast<double>(grid_sizes[1]),
         (sizes_z[1] - sizes_z[0]) / static_cast<double>(grid_sizes[2])
     };
-    FDTD method(params, time_step);
+    FDTD method(params, time_step, 0.0);
     
     // Meaningful calculations
     Test_FDTD test(params);
@@ -132,37 +131,42 @@ void spherical_wave(int n, int it, char* base_path = "")
     double T = cur_param.period;
     double Tx = cur_param.period_x;
     double Ty = cur_param.period_y;
-    std::function<double(double, double, double)> cur_func = [T, Tx, Ty](double x, double y, double t)
+    double Tz = cur_param.period_z;
+    double omega1 = 1.0;
+    double omega2 = 0.5;
+    cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt); //2.0 * M_PI / (omega2 * cur_param.dt)
+    std::function<double(double, double, double, double)> cur_func = [omega1, omega2, T, Tx, Ty, Tz](double x, double y, double z, double t)
     {
-        return sin(2.0 * M_PI * t / T) * pow(cos(2.0 * M_PI * x / Tx), 2.0) * pow(cos(2.0 * M_PI * y / Ty), 2.0);
-    };
-
+        return sin(2.0 * M_PI * t / T) * pow(cos(2.0 * M_PI * x / Tx), 2.0) * pow(cos(2.0 * M_PI * y / Ty), 2.0) * pow(cos(2.0 * M_PI * z / Tz), 2.0);
+    }; // sin(omega1 * t) * pow(sin(omega2 * t), 2.0)
+    
     // Initialization of the structures and method
     double d = FDTDconst::C;
+    double boundary = static_cast<double>(n) / 2.0 * d;
     Parameters params
     {
         n,
         n,
-        1,
-        -static_cast<double>(n) / 2.0 * d,
-        static_cast<double>(n) / 2.0 * d,
-        -static_cast<double>(n) / 2.0 * d,
-        static_cast<double>(n) / 2.0 * d,
-        0.0,
-        0.0,
+        n,
+        -boundary,
+        boundary,
+        -boundary,
+        boundary,
+        -boundary,
+        boundary,
         d,
         d,
         d
     };
-    FDTD method(params, cur_param.dt);
+    FDTD method(params, cur_param.dt, 0.1);
 
     // Meaningful calculations
     Test_FDTD test(params);
     test.initiialize_current(method, cur_param, it, cur_func);
-    method.update_fields(it);
+    std::vector<std::vector<Field>> data = method.update_fields(it);
     try
     {
-        write_spherical(method, Axis::X, it, base_path);
+        write_spherical(data, Axis::X, it, base_path);
     }
     catch (const std::exception& except)
     {
@@ -179,13 +183,9 @@ int main(int argc, char* argv[])
     if (argc == 1) 
     {
 #ifdef __USE_SPHERICAL_WAVE__
-        int N = 100;
-        int Iterations = 11;
-        for (int I = 2; I <= Iterations; I++)
-        {
-            std::cout << "Iteration: " << I << std::endl;
-            spherical_wave(N, I, "../../PlotScript/");
-        }
+        int N = 50;
+        int Iterations = 200;
+        spherical_wave(N, Iterations, "../../PlotScript/");
 #endif
 
 #ifndef __USE_SPHERICAL_WAVE__
@@ -223,15 +223,11 @@ int main(int argc, char* argv[])
         plane_wave(arguments, numbers, outfile_path);
 #endif
     }
-    else if (argc == 3)
+    else if (argc == 4)
     {
         int N = std::atoi(arguments[1]);
         int Iterations = std::atoi(arguments[2]);
-        for (int I = 2; I <= Iterations; I++)
-        {
-            std::cout << "Iteration: " << I << std::endl;
-            spherical_wave(N, I);
-        }
+        spherical_wave(N, Iterations);
     }
     else
     {
