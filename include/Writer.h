@@ -87,12 +87,12 @@ void write_spherical(std::vector<std::vector<Field>> data, Axis axis, int iterat
             {
                 test_fout.open(base_path + "OutFiles_" + std::to_string(c + 1) + "/" + std::to_string(it) + ".csv");
                 Field field = fields[c];
-                for (int j = 0; j < field.get_Nj(); ++j)
+                for (int k = 0; k < field.get_Nk(); ++k)
                 {
-                    for (int k = 0; k < field.get_Nk(); ++k)
+                    for (int j = 0; j < field.get_Nj(); ++j)
                     {
                         test_fout << field(field.get_Ni() / 2, j, k);
-                        if (k == field.get_Nk() - 1)
+                        if (j == field.get_Nj() - 1)
                         {
                             test_fout << std::endl;
                         }

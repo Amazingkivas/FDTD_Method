@@ -15,6 +15,7 @@ class Field
 private:
     int Ni, Nj, Nk;
     std::vector<double> field;
+    double nul = 0.0;
 
 public:
     Field(const int _Ni, const int _Nj, const int _Nk);
@@ -34,17 +35,18 @@ private:
 
     Field Exy, Exz, Eyx, Eyz, Ezx, Ezy;
     Field Bxy, Bxz, Byx, Byz, Bzx, Bzy;
+    Field EsigmaX, EsigmaY, EsigmaZ, BsigmaX, BsigmaY, BsigmaZ;
 
     std::vector<Field> Jx;
     std::vector<Field> Jy;
     std::vector<Field> Jz;
 
-    std::vector<double> EsigmaX;
+    /*std::vector<double> EsigmaX;
     std::vector<double> EsigmaY;
     std::vector<double> EsigmaZ;
     std::vector<double> BsigmaX;
     std::vector<double> BsigmaY;
-    std::vector<double> BsigmaZ;
+    std::vector<double> BsigmaZ;*/
 
     Parameters parameters;
     PMLparameters pml;
@@ -55,9 +57,12 @@ private:
     void update_E(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t);
     void update_B(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t);
 
-    double PMLcoef(std::vector<double> conductivity, double constant, int distance);
-    void update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t, std::function<int(int, int, int)> dist);
-    void update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t, std::function<int(int, int, int)> dist);
+    double PMLcoef(double sigma, double constant);
+    void update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
+    void update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
+    void set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2], double SGm[2], std::function<int(int, int, int)> dist);
+    void set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2], double SGm[2], std::function<int(int, int, int)> dist);
+    void set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2], double SGm[2], std::function<int(int, int, int)> dist);
 
 public:
     FDTD(Parameters _parameters, double _dt, double _pml_percent);

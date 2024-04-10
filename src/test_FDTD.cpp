@@ -12,7 +12,7 @@ void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int 
 
 	int start_i = std::floor((-Tx / 4.0 - parameters.ax) / parameters.dx);
 	int start_j = std::floor((-Ty / 4.0 - parameters.ay) / parameters.dy);
-	int start_k = std::floor((-Tz / 4.0 - parameters.ay) / parameters.dy);
+	int start_k = std::floor((-Tz / 4.0 - parameters.az) / parameters.dz);
 
 	int max_i = std::floor((Tx / 4.0 - parameters.ax) / parameters.dx);
 	int max_j = std::floor((Ty / 4.0 - parameters.ay) / parameters.dy);
@@ -24,7 +24,7 @@ void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int 
 		_test.get_current(Component::JY).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
 		_test.get_current(Component::JZ).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
 	}
-	for (int iter = 1; iter <= cParams.iterations; iter++)
+	for (int iter = 1; iter < cParams.iterations; iter++)
 	{
 		Field J(parameters.Ni, parameters.Nj, parameters.Nk);
 

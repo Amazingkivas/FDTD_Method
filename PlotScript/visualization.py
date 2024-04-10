@@ -49,6 +49,6 @@ def execute_cpp(grid_size, iters_num, single_iteration_flag=True):
 
 
 if __name__ == '__main__':
-    #execute_cpp(50, 100, False)
-    get_animation("Ey")
-    #get_heatmap("Bx", 100)
+    # execute_cpp(50, 100, False)
+    get_animation("Ex")
+    # get_heatmap("Ex", 86)
