@@ -86,7 +86,7 @@ def analyze_convergence(numbers, mult_2, iterations, shifts):
 if __name__ == '__main__':
     update_sources()
     loaded_numbers = save_source_into_reserve()
-    nums, convergence = analyze_convergence(loaded_numbers, 2, 5, True)
+    nums, convergence = analyze_convergence(loaded_numbers, 2, 4, False)
     reload_source()
 
     print(convergence)
