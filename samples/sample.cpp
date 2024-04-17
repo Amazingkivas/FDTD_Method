@@ -36,7 +36,8 @@ Axis get_axis(Component field_E, Component field_B)
     return selected_axis;
 }
 
-void plane_wave(std::vector<char*> arguments, std::vector<double> numbers, char* outfile_path)
+void plane_wave(std::vector<char*> arguments, 
+    std::vector<double> numbers, char* outfile_path)
 {
     // Saving data from the console
     Component selected_field_1 = static_cast<Component>(std::atoi(arguments[1]));
@@ -53,16 +54,12 @@ void plane_wave(std::vector<char*> arguments, std::vector<double> numbers, char*
     double sizes_z[2] = { numbers[7], numbers[8] };               // { az, bz }
     int iterations_num = static_cast<int>(numbers[9]);
     double time = numbers[10];
-    double time_step = 0.4; // time / static_cast<double>(iterations_num);   // dt
+    double time_step = time / static_cast<double>(iterations_num);   // dt
 
     // Initialization of the initializing function and the true solution function
     std::function<double(double, double[2])> initial_func = [](double x, double size[2])
     {
         return sin(2.0 * M_PI * (x - size[0]) / (size[1] - size[0]));
-    };
-    std::function<double(double, double, double[2])> true_func = [](double x, double t, double size[2])
-    {
-        return sin(2.0 * M_PI * (x - size[0] - FDTDconst::C * t) / (size[1] - size[0]));
     };
 
     // Determination of the wave propagation axis
@@ -80,17 +77,17 @@ void plane_wave(std::vector<char*> arguments, std::vector<double> numbers, char*
         grid_sizes[0],
         grid_sizes[1],
         grid_sizes[2],
-        0.0,
+        sizes_x[0],
         sizes_x[1],
-        0.0,
+        sizes_y[0],
         sizes_y[1],
-        0.0,
+        sizes_z[0],
         sizes_z[1],
-        FDTDconst::C, //(sizes_x[1] - sizes_x[0]) / static_cast<double>(grid_sizes[0]),
-        FDTDconst::C, //(sizes_y[1] - sizes_y[0]) / static_cast<double>(grid_sizes[1]),
-        FDTDconst::C, //(sizes_z[1] - sizes_z[0]) / static_cast<double>(grid_sizes[2])
+        (sizes_x[1] - sizes_x[0]) / static_cast<double>(grid_sizes[0]),
+        (sizes_y[1] - sizes_y[0]) / static_cast<double>(grid_sizes[1]),
+        (sizes_z[1] - sizes_z[0]) / static_cast<double>(grid_sizes[2])
     };
-    FDTD method(params, time_step, 0.1);
+    FDTD method(params, time_step, 0.0);
     
     // Meaningful calculations
     Test_FDTD test(params);
@@ -104,15 +101,13 @@ void plane_wave(std::vector<char*> arguments, std::vector<double> numbers, char*
     }
 
     std::vector<std::vector<Field>> data = method.update_fields(iterations_num);
-    
-    //std::cout << test.get_max_abs_error(method.get_field(fld_tested), fld_tested, true_func, time) << std::endl;
 
     if (write_flag == true)
     {
         // Writing the results to a file
         try
         {
-            write_spherical(data, Axis::X, iterations_num, outfile_path);
+             write_plane(method, axis, outfile_path);
         }
         catch (const std::exception& except)
         {
@@ -125,18 +120,22 @@ void spherical_wave(int n, int it, char* base_path = "")
 {
     CurrentParameters cur_param
     {
-        2,
+        8,
         4,
-        0.4,
+        0.2,
     };
     double T = cur_param.period;
     double Tx = cur_param.period_x;
     double Ty = cur_param.period_y;
     double Tz = cur_param.period_z;
     cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt);
-    std::function<double(double, double, double, double)> cur_func = [T, Tx, Ty, Tz](double x, double y, double z, double t)
+    std::function<double(double, double, double, double)> cur_func 
+        = [T, Tx, Ty, Tz](double x, double y, double z, double t)
     {
-        return sin(2.0 * M_PI * t / T) * pow(cos(2.0 * M_PI * x / Tx), 2.0) * pow(cos(2.0 * M_PI * y / Ty), 2.0) * pow(cos(2.0 * M_PI * z / Tz), 2.0);
+        return sin(2.0 * M_PI * t / T) 
+            * pow(cos(2.0 * M_PI * x / Tx), 2.0) 
+            * pow(cos(2.0 * M_PI * y / Ty), 2.0) 
+            * pow(cos(2.0 * M_PI * z / Tz), 2.0);
     };
     
     // Initialization of the structures and method
@@ -182,8 +181,8 @@ int main(int argc, char* argv[])
     if (argc == 1) 
     {
 #ifdef __USE_SPHERICAL_WAVE__
-        int N = 50; // 100;
-        int Iterations = 250; // 200;
+        int N = 70;
+        int Iterations = 300;
         spherical_wave(N, Iterations, "../../PlotScript/");
 #endif
 
