@@ -3,9 +3,9 @@ import subprocess
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import numpy as np
 
 components_num = {"Ex": '1', "Ey": '2', "Ez": '3', "Bx": '4', "By": '5', "Bz": '6'}
-
 
 def get_animation(component):
     folder_path = f'OutFiles_{components_num[component]}'
@@ -15,10 +15,11 @@ def get_animation(component):
     fig, ax = plt.subplots()
 
     def update(frame):
+        mut = 0
         ax.clear()
         data = pd.read_csv(file_names[frame], sep=';')
         data = data.apply(lambda x: x.str.replace(',', '.').astype(float) if x.dtype == 'object' else x)
-        ax.imshow(data, cmap='viridis', interpolation='nearest')
+        ax.imshow(data, cmap='RdBu', vmin=-0.5, vmax=0.5, interpolation='none')
         ax.set_title('Frame {}'.format(frame + 1))
 
     ani = FuncAnimation(fig, update, frames=len(file_names), interval=50)
@@ -49,6 +50,6 @@ def execute_cpp(grid_size, iters_num, single_iteration_flag=True):
 
 
 if __name__ == '__main__':
-    # execute_cpp(50, 100, False)
+    execute_cpp(75, 410, False)
     get_animation("Ex")
     # get_heatmap("Ex", 86)

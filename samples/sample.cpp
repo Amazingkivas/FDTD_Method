@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
     {
 #ifdef __USE_SPHERICAL_WAVE__
         int N = 70;
-        int Iterations = 300;
+        int Iterations = 10;
         spherical_wave(N, Iterations, "../../PlotScript/");
 #endif
 
