@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#define __DEBUG_PML__
+//#define __DEBUG_PML__
 //#define __OUTPUT_SIGMA__
 
 Field::Field(const int _Ni = 1, const int _Nj = 1, const int _Nk = 1) 
@@ -481,7 +481,7 @@ std::vector<std::vector<Field>> FDTD::update_fields(const int time)
     double max_val_1 = 0.0;
     double max_val_2 = 0.0;
     int t_start = 50;
-    int t_final = 280;
+    int t_final = 400;
 #endif // __DEBUG_PML__
 
     for (int t = 0; t < time; t++)
