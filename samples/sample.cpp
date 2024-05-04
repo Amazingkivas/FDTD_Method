@@ -140,7 +140,9 @@ void spherical_wave(int n, int it, char* base_path = "")
     
     // Initialization of the structures and method
     double d = FDTDconst::C;
+
     double boundary = static_cast<double>(n) / 2.0 * d;
+
     Parameters params
     {
         n,
@@ -182,7 +184,7 @@ int main(int argc, char* argv[])
     {
 #ifdef __USE_SPHERICAL_WAVE__
         int N = 70;
-        int Iterations = 10;
+        int Iterations = 410;
         spherical_wave(N, Iterations, "../../PlotScript/");
 #endif
 

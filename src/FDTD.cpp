@@ -58,7 +58,7 @@ void FDTD::set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2],
                     pow((static_cast<double>(dist(i, j, k))) /
                     static_cast<double>(pml_size_i), FDTDconst::N);
                 BsigmaX(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k)) + 0.5) /
+                    pow((static_cast<double>(dist(i, j, k))) /
                     static_cast<double>(pml_size_i), FDTDconst::N);
             }
         }
@@ -78,7 +78,7 @@ void FDTD::set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2],
                     pow((static_cast<double>(dist(i, j, k))) /
                         static_cast<double>(pml_size_j), FDTDconst::N);
                 BsigmaY(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k)) + 0.5) /
+                    pow((static_cast<double>(dist(i, j, k))) /
                         static_cast<double>(pml_size_j), FDTDconst::N);
             }
         }
@@ -95,11 +95,11 @@ void FDTD::set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2],
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
                 EsigmaZ(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k)))
-                    / static_cast<double>(pml_size_k), FDTDconst::N);
+                    pow((static_cast<double>(dist(i, j, k))) /
+                        static_cast<double>(pml_size_k), FDTDconst::N);
                 BsigmaZ(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k)) + 0.5)
-                    / static_cast<double>(pml_size_k), FDTDconst::N);
+                    pow((static_cast<double>(dist(i, j, k))) /
+                        static_cast<double>(pml_size_k), FDTDconst::N);
             }
         }
     }
@@ -108,12 +108,6 @@ void FDTD::set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2],
 FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent) : 
     parameters(_parameters), dt(_dt), pml_percent(_pml_percent)
 {
-    if (parameters.ax > parameters.bx ||
-        parameters.ay > parameters.by ||
-        parameters.az > parameters.bz)
-    {
-        throw std::exception("ERROR: invalid parameters");
-    }
     if (parameters.Ni <= 0 ||
         parameters.Nj <= 0 ||
         parameters.Nk <= 0 ||
@@ -234,6 +228,8 @@ void FDTD::update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
     double dy = parameters.dy;
     double dz = parameters.dz;
 
+    double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
+
 #pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     { 
@@ -241,33 +237,36 @@ void FDTD::update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
         {
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
-                if (EsigmaX(i, j, k) != 0)
-                {
-                    Eyx(i, j, k) = Eyx(i, j, k) * PMLcoef(EsigmaX(i, j, k)) -
-                        (1.0 - PMLcoef(EsigmaX(i, j, k))) / (EsigmaX(i, j, k) * dx) *
-                        (Bz(i, j, k) - Bz(i - 1, j, k));
-                    Ezx(i, j, k) = Ezx(i, j, k) * PMLcoef(EsigmaX(i, j, k)) +
-                        (1.0 - PMLcoef(EsigmaX(i, j, k))) / (EsigmaX(i, j, k) * dx) *
-                        (By(i, j, k) - By(i - 1, j, k));
-                }
-                if (EsigmaY(i, j, k) != 0)
-                {
-                    Exy(i, j, k) = Exy(i, j, k) * PMLcoef(EsigmaY(i, j, k)) +
-                        (1.0 - PMLcoef(EsigmaY(i, j, k))) / (EsigmaY(i, j, k) * dy) *
-                        (Bz(i, j, k) - Bz(i, j - 1, k));
-                    Ezy(i, j, k) = Ezy(i, j, k) * PMLcoef(EsigmaY(i, j, k)) -
-                        (1.0 - PMLcoef(EsigmaY(i, j, k))) / (EsigmaY(i, j, k) * dy) *
-                        (Bx(i, j, k) - Bx(i, j - 1, k));
-                }
-                if (EsigmaZ(i, j, k) != 0)
-                {
-                    Exz(i, j, k) = Exz(i, j, k) * PMLcoef(EsigmaZ(i, j, k)) -
-                        (1.0 - PMLcoef(EsigmaZ(i, j, k))) / (EsigmaZ(i, j, k) * dz) *
-                        (By(i, j, k) - By(i, j, k - 1));
-                    Eyz(i, j, k) = Eyz(i, j, k) * PMLcoef(EsigmaZ(i, j, k)) +
-                        (1.0 - PMLcoef(EsigmaZ(i, j, k))) / (EsigmaZ(i, j, k) * dz) *
-                        (Bx(i, j, k) - Bx(i, j, k - 1));
-                }
+                if (EsigmaX(i, j, k) != 0.0)
+                    PMLcoef2_x = (1.0 - PMLcoef(EsigmaX(i, j, k))) / (EsigmaX(i, j, k) * dx);
+                else
+                    PMLcoef2_x = FDTDconst::C * dt / dx;
+
+                if (EsigmaY(i, j, k) != 0.0)
+                    PMLcoef2_y = (1.0 - PMLcoef(EsigmaY(i, j, k))) / (EsigmaY(i, j, k) * dy);
+                else
+                    PMLcoef2_y = FDTDconst::C * dt / dy;
+
+                if (EsigmaZ(i, j, k) != 0.0)
+                    PMLcoef2_z = (1.0 - PMLcoef(EsigmaZ(i, j, k))) / (EsigmaZ(i, j, k) * dz);
+                else
+                    PMLcoef2_z = FDTDconst::C * dt / dz;
+
+                Eyx(i, j, k) = Eyx(i, j, k) * PMLcoef(EsigmaX(i, j, k)) -
+                    PMLcoef2_x * (Bz(i, j, k) - Bz(i - 1, j, k));
+                Ezx(i, j, k) = Ezx(i, j, k) * PMLcoef(EsigmaX(i, j, k)) +
+                    PMLcoef2_x * (By(i, j, k) - By(i - 1, j, k));
+
+                Exy(i, j, k) = Exy(i, j, k) * PMLcoef(EsigmaY(i, j, k)) +
+                    PMLcoef2_y * (Bz(i, j, k) - Bz(i, j - 1, k));
+                Ezy(i, j, k) = Ezy(i, j, k) * PMLcoef(EsigmaY(i, j, k)) -
+                    PMLcoef2_y * (Bx(i, j, k) - Bx(i, j - 1, k));
+
+                Exz(i, j, k) = Exz(i, j, k) * PMLcoef(EsigmaZ(i, j, k)) -
+                    PMLcoef2_z * (By(i, j, k) - By(i, j, k - 1));
+                Eyz(i, j, k) = Eyz(i, j, k) * PMLcoef(EsigmaZ(i, j, k)) +
+                    PMLcoef2_z * (Bx(i, j, k) - Bx(i, j, k - 1));
+
                 Ex(i, j, k) = Exz(i, j, k) + Exy(i, j, k);
                 Ey(i, j, k) = Eyx(i, j, k) + Eyz(i, j, k);
                 Ez(i, j, k) = Ezy(i, j, k) + Ezx(i, j, k);
@@ -281,6 +280,8 @@ void FDTD::update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
     double dx = parameters.dx;
     double dy = parameters.dy;
     double dz = parameters.dz;
+
+    double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
     
 #pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
@@ -290,32 +291,35 @@ void FDTD::update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
                 if (BsigmaX(i, j, k) != 0.0)
-                {
-                    Byx(i, j, k) = Byx(i, j, k) * PMLcoef(BsigmaX(i, j, k)) +
-                        (1.0 - PMLcoef(BsigmaX(i, j, k))) / (BsigmaX(i, j, k) * dx) *
-                        (Ez(i + 1, j, k) - Ez(i, j, k));
-                    Bzx(i, j, k) = Bzx(i, j, k) * PMLcoef(BsigmaX(i, j, k)) -
-                        (1.0 - PMLcoef(BsigmaX(i, j, k))) / (BsigmaX(i, j, k) * dx) *
-                        (Ey(i + 1, j, k) - Ey(i, j, k));
-                }
+                    PMLcoef2_x = (1.0 - PMLcoef(BsigmaX(i, j, k))) / (BsigmaX(i, j, k) * dx);
+                else
+                    PMLcoef2_x = FDTDconst::C * dt / dx;
+
                 if (BsigmaY(i, j, k) != 0.0)
-                {
-                    Bxy(i, j, k) = Bxy(i, j, k) * PMLcoef(BsigmaY(i, j, k)) -
-                        (1.0 - PMLcoef(BsigmaY(i, j, k))) / (BsigmaY(i, j, k) * dy) *
-                        (Ez(i, j + 1, k) - Ez(i, j, k));
-                    Bzy(i, j, k) = Bzy(i, j, k) * PMLcoef(BsigmaY(i, j, k)) +
-                        (1.0 - PMLcoef(BsigmaY(i, j, k))) / (BsigmaY(i, j, k) * dy) *
-                        (Ex(i, j + 1, k) - Ex(i, j, k));
-                }
+                    PMLcoef2_y = (1.0 - PMLcoef(BsigmaY(i, j, k))) / (BsigmaY(i, j, k) * dy);
+                else
+                    PMLcoef2_y = FDTDconst::C * dt / dy;
+
                 if (BsigmaZ(i, j, k) != 0.0)
-                {
-                    Bxz(i, j, k) = Bxz(i, j, k) * PMLcoef(BsigmaZ(i, j, k)) +
-                        (1.0 - PMLcoef(BsigmaZ(i, j, k))) / (BsigmaZ(i, j, k) * dz) *
-                        (Ey(i, j, k + 1) - Ey(i, j, k));
-                    Byz(i, j, k) = Byz(i, j, k) * PMLcoef(BsigmaZ(i, j, k)) -
-                        (1.0 - PMLcoef(BsigmaZ(i, j, k))) / (BsigmaZ(i, j, k) * dz) *
-                        (Ex(i, j, k + 1) - Ex(i, j, k));
-                }
+                    PMLcoef2_z = (1.0 - PMLcoef(BsigmaZ(i, j, k))) / (BsigmaZ(i, j, k) * dz);
+                else
+                    PMLcoef2_z = FDTDconst::C * dt / dz;
+
+                Byx(i, j, k) = Byx(i, j, k) * PMLcoef(BsigmaX(i, j, k)) +
+                    PMLcoef2_x * (Ez(i + 1, j, k) - Ez(i, j, k));
+                Bzx(i, j, k) = Bzx(i, j, k) * PMLcoef(BsigmaX(i, j, k)) -
+                    PMLcoef2_x * (Ey(i + 1, j, k) - Ey(i, j, k));
+
+                Bxy(i, j, k) = Bxy(i, j, k) * PMLcoef(BsigmaY(i, j, k)) -
+                    PMLcoef2_y * (Ez(i, j + 1, k) - Ez(i, j, k));
+                Bzy(i, j, k) = Bzy(i, j, k) * PMLcoef(BsigmaY(i, j, k)) +
+                    PMLcoef2_y * (Ex(i, j + 1, k) - Ex(i, j, k));
+
+                Bxz(i, j, k) = Bxz(i, j, k) * PMLcoef(BsigmaZ(i, j, k)) +
+                    PMLcoef2_z * (Ey(i, j, k + 1) - Ey(i, j, k));
+                Byz(i, j, k) = Byz(i, j, k) * PMLcoef(BsigmaZ(i, j, k)) -
+                    PMLcoef2_z * (Ex(i, j, k + 1) - Ex(i, j, k));
+
                 Bx(i, j, k) = Bxy(i, j, k) + Bxz(i, j, k);
                 By(i, j, k) = Byz(i, j, k) + Byx(i, j, k);
                 Bz(i, j, k) = Bzx(i, j, k) + Bzy(i, j, k);
@@ -519,15 +523,21 @@ std::vector<std::vector<Field>> FDTD::update_fields(const int time)
         {
             max_val_2 = calc_max_value(Ex);
         }
-#ifdef __OUTPUT_SIGMA__
-        if (t == 0) break;
-        std::vector<Field> new_iteration{ EsigmaX, EsigmaY, EsigmaZ, 
-                                          BsigmaX, BsigmaY, BsigmaZ };
-#endif // __OUTPUT_SIGMA__
+
 #endif //__DEBUG_PML__
 
 #ifndef __OUTPUT_SIGMA__
         std::vector<Field> new_iteration{ Ex, Ey, Ez, Bx, By, Bz };
+#endif // __OUTPUT_SIGMA__
+
+#ifdef __OUTPUT_SIGMA__
+
+        EsigmaX(parameters.Ni / 2, 1, 1) = 100;
+
+        std::vector<Field> new_iteration{ EsigmaX, EsigmaY, EsigmaZ,
+                                          BsigmaX, BsigmaY, BsigmaZ };
+        return_data.push_back(new_iteration);
+        if (t == 0) break;
 #endif // __OUTPUT_SIGMA__
 
         return_data.push_back(new_iteration);
