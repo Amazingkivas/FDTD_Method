@@ -49,5 +49,5 @@ def execute_cpp(grid_size, iters_num, single_iteration_flag=True):
 
 
 if __name__ == '__main__':
-    #execute_cpp(75, 410, False)
+    execute_cpp(75, 410, False)
     get_animation("Ex")
