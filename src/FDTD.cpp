@@ -1,6 +1,8 @@
 #include "FDTD.h"
 
 #include <iostream>
+#include <exception>
+#include <cmath>
 
 //#define __DEBUG_PML__
 //#define __OUTPUT_SIGMA__
@@ -55,10 +57,10 @@ void FDTD::set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2],
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
                 EsigmaX(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k))) /
+                    std::pow((static_cast<double>(dist(i, j, k))) /
                     static_cast<double>(pml_size_i), FDTDconst::N);
                 BsigmaX(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k))) /
+                    std::pow((static_cast<double>(dist(i, j, k))) /
                     static_cast<double>(pml_size_i), FDTDconst::N);
             }
         }
@@ -75,10 +77,10 @@ void FDTD::set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2],
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
                 EsigmaY(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k))) /
+                    std::pow((static_cast<double>(dist(i, j, k))) /
                         static_cast<double>(pml_size_j), FDTDconst::N);
                 BsigmaY(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k))) /
+                    std::pow((static_cast<double>(dist(i, j, k))) /
                         static_cast<double>(pml_size_j), FDTDconst::N);
             }
         }
@@ -95,10 +97,10 @@ void FDTD::set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2],
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
                 EsigmaZ(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k))) /
+                    std::pow((static_cast<double>(dist(i, j, k))) /
                         static_cast<double>(pml_size_k), FDTDconst::N);
                 BsigmaZ(i, j, k) = SGm *
-                    pow((static_cast<double>(dist(i, j, k))) /
+                    std::pow((static_cast<double>(dist(i, j, k))) /
                         static_cast<double>(pml_size_k), FDTDconst::N);
             }
         }
@@ -113,7 +115,7 @@ FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent) :
         parameters.Nk <= 0 ||
         dt <= 0)
     {
-        throw std::exception("ERROR: invalid parameters");
+        throw std::invalid_argument("ERROR: invalid parameters");
     }
     Ex = Ey = Ez = Bx = By = Bz 
         = Field(parameters.Ni, parameters.Nj, parameters.Nk);
@@ -145,7 +147,7 @@ Field& FDTD::get_field(Component this_field)
 
     case Component::BZ: return Bz;
 
-    default: throw std::exception("ERROR: Invalid field component");
+    default: throw std::logic_error("ERROR: Invalid field component");
     }
 }
 
@@ -159,7 +161,7 @@ std::vector<Field>& FDTD::get_current(Component this_current)
 
     case Component::JZ: return Jz;
 
-    default: throw std::exception("ERROR: Invalid current component");
+    default: throw std::logic_error("ERROR: Invalid current component");
     }
 }
 
@@ -176,13 +178,13 @@ void FDTD::update_E(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t)
         {
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
-                Ex(i, j, k) = Ex(i, j, k) - 4.0 * M_PI * dt * Jx[t](i, j, k) + 
+                Ex(i, j, k) = Ex(i, j, k) - 4.0 * FDTDconst::PI * dt * Jx[t](i, j, k) + 
                     FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j - 1, k)) / dy - 
                                          (By(i, j, k) - By(i, j, k - 1)) / dz);
-                Ey(i, j, k) = Ey(i, j, k) - 4.0 * M_PI * dt * Jy[t](i, j, k) + 
+                Ey(i, j, k) = Ey(i, j, k) - 4.0 * FDTDconst::PI * dt * Jy[t](i, j, k) + 
                     FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k - 1)) / dz - 
                                          (Bz(i, j, k) - Bz(i - 1, j, k)) / dx);
-                Ez(i, j, k) = Ez(i, j, k) - 4.0 * M_PI * dt * Jz[t](i, j, k) + 
+                Ez(i, j, k) = Ez(i, j, k) - 4.0 * FDTDconst::PI * dt * Jz[t](i, j, k) + 
                     FDTDconst::C * dt * ((By(i, j, k) - By(i - 1, j, k)) / dx - 
                                          (Bx(i, j, k) - Bx(i, j - 1, k)) / dy);
             }
@@ -219,7 +221,7 @@ void FDTD::update_B(int bounds_i[2], int bounds_j[2], int bounds_k[2])
 
 double FDTD::PMLcoef(double sigma)
 {
-    return exp(-sigma * dt * FDTDconst::C);
+    return std::exp(-sigma * dt * FDTDconst::C);
 }
 
 void FDTD::update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
@@ -341,24 +343,24 @@ double FDTD::calc_reflection(Field E_start[3], Field B_start[3],
         {
             for (int k = pml_size_k; k < parameters.Nk - pml_size_k; k++)
             {
-                energy_start += pow(E_start[0](i, j, k), 2.0) +
-                    pow(E_start[1](i, j, k), 2.0) +
-                    pow(E_start[2](i, j, k), 2.0) +
-                    pow(B_start[0](i, j, k), 2.0) +
-                    pow(B_start[1](i, j, k), 2.0) +
-                    pow(B_start[2](i, j, k), 2.0);
+                energy_start += std::pow(E_start[0](i, j, k), 2.0) +
+                    std::pow(E_start[1](i, j, k), 2.0) +
+                    std::pow(E_start[2](i, j, k), 2.0) +
+                    std::pow(B_start[0](i, j, k), 2.0) +
+                    std::pow(B_start[1](i, j, k), 2.0) +
+                    std::pow(B_start[2](i, j, k), 2.0);
 
-                energy_final += pow(E_final[0](i, j, k), 2.0) +
-                    pow(E_final[1](i, j, k), 2.0) +
-                    pow(E_final[2](i, j, k), 2.0) +
-                    pow(B_final[0](i, j, k), 2.0) +
-                    pow(B_final[1](i, j, k), 2.0) +
-                    pow(B_final[2](i, j, k), 2.0);
+                energy_final += std::pow(E_final[0](i, j, k), 2.0) +
+                    std::pow(E_final[1](i, j, k), 2.0) +
+                    std::pow(E_final[2](i, j, k), 2.0) +
+                    std::pow(B_final[0](i, j, k), 2.0) +
+                    std::pow(B_final[1](i, j, k), 2.0) +
+                    std::pow(B_final[2](i, j, k), 2.0);
             }
         }
     }
 
-    return sqrt(energy_final / energy_start);
+    return std::sqrt(energy_final / energy_start);
 }
 
 double FDTD::calc_max_value(Field& field)
@@ -372,7 +374,7 @@ double FDTD::calc_max_value(Field& field)
         {
             for (int k = 0; k < parameters.Nk - pml_size_k; k++)
             {
-                if (fabs(field(i, j, k)) > fabs(max_val))
+                if (std::abs(field(i, j, k)) > std::abs(max_val))
                 {
                     max_val = field(i, j, k);
                 }
@@ -386,7 +388,7 @@ std::vector<std::vector<Field>> FDTD::update_fields(const int time)
 {
     if (time < 0)
     {
-        throw std::exception("ERROR: Invalid update field argument");
+        throw std::invalid_argument("ERROR: Invalid update field argument");
     }
     std::vector<std::vector<Field>> return_data;
 
@@ -459,11 +461,11 @@ std::vector<std::vector<Field>> FDTD::update_fields(const int time)
     };
 
     // Calculation of maximum permittivity
-    double SGm_x = -(FDTDconst::N + 1.0) / 2.0 * log(FDTDconst::R)
+    double SGm_x = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
         / (static_cast<double>(pml_size_i) * parameters.dx);
-    double SGm_y = -(FDTDconst::N + 1.0) / 2.0 * log(FDTDconst::R)
+    double SGm_y = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
         / (static_cast<double>(pml_size_j) * parameters.dy);
-    double SGm_z = -(FDTDconst::N + 1.0) / 2.0 * log(FDTDconst::R)
+    double SGm_z = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
         / (static_cast<double>(pml_size_k) * parameters.dz);
 
     // Calculation of permittivity in the cells

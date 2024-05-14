@@ -9,6 +9,7 @@ namespace FDTDconst
 	const double EPS0 = 1.0;
 	const double MU0 = EPS0;
 	const double N = 4.0;
+	const double PI = 3.14159265358;
 }
 
 namespace FDTDstruct
