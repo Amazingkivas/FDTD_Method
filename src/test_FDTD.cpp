@@ -126,7 +126,7 @@ void Test_FDTD::set_sign(Component field_E, Component field_B)
 	{
 		sign = 1.0;
 	}
-	else throw std::exception("ERROR: invalid selected fields");
+	else throw std::logic_error("ERROR: invalid selected fields");
 }
 void Test_FDTD::set_axis(Component field_E, Component field_B)
 {
@@ -145,7 +145,7 @@ void Test_FDTD::set_axis(Component field_E, Component field_B)
 	{
 		axis = Axis::Z;
 	}
-	else throw std::exception("ERROR: invalid selected fields");
+	else throw std::logic_error("ERROR: invalid selected fields");
 }
 double Test_FDTD::get_shift(Component _field, double step)
 {
