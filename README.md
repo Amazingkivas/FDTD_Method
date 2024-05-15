@@ -14,18 +14,10 @@ pip install matplotlib
 ```
 
 ## Build the project with `CMake`
-
-* **Windows (MSVC)**:
   
   ```
   cd sln
   cmake .
-  cmake --build . --config RELEASE
-  ```
-* **Linux (gcc)**:
-  
-  ```
-  cd sln
   cmake --build . --config RELEASE
   ```
 
