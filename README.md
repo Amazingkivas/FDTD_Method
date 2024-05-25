@@ -21,11 +21,11 @@ pip install matplotlib
   cmake --build . --config RELEASE
   ```
 
-## Run and visualise
+## Run and visualize
 
 ![](https://github.com/Amazingkivas/FDTD_Method/blob/main/PlotScript/Animations/animation_Ex.gif)
 
-### Go to the folder
+### Go to folder
 ```
 cd PlotScript
 ```
