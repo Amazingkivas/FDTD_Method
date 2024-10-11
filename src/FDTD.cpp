@@ -4,12 +4,10 @@
 #include <exception>
 #include <cmath>
 
-#include "Field.h"
-
 void FDTD::set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2],
     double SGm, std::function<int(int, int, int)> dist)
 {
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(3)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -29,7 +27,7 @@ void FDTD::set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2],
 void FDTD::set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2],
     double SGm, std::function<int(int, int, int)> dist)
 {
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(3)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -49,7 +47,7 @@ void FDTD::set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2],
 void FDTD::set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2],
     double SGm, std::function<int(int, int, int)> dist)
 {
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(3)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -67,7 +65,7 @@ void FDTD::set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2],
     }
 }
 
-FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent) :
+FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent, int current_iters) :
     parameters(_parameters), dt(_dt), pml_percent(_pml_percent)
 {
     if (parameters.Ni <= 0 ||
@@ -77,6 +75,7 @@ FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent) :
     {
         throw std::invalid_argument("ERROR: invalid parameters");
     }
+    Jx = Jy = Jz = Current(current_iters, parameters.Ni, parameters.Nj, parameters.Nk);
     Ex = Ey = Ez = Bx = By = Bz
         = Field(parameters.Ni, parameters.Nj, parameters.Nk);
     Exy = Exz = Eyx = Eyz = Ezx = Ezy
@@ -111,7 +110,7 @@ Field& FDTD::get_field(Component this_field)
     }
 }
 
-std::vector<Field>& FDTD::get_current(Component this_current)
+Current& FDTD::get_current(Component this_current)
 {
     switch (this_current)
     {
@@ -131,20 +130,20 @@ void FDTD::update_E(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t)
     double dy = parameters.dy;
     double dz = parameters.dz;
 
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(3)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
         {
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
-                Ex(i, j, k) = Ex(i, j, k) - 4.0 * FDTDconst::PI * dt * Jx[t](i, j, k) +
+                Ex(i, j, k) = Ex(i, j, k) - 4.0 * FDTDconst::PI * dt * Jx(t, i, j, k) +
                     FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j - 1, k)) / dy -
                         (By(i, j, k) - By(i, j, k - 1)) / dz);
-                Ey(i, j, k) = Ey(i, j, k) - 4.0 * FDTDconst::PI * dt * Jy[t](i, j, k) +
+                Ey(i, j, k) = Ey(i, j, k) - 4.0 * FDTDconst::PI * dt * Jy(t, i, j, k) +
                     FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k - 1)) / dz -
                         (Bz(i, j, k) - Bz(i - 1, j, k)) / dx);
-                Ez(i, j, k) = Ez(i, j, k) - 4.0 * FDTDconst::PI * dt * Jz[t](i, j, k) +
+                Ez(i, j, k) = Ez(i, j, k) - 4.0 * FDTDconst::PI * dt * Jz(t, i, j, k) +
                     FDTDconst::C * dt * ((By(i, j, k) - By(i - 1, j, k)) / dx -
                         (Bx(i, j, k) - Bx(i, j - 1, k)) / dy);
             }
@@ -158,7 +157,7 @@ void FDTD::update_B(int bounds_i[2], int bounds_j[2], int bounds_k[2])
     double dy = parameters.dy;
     double dz = parameters.dz;
 
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(3)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -192,7 +191,7 @@ void FDTD::update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
 
     double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
 
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(3)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -245,7 +244,7 @@ void FDTD::update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
 
     double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
 
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(3)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -368,7 +367,7 @@ std::vector<Field> FDTD::update_fields(const int time, bool write_result, Axis w
         return pml_size_k - k;
     };
 
-    // Calculation of maximum permittivity
+    // Calculation of maximum permittivity and permeability
     double SGm_x = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
         / (static_cast<double>(pml_size_i) * parameters.dx);
     double SGm_y = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
@@ -376,7 +375,7 @@ std::vector<Field> FDTD::update_fields(const int time, bool write_result, Axis w
     double SGm_z = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
         / (static_cast<double>(pml_size_k) * parameters.dz);
 
-    // Calculation of permittivity in the cells
+    // Calculation of permittivity and permeability in the cells
     set_sigma_z(size_i_solid, size_j_solid, size_xy_lower_k_pml,
         SGm_z, calc_distant_k_low);
     set_sigma_y(size_i_solid, size_zx_lower_j_pml, size_k_solid,

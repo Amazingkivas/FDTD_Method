@@ -8,6 +8,7 @@
 
 #include "Writer.h"
 #include "Field.h"
+#include "Current.h"
 
 using namespace FDTDstruct;
 
@@ -16,12 +17,14 @@ class FDTD
 private:
     Field Ex, Ey, Ez, Bx, By, Bz;
 
-    std::vector<Field> Jx;
-    std::vector<Field> Jy;
-    std::vector<Field> Jz;
+    Current Jx;
+    Current Jy;
+    Current Jz;
 
     Field Exy, Exz, Eyx, Eyz, Ezx, Ezy;
     Field Bxy, Bxz, Byx, Byz, Bzx, Bzy;
+
+    // Permittivity and permeability of the medium
     Field EsigmaX, EsigmaY, EsigmaZ, 
           BsigmaX, BsigmaY, BsigmaZ;
 
@@ -44,10 +47,10 @@ private:
         double SGm, std::function<int(int, int, int)> dist);
 
 public:
-    FDTD(Parameters _parameters, double _dt, double _pml_percent);
+    FDTD(Parameters _parameters, double _dt, double _pml_percent, int current_iters = 1);
 
     Field& get_field(Component);
-    std::vector<Field>& get_current(Component);
+    Current& get_current(Component);
 
     std::vector<Field> update_fields(const int time, bool write_result = false, 
         Axis write_axis = Axis::X, std::string base_path = "");
