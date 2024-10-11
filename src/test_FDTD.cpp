@@ -18,16 +18,10 @@ void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int 
 	int max_j = std::floor((Ty / 4.0 - parameters.ay) / parameters.dy);
 	int max_k = std::floor((Tz / 4.0 - parameters.az) / parameters.dz);
 
-	for (int n = 0; n < std::max(iters, cParams.iterations); n++)
-	{
-		_test.get_current(Component::JX).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-		_test.get_current(Component::JY).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-		_test.get_current(Component::JZ).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-	}
-	for (int iter = 1; iter < cParams.iterations; iter++)
+	for (int iter = 0; iter < cParams.iterations; iter++)
 	{
 		Field J(parameters.Ni, parameters.Nj, parameters.Nk);
-
+#pragma omp parallel for collapse(3)
 		for (int i = start_i; i <= max_i; i++)
 		{
 			for (int j = start_j; j <= max_j; j++)
@@ -37,26 +31,19 @@ void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int 
 					J(i, j, k) = init_function(static_cast<double>(i) * parameters.dx,
 						static_cast<double>(j) * parameters.dy,
 						static_cast<double>(k) * parameters.dz,
-						static_cast<double>(iter) * cParams.dt);
+						static_cast<double>(iter + 1) * cParams.dt);
 				}
 			}
 		}
-		_test.get_current(Component::JX)[iter - 1] = J;
-		_test.get_current(Component::JY)[iter - 1] = J;
-		_test.get_current(Component::JZ)[iter - 1] = J;
+		_test.get_current(Component::JX)[iter] = J;
+		_test.get_current(Component::JY)[iter] = J;
+		_test.get_current(Component::JZ)[iter] = J;
 	}
 }
 
 void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	std::function<double(double, double[2])>& init_function)
 {
-	for (int n = 0; n < iters; n++)
-	{
-		_test.get_current(Component::JX).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-		_test.get_current(Component::JY).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-		_test.get_current(Component::JZ).push_back(Field(parameters.Ni, parameters.Nj, parameters.Nk));
-	}
-
 	set_axis(fields.selected_E, fields.selected_B);
 	set_sign(fields.selected_E, fields.selected_B);
 	if (axis == Axis::X)

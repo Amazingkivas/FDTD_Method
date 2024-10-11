@@ -76,7 +76,7 @@ void spherical_wave(int n, int it, char* base_path = "")
         d,
         d
     };
-    FDTD method(params, cur_param.dt, 0.1);
+    FDTD method(params, cur_param.dt, 0.1, cur_param.iterations);
 
     // Meaningful calculations
     Test_FDTD test(params);
