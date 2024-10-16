@@ -37,7 +37,7 @@ jobs:
               -DCMAKE_CXX_COMPILER=g++ \
               -B ${PWD}/build
           cmake --build ${PWD}/build --config Release
-          find ${PWD}/sln/build -name test_FDTD_method
+          find ${PWD}/build -name test_FDTD_method
       - name: Run tests with GCC
         shell: bash
         run: |
