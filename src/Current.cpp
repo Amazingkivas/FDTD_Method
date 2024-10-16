@@ -1,5 +1,7 @@
 #include "Current.h"
 
+#include <iostream>
+
 Current::Current(int iters, int _Ni, int _Nj, int _Nk) 
 	: iterations(iters), Ni(_Ni), Nj(_Nj), Nk(_Nk)
 {
@@ -14,11 +16,11 @@ Field& Current::operator[] (int iteration)
 	}
 	else
 	{
-		return Field(Ni, Nj, Nk);
+		throw std::invalid_argument("Exceeding the specified number of iterations");
 	}
 }
 
-double& Current::operator() (int iteration, int i, int j, int k)
+double Current::operator() (int iteration, int i, int j, int k)
 {
 	if (iteration < iterations)
 	{
