@@ -21,3 +21,23 @@ jobs:
       shell: bash
       run: |
         ${PWD}/sln/build/test_FDTD_method/Release/test_FDTD_method.exe --gtest_repeat=2 --gtest_break_on_failure
+        
+ linux-gcc-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build FDTD with GCC
+        shell: bash
+        run: |
+          export CMAKE_BUILD_PARALLEL_LEVEL=4
+          mkdir build
+          cd sln
+          cmake \
+              -DCMAKE_C_COMPILER=gcc \
+              -DCMAKE_CXX_COMPILER=g++ \
+              -B ${PWD}/build
+          cmake --build ${PWD}/build --config Release
+      - name: Run tests with GCC
+        shell: bash
+        run: |
+          ${PWD}/sln/build/test_FDTD_method/Release/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
