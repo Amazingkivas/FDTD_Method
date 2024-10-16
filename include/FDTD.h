@@ -17,9 +17,7 @@ class FDTD
 private:
     Field Ex, Ey, Ez, Bx, By, Bz;
 
-    Current Jx;
-    Current Jy;
-    Current Jz;
+    Current Jx, Jy, Jz;
 
     Field Exy, Exz, Eyx, Eyz, Ezx, Ezy;
     Field Bxy, Bxz, Byx, Byz, Bzx, Bzy;

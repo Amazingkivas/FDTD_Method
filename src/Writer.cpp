@@ -1,80 +1,13 @@
 #include "Writer.h"
 
-void write_x(Field& this_field, std::ofstream& fout)
-{
-    for (int k = 0; k < this_field.get_Nk(); ++k)
-    {
-        for (int j = 0; j < this_field.get_Nj(); ++j)
-        {
-            for (int i = 0; i < this_field.get_Ni(); ++i)
-            {
-                fout << this_field(i, j, k);
-                if (i == this_field.get_Ni() - 1)
-                {
-                    fout << std::endl;
-                }
-                else
-                {
-                    fout << ";";
-                }
-            }
-        }
-    }
-    fout << std::endl << std::endl;
-}
-void write_y(Field& this_field, std::ofstream& fout)
-{
-    for (int k = 0; k < this_field.get_Nk(); ++k)
-    {
-        for (int i = 0; i < this_field.get_Ni(); ++i)
-        {
-            for (int j = 0; j < this_field.get_Nj(); ++j)
-            {
-                fout << this_field(i, j, k);
-                if (j == this_field.get_Nj() - 1)
-                {
-                    fout << std::endl;
-                }
-                else
-                {
-                    fout << ";";
-                }
-            }
-        }
-    }
-    fout << std::endl << std::endl;
-}
-void write_z(Field& this_field, std::ofstream& fout)
-{
-    for (int i = 0; i < this_field.get_Ni(); ++i)
-    {
-        for (int j = 0; j < this_field.get_Nj(); ++j)
-        {
-            for (int k = 0; k < this_field.get_Nk(); ++k)
-            {
-                fout << this_field(i, j, k);
-                if (k == this_field.get_Nk() - 1)
-                {
-                    fout << std::endl;
-                }
-                else
-                {
-                    fout << ";";
-                }
-            }
-        }
-    }
-    fout << std::endl << std::endl;
-}
-
 void write_spherical(std::vector<Field> fields, Axis axis, std::string base_path, int it)
 {
     std::ofstream test_fout;
-    
-    for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
+    switch (axis)
     {
-        std::cout << "Write : " << it << " -- " << c << std::endl;
-        if (axis == Axis::X)
+    case Axis::X:
+    {
+        for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
         {
             test_fout.open(base_path + "OutFiles_" + std::to_string(c + 1) + "/" + std::to_string(it) + ".csv");
             Field field = fields[c];
@@ -95,7 +28,11 @@ void write_spherical(std::vector<Field> fields, Axis axis, std::string base_path
             }
             test_fout.close();
         }
-        else if (axis == Axis::Y)
+        break;
+    }
+    case Axis::Y:
+    {
+        for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
         {
             test_fout.open(base_path + "OutFiles_" + std::to_string(c + 1) + "/" + std::to_string(it) + ".csv");
             Field field = fields[c];
@@ -110,13 +47,17 @@ void write_spherical(std::vector<Field> fields, Axis axis, std::string base_path
                     }
                     else
                     {
-                            test_fout << ";";
+                        test_fout << ";";
                     }
                 }
             }
             test_fout.close();
         }
-        else
+        break;
+    }
+    case Axis::Z:
+    {
+        for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
         {
             test_fout.open(base_path + "OutFiles_" + std::to_string(c + 1) + "/" + std::to_string(it) + ".csv");
             Field field = fields[c];
@@ -137,5 +78,8 @@ void write_spherical(std::vector<Field> fields, Axis axis, std::string base_path
             }
             test_fout.close();
         }
+        break;
+    }
+    default: throw std::logic_error("ERROR: Invalid axis");
     }
 }
