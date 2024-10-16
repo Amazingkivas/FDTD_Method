@@ -81,14 +81,12 @@ void spherical_wave(int n, int it, char* base_path = "")
     // Meaningful calculations
     Test_FDTD test(params);
     test.initiialize_current(method, cur_param, it, cur_func);
-    method.update_fields(it, true, Axis::X, "");
+    method.update_fields(it, true, Axis::Z, "");
 }
 
 int main(int argc, char* argv[])
 {
     std::ifstream source_fin;
-    char* outfile_path;
-    
     std::vector<char*> arguments(argv, argv + argc);
     if (argc == 1) 
     {
