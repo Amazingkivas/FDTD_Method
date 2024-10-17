@@ -2,7 +2,7 @@
 
 #include "test_FDTD.h"
 
-#include <gtest.h>
+#include <gtest/gtest.h>
 
 const double default_time = 5e-13;
 
