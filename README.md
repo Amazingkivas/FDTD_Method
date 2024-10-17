@@ -12,11 +12,14 @@ This repository contains a C++ project with the main implementation of the metho
 pip install pandas
 pip install matplotlib
 ```
+## Download all submodules
+  ```
+  git submodule update --init --recursive
+  ```
 
 ## Build the project with `CMake`
   
   ```
-  cd sln
   cmake .
   cmake --build . --config RELEASE
   ```
@@ -25,43 +28,17 @@ pip install matplotlib
 
 ![](https://github.com/Amazingkivas/FDTD_Method/blob/main/PlotScript/Animations/animation_Ex.gif)
 
-### Go to folder
-```
-cd PlotScript
-```
+### Get information about running the application and visualising the results
+* **Linux (gcc)**:
+  
+  ```
+  cd PlotScript
+  python3 visualization.py --help
+  ```
+* **Windows (MSVC)**:
+  
+  ```
+  cd PlotScript
+  python visualization.py --help
+  ```
 
-### To run the method and save the data
-* **Linux (gcc)**:
-  
-  ```
-  python3 visualization.py --run_cpp --grid_size <grid size> --iters_num <iterations number> <component>
-  ```
-* **Windows (MSVC)**:
-  
-  ```
-  python visualization.py --run_cpp --grid_size <grid size> --iters_num <iterations number> <component>
-  ```
-### To create an animation
-* **Linux (gcc)**:
-  
-  ```
-  python3 visualization.py --function animation <component for analysis>
-  ```
-* **Windows (MSVC)**:
-  
-  ```
-  python visualization.py --function animation <component for analysis>
-  ```
-The result will be saved to a folder `PlotScript/animations`
-### To create a heatmap
-* **Linux (gcc)**:
-  
-  ```
-  python3 visualization.py --function heatmap --iteration <iteration number> <component>
-  ```
-* **Windows (MSVC)**:
-  
-  ```
-  python visualization.py --function heatmap --iteration <iteration number> <component>
-  ```
-The result will be saved to a folder `PlotScript/heatmap`
