@@ -21,7 +21,7 @@ jobs:
     - name: Run tests
       shell: bash
       run: |
-        ${PWD}/sln/build/test_FDTD_method/Release/test_FDTD_method.exe --gtest_repeat=2 --gtest_break_on_failure
+        ${PWD}/build/sln/test_FDTD_method/Release/test_FDTD_method.exe --gtest_repeat=2 --gtest_break_on_failure
         
  linux-gcc-build:
     runs-on: ubuntu-latest
@@ -43,4 +43,4 @@ jobs:
       - name: Run tests with GCC
         shell: bash
         run: |
-          ${PWD}/sln/build/test_FDTD_method/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
+          ${PWD}/build/sln/test_FDTD_method/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
