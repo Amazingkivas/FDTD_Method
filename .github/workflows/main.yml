@@ -7,6 +7,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
+      with:
+          submodules: 'recursive'
     - name: Build FDTD
       shell: bash
       run: |
@@ -26,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+        with:
+          submodules: 'recursive'
       - name: Build FDTD with GCC
         shell: bash
         run: |
