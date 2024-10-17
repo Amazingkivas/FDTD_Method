@@ -18,6 +18,7 @@ jobs:
             -A x64 \
             -B ${PWD}/build
         cmake --build ${PWD}/build --config Release
+        find ${PWD}/build -name test_FDTD_method
     - name: Run tests
       shell: bash
       run: |
