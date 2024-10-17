@@ -1,5 +1,7 @@
 set(target test_FDTD_method)
 
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+
 file(GLOB hdrs "*.h*" "../../include/*.h")
 #file(GLOB hdrs "*.h*")
 file(GLOB srcs "*.cpp" "../../src/*.cpp" "../../test/*.cpp")
