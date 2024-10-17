@@ -1,0 +1,6 @@
+[submodule "3rdparty/googletest"]
+	path = 3rdparty/googletest
+	url = https://github.com/google/googletest
+[submodule "3rdparty/kokkos"]
+	path = 3rdparty/kokkos
+	url = https://github.com/kokkos/kokkos
