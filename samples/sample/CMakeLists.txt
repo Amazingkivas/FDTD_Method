@@ -1,5 +1,5 @@
-file(GLOB hdrs "*.h*" "../../include/*.h")
-file(GLOB srcs "*.cpp" "../../src/*.cpp" "../../samples/*.cpp")
+file(GLOB hdrs "*../../include/*.h" "../../include/FDTD/*.h")
+file(GLOB srcs "*.cpp" "../../src/FDTD/*.cpp" "sample.cpp")
 
 add_executable(sample ${srcs} ${hdrs})
 

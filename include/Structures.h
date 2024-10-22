@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 namespace FDTDconst
 {
 	const double C = 3e10;
