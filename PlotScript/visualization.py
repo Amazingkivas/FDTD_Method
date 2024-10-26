@@ -45,23 +45,14 @@ def get_heatmap(component, iteration):
     plt.savefig(heatmap_path)
 
 
-def execute_cpp(grid_size, iters_num):
-
-    system = platform.system()
-
-    if system == 'Windows':
-        cpp_executable = 'src/Release/sample.exe'
-    else:
-        cpp_executable = 'src/Release/sample'
-
+def execute_cpp(cpp_executable, grid_size, iters_num):
     args = [cpp_executable, str(grid_size), str(iters_num), str(int(True))]
     try:
         subprocess.run(args, check=True)
     except subprocess.CalledProcessError:
-        print('Error when starting a C++ project')
+        print('Error when starting the C++ project')
     except FileNotFoundError:
         print(f'{cpp_executable} not found')
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -75,14 +66,28 @@ if __name__ == '__main__':
     group.add_argument('--grid_size', type=int, help="Grid size")
     group.add_argument('--iters_num', type=int, help="Number of iterations")
     
+    group.add_argument('--executable', choices=['sample', 'kokkos_sample'], 
+                      help="Choose which C++ executable to run (required if --run_cpp is specified)")
+
     args = parser.parse_args()
 
     if args.run_cpp:
         if not (args.grid_size and args.iters_num):
             parser.error("The --run_cpp flag requires --grid_size and --iters_num arguments")
-        execute_cpp(args.grid_size, args.iters_num)
+
+        if not args.executable:
+            parser.error("The --executable argument is required when --run_cpp is specified.")
+
+        system = platform.system()
+        if system == 'Windows':
+            cpp_executable = f'src/Release/{args.executable}.exe'
+        else:
+            cpp_executable = f'src/Release/{args.executable}'
+
+        execute_cpp(cpp_executable, args.grid_size, args.iters_num)
 
     if args.function == 'heatmap':
         get_heatmap(args.component, args.iteration)
     elif args.function == 'animation':
         get_animation(args.component)
+        
