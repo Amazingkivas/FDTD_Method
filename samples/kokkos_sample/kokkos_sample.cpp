@@ -3,12 +3,15 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <iterator>
+#include <filesystem>
 #include <cmath>
+#include <chrono>
 #include <Kokkos_Core.hpp>
+
+namespace fs = std::filesystem;
+
 #include "FDTD_kokkos.h"
 
-// Функция для определения оси
 Axis get_axis(Component field_E, Component field_B)
 {
     Axis selected_axis;
@@ -35,15 +38,13 @@ Axis get_axis(Component field_E, Component field_B)
     return selected_axis;
 }
 
-// Основная функция для моделирования сферической волны
-void spherical_wave(int n, int it, const char* base_path = "../../PlotScript/")
+void spherical_wave(int n, int it, const std::string base_path = "../../PlotScript/")
 {
-    // Параметры тока
     CurrentParameters cur_param
     {
-        8,     // period
-        4,     // period_x
-        0.2    // dt
+        8,
+        4,
+        0.2
     };
 
     double T = cur_param.period;
@@ -53,7 +54,6 @@ void spherical_wave(int n, int it, const char* base_path = "../../PlotScript/")
 
     cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt);
 
-    // Функция для тока
     std::function<double(double, double, double, double)> cur_func =
         [T, Tx, Ty, Tz](double x, double y, double z, double t)
     {
@@ -63,7 +63,6 @@ void spherical_wave(int n, int it, const char* base_path = "../../PlotScript/")
             * pow(cos(2.0 * M_PI * z / Tz), 2.0);
     };
 
-    // Инициализация параметров для FDTD
     double d = FDTDconst::C;
     double boundary = static_cast<double>(n) / 2.0 * d;
 
@@ -83,27 +82,47 @@ void spherical_wave(int n, int it, const char* base_path = "../../PlotScript/")
         d           // dz
     };
 
-    FDTD method(params, cur_param, cur_param.dt, 0.0, cur_func, it);
+    auto clear_directory = [](const std::string& dir_path) {
+        if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
+            for (auto& file : fs::directory_iterator(dir_path)) {
+                if (fs::is_regular_file(file.path())) {
+                    fs::remove(file.path());
+                }
+            }
+        } else {
+            fs::create_directories(dir_path);
+        }
+    };
 
-    // Выполнение обновления полей
+    for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
+    {
+        std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
+        clear_directory(dir_path);
+    }
+
+    FDTD_kokkos::FDTD method(params, cur_param.dt, 0.1, it, cur_param, cur_func);
+
+    auto start = std::chrono::high_resolution_clock::now();
     method.update_fields(true, Axis::Z, base_path);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Execution time: " << elapsed.count() << " s" << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
-    Kokkos::initialize(argc, argv);  // Инициализация Kokkos
+    Kokkos::initialize(argc, argv);
     {
         std::ifstream source_fin;
         std::vector<char*> arguments(argv, argv + argc);
 
-        // Выполнение с параметрами по умолчанию
         if (argc == 1)
         {
             int N = 70;
-            int Iterations = 110;
+            int Iterations = 50;
             spherical_wave(N, Iterations, "../../");
         }
-        // Выполнение с пользовательскими параметрами
         else if (argc == 4)
         {
             int N = std::atoi(arguments[1]);
@@ -116,6 +135,6 @@ int main(int argc, char* argv[])
             exit(1);
         }
     }
-    Kokkos::finalize();  // Завершение Kokkos
+    Kokkos::finalize();
     return 0;
 }

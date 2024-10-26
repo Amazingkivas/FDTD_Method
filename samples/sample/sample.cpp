@@ -3,8 +3,11 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <iterator>
+#include <filesystem>
 #include <cmath>
+#include <chrono>
+
+namespace fs = std::filesystem;
 
 #include "test_FDTD.h"
 
@@ -34,7 +37,7 @@ Axis get_axis(Component field_E, Component field_B)
     return selected_axis;
 }
 
-void spherical_wave(int n, int it, char* base_path = "")
+void spherical_wave(int n, int it, std::string base_path = "")
 {
     CurrentParameters cur_param
     {
@@ -76,12 +79,37 @@ void spherical_wave(int n, int it, char* base_path = "")
         d,
         d
     };
+
+    auto clear_directory = [](const std::string& dir_path) {
+        if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
+            for (auto& file : fs::directory_iterator(dir_path)) {
+                if (fs::is_regular_file(file.path())) {
+                    fs::remove(file.path());
+                }
+            }
+        } else {
+            fs::create_directories(dir_path);
+        }
+    };
+
+    for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
+    {
+        std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
+        clear_directory(dir_path);
+    }
+
     FDTD method(params, cur_param.dt, 0.1, cur_param.iterations);
 
     // Meaningful calculations
     Test_FDTD test(params);
+
+    auto start = std::chrono::high_resolution_clock::now();
     test.initiialize_current(method, cur_param, it, cur_func);
-    method.update_fields(it, true, Axis::Z, "");
+    method.update_fields(it, true, Axis::Z, base_path);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Execution time: " << elapsed.count() << " s" << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -91,8 +119,8 @@ int main(int argc, char* argv[])
     if (argc == 1) 
     {
         int N = 70;
-        int Iterations = 410;
-        spherical_wave(N, Iterations, "../../PlotScript/");
+        int Iterations = 50;
+        spherical_wave(N, Iterations, "../../");
     }
     else if (argc == 4)
     {

@@ -63,4 +63,3 @@ find_package(Kokkos REQUIRED)
 add_subdirectory(project)
 add_subdirectory(test)
 add_subdirectory(samples)
-

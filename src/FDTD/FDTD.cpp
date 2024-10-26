@@ -304,6 +304,8 @@ std::vector<Field> FDTD::update_fields(const int time, bool write_result, Axis w
         int size_k_main[2] = { 0, parameters.Nk };
         for (int t = 0; t < time; t++)
         {
+            std::cout << "Iteration: " << t + 1 << std::endl;
+
             update_B(size_i_main, size_j_main, size_k_main);
             update_E(size_i_main, size_j_main, size_k_main, t);
             update_B(size_i_main, size_j_main, size_k_main);
