@@ -37,4 +37,4 @@ jobs:
       - name: Run tests with GCC
         shell: bash
         run: |
-          ${PWD}/build/sln/test_FDTD_method/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
+          ${PWD}/build/test/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
