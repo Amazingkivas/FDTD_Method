@@ -42,6 +42,7 @@ jobs:
       - name: Run kokkos_sample
         shell: bash
         run: |
+          find ${PWD}/build -name kokkos_sample
           ${PWD}/PlotScript/src/Release/kokkos_sample
       
       - name: Run sample
