@@ -1,4 +1,5 @@
 [![Build|Test|Run](https://github.com/Amazingkivas/FDTD_Method/actions/workflows/main.yml/badge.svg)](https://github.com/Amazingkivas/FDTD_Method/actions/workflows/main.yml)
+![Platforms](https://img.shields.io/badge/platform-linux-lightgrey.svg)
 
 # FDTD Method
 
@@ -6,8 +7,6 @@ Finite-difference time-domain (FDTD) is a numerical analysis technique used for 
 
 This repository contains a C++ project with the main implementation of the method. The following python script is used for testing and visualization:
 * `PlotScript/visualization.py`
-
-**Supports Linux (WSL) + gcc only**
 
 ## 0. Download all submodules
   ```
