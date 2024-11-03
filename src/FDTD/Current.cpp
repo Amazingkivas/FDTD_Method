@@ -20,7 +20,7 @@ Field& Current::operator[] (int iteration)
 	}
 }
 
-double Current::operator() (int iteration, int i, int j, int k)
+double Current::operator() (const int& iteration, const int& i, const int& j, const int& k)
 {
 	if (iteration < iterations)
 	{

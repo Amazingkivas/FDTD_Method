@@ -12,7 +12,7 @@ public:
 	Field(const int _Ni = 1, const int _Nj = 1, const int _Nk = 1);
 	Field& operator= (const Field& other);
 
-	double& operator() (int i, int j, int k);
+	double& operator() (const int& i, const int& j, const int& k);
 
 	int get_Ni() { return Ni; }
 	int get_Nj() { return Nj; }

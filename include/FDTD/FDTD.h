@@ -5,10 +5,14 @@
 #include <vector>
 #include <omp.h>
 #include <functional>
+#include <iostream>
+#include <cmath>
 
 #include "Writer.h"
 #include "Field.h"
 #include "Current.h"
+
+#include "FDTD_boundaries.h"
 
 using namespace FDTDstruct;
 
@@ -30,10 +34,12 @@ private:
     double pml_percent, dt;
     int pml_size_i, pml_size_j, pml_size_k;
 
+    void applyPeriodicBoundary(int& i, int& j, int& k, int Ni, int Nj, int Nk);
+
     void update_E(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t);
     void update_B(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
 
-    double PMLcoef(double sigma);
+    double PMLcoef(const double& sigma);
     void update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
     void update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
 

@@ -4,7 +4,7 @@
 
 #include "Structures.h"
 
-namespace FDTD_kokkos
+namespace FDTD_boundaries
 {
     void applyPeriodicBoundary(int& i, int& j, int& k, int Ni, int Nj, int Nk);
 }

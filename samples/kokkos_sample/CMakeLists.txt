@@ -1,5 +1,5 @@
 file(GLOB hdrs "*../../include/*.h" "../../include/FDTD_kokkos/*.h")
-file(GLOB srcs "*.cpp" "../../src/FDTD_kokkos/*.cpp" "kokkos_sample.cpp")
+file(GLOB srcs "*.cpp" "../../src/*.cpp" "../../src/FDTD_kokkos/*.cpp" "kokkos_sample.cpp")
 
 add_executable(kokkos_sample ${srcs} ${hdrs})
 
