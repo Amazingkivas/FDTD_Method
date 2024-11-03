@@ -102,7 +102,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
 
     // Meaningful calculations
     Test_FDTD test(params);
-
+    
     auto start = std::chrono::high_resolution_clock::now();
     test.initiialize_current(method, cur_param, it, cur_func);
     method.update_fields(it, true, Axis::Z, base_path);

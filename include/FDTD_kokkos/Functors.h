@@ -2,7 +2,7 @@
 
 #include "kokkos_shared.h"
 #include "Structures.h"
-#include "kokkos_FDTD_boundary.h"
+#include "FDTD_boundaries.h"
 
 using namespace FDTDstruct;
 
@@ -113,7 +113,7 @@ public:
         int j_pred = j - 1;
         int k_pred = k - 1;
 
-        applyPeriodicBoundary(i_pred, j_pred, k_pred, Ni, Nj, Nk);
+        FDTD_boundaries::applyPeriodicBoundary(i_pred, j_pred, k_pred, Ni, Nj, Nk);
 
         double Jx_val = (iters <= t) ? 0.0 : 4.0 * FDTDconst::PI * dt * Jx(t, i, j, k);
         double Jy_val = (iters <= t) ? 0.0 : 4.0 * FDTDconst::PI * dt * Jy(t, i, j, k);
@@ -162,7 +162,7 @@ public:
         int j_next = j + 1;
         int k_next = k + 1;
 
-        applyPeriodicBoundary(i_next, j_next, k_next, Ni, Nj, Nk);
+        FDTD_boundaries::applyPeriodicBoundary(i_next, j_next, k_next, Ni, Nj, Nk);
 
         Bx(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ey(i, j, k_next) - Ey(i, j, k)) / dz -
                         (Ez(i, j_next, k) - Ez(i, j, k)) / dy);
@@ -225,7 +225,7 @@ public:
         int j_pred = j - 1;
         int k_pred = k - 1;
 
-        applyPeriodicBoundary(i_pred, j_pred, k_pred, Ni, Nj, Nk);
+        FDTD_boundaries::applyPeriodicBoundary(i_pred, j_pred, k_pred, Ni, Nj, Nk);
 
         double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
 
@@ -317,7 +317,7 @@ public:
         int j_next = j + 1;
         int k_next = k + 1;
 
-        applyPeriodicBoundary(i_next, j_next, k_next, Ni, Nj, Nk);
+        FDTD_boundaries::applyPeriodicBoundary(i_next, j_next, k_next, Ni, Nj, Nk);
 
         double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
 

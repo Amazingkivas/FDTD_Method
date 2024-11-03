@@ -1,13 +1,9 @@
 #include "FDTD.h"
 
-#include <iostream>
-#include <exception>
-#include <cmath>
-
 void FDTD::set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2],
     double SGm, std::function<int(int, int, int)> dist)
 {
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -27,7 +23,7 @@ void FDTD::set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2],
 void FDTD::set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2],
     double SGm, std::function<int(int, int, int)> dist)
 {
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -47,7 +43,7 @@ void FDTD::set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2],
 void FDTD::set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2],
     double SGm, std::function<int(int, int, int)> dist)
 {
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
@@ -130,22 +126,30 @@ void FDTD::update_E(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t)
     double dy = parameters.dy;
     double dz = parameters.dz;
 
-#pragma omp parallel for collapse(3)
+    
+
+#pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
         {
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
+                int i_pred = i - 1;
+                int j_pred = j - 1;
+                int k_pred = k - 1;
+
+                FDTD_boundaries::applyPeriodicBoundary(i_pred, j_pred, k_pred, parameters.Ni, parameters.Nj, parameters.Nk);
+
                 Ex(i, j, k) = Ex(i, j, k) - 4.0 * FDTDconst::PI * dt * Jx(t, i, j, k) +
-                    FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j - 1, k)) / dy -
-                        (By(i, j, k) - By(i, j, k - 1)) / dz);
+                    FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j_pred, k)) / dy -
+                        (By(i, j, k) - By(i, j, k_pred)) / dz);
                 Ey(i, j, k) = Ey(i, j, k) - 4.0 * FDTDconst::PI * dt * Jy(t, i, j, k) +
-                    FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k - 1)) / dz -
-                        (Bz(i, j, k) - Bz(i - 1, j, k)) / dx);
+                    FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k_pred)) / dz -
+                        (Bz(i, j, k) - Bz(i_pred, j, k)) / dx);
                 Ez(i, j, k) = Ez(i, j, k) - 4.0 * FDTDconst::PI * dt * Jz(t, i, j, k) +
-                    FDTDconst::C * dt * ((By(i, j, k) - By(i - 1, j, k)) / dx -
-                        (Bx(i, j, k) - Bx(i, j - 1, k)) / dy);
+                    FDTDconst::C * dt * ((By(i, j, k) - By(i_pred, j, k)) / dx -
+                        (Bx(i, j, k) - Bx(i, j_pred, k)) / dy);
             }
         }
     }
@@ -157,28 +161,34 @@ void FDTD::update_B(int bounds_i[2], int bounds_j[2], int bounds_k[2])
     double dy = parameters.dy;
     double dz = parameters.dz;
 
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
         {
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
+                int i_next = i + 1;
+                int j_next = j + 1;
+                int k_next = k + 1;
+
+                FDTD_boundaries::applyPeriodicBoundary(i_next, j_next, k_next, parameters.Ni, parameters.Nj, parameters.Nk);
+
                 Bx(i, j, k) += FDTDconst::C * dt / 2.0 *
-                    ((Ey(i, j, k + 1) - Ey(i, j, k)) / dz -
-                        (Ez(i, j + 1, k) - Ez(i, j, k)) / dy);
+                    ((Ey(i, j, k_next) - Ey(i, j, k)) / dz -
+                        (Ez(i, j_next, k) - Ez(i, j, k)) / dy);
                 By(i, j, k) += FDTDconst::C * dt / 2.0 *
-                    ((Ez(i + 1, j, k) - Ez(i, j, k)) / dx -
-                        (Ex(i, j, k + 1) - Ex(i, j, k)) / dz);
+                    ((Ez(i_next, j, k) - Ez(i, j, k)) / dx -
+                        (Ex(i, j, k_next) - Ex(i, j, k)) / dz);
                 Bz(i, j, k) += FDTDconst::C * dt / 2.0 *
-                    ((Ex(i, j + 1, k) - Ex(i, j, k)) / dy -
-                        (Ey(i + 1, j, k) - Ey(i, j, k)) / dx);
+                    ((Ex(i, j_next, k) - Ex(i, j, k)) / dy -
+                        (Ey(i_next, j, k) - Ey(i, j, k)) / dx);
             }
         }
     }
 }
 
-double FDTD::PMLcoef(double sigma)
+double FDTD::PMLcoef(const double& sigma)
 {
     return std::exp(-sigma * dt * FDTDconst::C);
 }
@@ -191,13 +201,19 @@ void FDTD::update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
 
     double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
 
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
         {
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
+                int i_pred = i - 1;
+                int j_pred = j - 1;
+                int k_pred = k - 1;
+
+                FDTD_boundaries::applyPeriodicBoundary(i_pred, j_pred, k_pred, parameters.Ni, parameters.Nj, parameters.Nk);
+
                 if (EsigmaX(i, j, k) != 0.0)
                     PMLcoef2_x = (1.0 - PMLcoef(EsigmaX(i, j, k))) / (EsigmaX(i, j, k) * dx);
                 else
@@ -214,19 +230,19 @@ void FDTD::update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
                     PMLcoef2_z = FDTDconst::C * dt / dz;
 
                 Eyx(i, j, k) = Eyx(i, j, k) * PMLcoef(EsigmaX(i, j, k)) -
-                    PMLcoef2_x * (Bz(i, j, k) - Bz(i - 1, j, k));
+                    PMLcoef2_x * (Bz(i, j, k) - Bz(i_pred, j, k));
                 Ezx(i, j, k) = Ezx(i, j, k) * PMLcoef(EsigmaX(i, j, k)) +
-                    PMLcoef2_x * (By(i, j, k) - By(i - 1, j, k));
+                    PMLcoef2_x * (By(i, j, k) - By(i_pred, j, k));
 
                 Exy(i, j, k) = Exy(i, j, k) * PMLcoef(EsigmaY(i, j, k)) +
-                    PMLcoef2_y * (Bz(i, j, k) - Bz(i, j - 1, k));
+                    PMLcoef2_y * (Bz(i, j, k) - Bz(i, j_pred, k));
                 Ezy(i, j, k) = Ezy(i, j, k) * PMLcoef(EsigmaY(i, j, k)) -
-                    PMLcoef2_y * (Bx(i, j, k) - Bx(i, j - 1, k));
+                    PMLcoef2_y * (Bx(i, j, k) - Bx(i, j_pred, k));
 
                 Exz(i, j, k) = Exz(i, j, k) * PMLcoef(EsigmaZ(i, j, k)) -
-                    PMLcoef2_z * (By(i, j, k) - By(i, j, k - 1));
+                    PMLcoef2_z * (By(i, j, k) - By(i, j, k_pred));
                 Eyz(i, j, k) = Eyz(i, j, k) * PMLcoef(EsigmaZ(i, j, k)) +
-                    PMLcoef2_z * (Bx(i, j, k) - Bx(i, j, k - 1));
+                    PMLcoef2_z * (Bx(i, j, k) - Bx(i, j, k_pred));
 
                 Ex(i, j, k) = Exz(i, j, k) + Exy(i, j, k);
                 Ey(i, j, k) = Eyx(i, j, k) + Eyz(i, j, k);
@@ -244,13 +260,19 @@ void FDTD::update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
 
     double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
 
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(2)
     for (int i = bounds_i[0]; i < bounds_i[1]; i++)
     {
         for (int j = bounds_j[0]; j < bounds_j[1]; j++)
         {
             for (int k = bounds_k[0]; k < bounds_k[1]; k++)
             {
+                int i_next = i + 1;
+                int j_next = j + 1;
+                int k_next = k + 1;
+
+                FDTD_boundaries::applyPeriodicBoundary(i_next, j_next, k_next, parameters.Ni, parameters.Nj, parameters.Nk);
+
                 if (BsigmaX(i, j, k) != 0.0)
                     PMLcoef2_x = (1.0 - PMLcoef(BsigmaX(i, j, k))) / (BsigmaX(i, j, k) * dx);
                 else
@@ -267,19 +289,19 @@ void FDTD::update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2])
                     PMLcoef2_z = FDTDconst::C * dt / dz;
 
                 Byx(i, j, k) = Byx(i, j, k) * PMLcoef(BsigmaX(i, j, k)) +
-                    PMLcoef2_x * (Ez(i + 1, j, k) - Ez(i, j, k));
+                    PMLcoef2_x * (Ez(i_next, j, k) - Ez(i, j, k));
                 Bzx(i, j, k) = Bzx(i, j, k) * PMLcoef(BsigmaX(i, j, k)) -
-                    PMLcoef2_x * (Ey(i + 1, j, k) - Ey(i, j, k));
+                    PMLcoef2_x * (Ey(i_next, j, k) - Ey(i, j, k));
 
                 Bxy(i, j, k) = Bxy(i, j, k) * PMLcoef(BsigmaY(i, j, k)) -
-                    PMLcoef2_y * (Ez(i, j + 1, k) - Ez(i, j, k));
+                    PMLcoef2_y * (Ez(i, j_next, k) - Ez(i, j, k));
                 Bzy(i, j, k) = Bzy(i, j, k) * PMLcoef(BsigmaY(i, j, k)) +
-                    PMLcoef2_y * (Ex(i, j + 1, k) - Ex(i, j, k));
+                    PMLcoef2_y * (Ex(i, j_next, k) - Ex(i, j, k));
 
                 Bxz(i, j, k) = Bxz(i, j, k) * PMLcoef(BsigmaZ(i, j, k)) +
-                    PMLcoef2_z * (Ey(i, j, k + 1) - Ey(i, j, k));
+                    PMLcoef2_z * (Ey(i, j, k_next) - Ey(i, j, k));
                 Byz(i, j, k) = Byz(i, j, k) * PMLcoef(BsigmaZ(i, j, k)) -
-                    PMLcoef2_z * (Ex(i, j, k + 1) - Ex(i, j, k));
+                    PMLcoef2_z * (Ex(i, j, k_next) - Ex(i, j, k));
 
                 Bx(i, j, k) = Bxy(i, j, k) + Bxz(i, j, k);
                 By(i, j, k) = Byz(i, j, k) + Byx(i, j, k);

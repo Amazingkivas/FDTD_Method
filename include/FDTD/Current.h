@@ -16,5 +16,5 @@ public:
 
 	Field& operator[] (int iteration);
 
-	double operator() (int iteration, int i, int j, int k);
+	double operator() (const int& iteration, const int& i, const int& j, const int& k);
 };
