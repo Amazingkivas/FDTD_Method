@@ -3,7 +3,7 @@ name: Build|Test|Run
 on: [push, pull_request]
 
 jobs:
- linux-gcc-build:
+  linux-gcc-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -49,3 +49,46 @@ jobs:
         shell: bash
         run: |
           ${PWD}/build/PlotScript/src/Release/sample
+          
+  linux-gcc-build-gpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: 'recursive'
+      
+      - name: Build Kokkos with OpenMP
+        shell: bash
+        run: |
+          cd 3rdparty/kokkos
+          mkdir build
+          cd build
+          cmake .. \
+              -DCMAKE_CXX_COMPILER=g++ \
+              -DCMAKE_C_COMPILER=gcc \
+              -DKokkos_ENABLE_CUDA=ON \
+              -DKokkos_ARCH_AMPERE80=ON
+          make -j4
+          cd ../../..
+      
+      - name: Build FDTD with GCC
+        shell: bash
+        run: |
+          export CMAKE_BUILD_PARALLEL_LEVEL=4
+          mkdir build
+          cmake \
+              -DCMAKE_C_COMPILER=gcc \
+              -DCMAKE_CXX_COMPILER=g++ \
+              -B ${PWD}/build
+          cmake --build ${PWD}/build --config Release
+          find ${PWD}/build -name test_FDTD_method
+      - name: Run tests with GCC
+        shell: bash
+        run: |
+          ${PWD}/build/test/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
+
+      - name: Run kokkos_sample
+        shell: bash
+        run: |
+          find ${PWD}/build -name kokkos_sample
+          ${PWD}/build/PlotScript/src/Release/kokkos_sample
