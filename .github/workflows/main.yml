@@ -62,6 +62,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y nvidia-cuda-toolkit
+          sudo apt-get install -y g++-10
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
           echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc
           source ~/.bashrc
           cd 3rdparty/kokkos
@@ -70,6 +72,7 @@ jobs:
           cmake .. \
               -DCMAKE_CXX_COMPILER=${PWD}/../bin/nvcc_wrapper \
               -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+              -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-10 \
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_AMPERE80=ON \
               -DCMAKE_CXX_STANDARD=17
