@@ -71,7 +71,8 @@ jobs:
               -DCMAKE_CXX_COMPILER=${PWD}/../bin/nvcc_wrapper \
               -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
               -DKokkos_ENABLE_CUDA=ON \
-              -DKokkos_ARCH_AMPERE80=ON
+              -DKokkos_ARCH_AMPERE80=ON \
+              -DCMAKE_CXX_STANDARD=17
           make -j4
           cd ../../..
 
