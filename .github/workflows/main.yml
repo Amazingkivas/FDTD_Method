@@ -61,11 +61,10 @@ jobs:
         shell: bash
         run: |
           cd 3rdparty/kokkos
+          export CUDACXX=bin/nvcc_wrapper
           mkdir build
           cd build
           cmake .. \
-              -DCMAKE_CXX_COMPILER=../bin/nvcc_wrapper \
-              -DCMAKE_C_COMPILER=gcc \
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_AMPERE80=ON
           make -j4
