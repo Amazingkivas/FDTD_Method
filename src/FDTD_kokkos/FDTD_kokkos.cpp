@@ -170,7 +170,7 @@ void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_pa
             Kokkos::deep_copy(By_host, By);
             Kokkos::deep_copy(Bz_host, Bz);
 
-            std::vector<Field> return_data{ Ex_host, Ey_host, Ez_host, Bx_host, By_host, Bz_host };
+            std::vector<Field> return_data{ Ex, Ey, Ez, Bx, By, Bz };
             if (write_result)
                 write_spherical(return_data, write_axis, base_path, t);
         }
@@ -301,7 +301,7 @@ void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_pa
         Kokkos::deep_copy(By_host, By);
         Kokkos::deep_copy(Bz_host, Bz);
 
-        std::vector<Field> return_data{ Ex_host, Ey_host, Ez_host, Bx_host, By_host, Bz_host };
+        std::vector<Field> return_data{ Ex, Ey, Ez, Bx, By, Bz };
         if (write_result)
             write_spherical(return_data, write_axis, base_path, t);
     }
