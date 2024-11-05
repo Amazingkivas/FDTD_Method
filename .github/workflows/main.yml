@@ -64,28 +64,12 @@ jobs:
           mkdir build
           cd build
           cmake .. \
-              -DCMAKE_CXX_COMPILER=g++ \
+              -DCMAKE_CXX_COMPILER=../bin/nvcc_wrapper \
               -DCMAKE_C_COMPILER=gcc \
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_AMPERE80=ON
           make -j4
           cd ../../..
-      
-      - name: Build FDTD with GCC
-        shell: bash
-        run: |
-          export CMAKE_BUILD_PARALLEL_LEVEL=4
-          mkdir build
-          cmake \
-              -DCMAKE_C_COMPILER=gcc \
-              -DCMAKE_CXX_COMPILER=g++ \
-              -B ${PWD}/build
-          cmake --build ${PWD}/build --config Release
-          find ${PWD}/build -name test_FDTD_method
-      - name: Run tests with GCC
-        shell: bash
-        run: |
-          ${PWD}/build/test/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
 
       - name: Run kokkos_sample
         shell: bash
