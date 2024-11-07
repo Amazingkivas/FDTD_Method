@@ -65,6 +65,7 @@ jobs:
           sudo apt-get install -y g++-10
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
           echo 'export PATH=/usr/lib/nvidia-cuda-toolkit/bin:$PATH' >> ~/.bashrc
+          echo 'export LD_LIBRARY_PATH=/usr/lib/nvidia-cuda-toolkit/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
           source ~/.bashrc
           nvcc --version
           sudo rm -f /usr/bin/nvcc || echo "/usr/bin/nvcc not found"
