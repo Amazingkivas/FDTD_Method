@@ -64,12 +64,10 @@ jobs:
           sudo apt-get install -y nvidia-cuda-toolkit
           sudo apt-get install -y g++-10
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
-          echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc
+          echo 'export PATH=/usr/lib/nvidia-cuda-toolkit/bin:$PATH' >> ~/.bashrc
           source ~/.bashrc
-          find /usr -name nvcc
           nvcc --version
           sudo rm -f /usr/bin/nvcc || echo "/usr/bin/nvcc not found"
-          find /usr -name nvcc
           /usr/lib/nvidia-cuda-toolkit/bin/nvcc --version || echo "/usr/lib/nvidia-cuda-toolkit/bin/nvcc not found"
           cd 3rdparty/kokkos
           mkdir build
