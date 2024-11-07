@@ -13,8 +13,8 @@ add_subdirectory(../3rdparty/googletest ../3rdparty/googletest/build EXCLUDE_FRO
 add_executable(${target} ${srcs} ${hdrs})
 add_dependencies(${target} gtest)
 target_link_directories(${target} PUBLIC ${CMAKE_BINARY_DIR}/googletest/lib)
-target_link_libraries(${target} PUBLIC gtest gtest_main)
+target_link_libraries(${target} PRIVATE gtest gtest_main)
 
-target_link_libraries(${target} Kokkos::kokkos)
+target_link_libraries(${target} PRIVATE Kokkos::kokkos)
 
 add_compile_options(/wd4996)

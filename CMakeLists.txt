@@ -1,6 +1,14 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
-project(FDTD)
+project(FDTD LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD_REQUIRED True)
+
+set(CMAKE_CUDA_FLAGS_INIT "-std=c++17")
 
 find_package(OpenMP REQUIRED)
 
@@ -14,6 +22,11 @@ include_directories(3rdparty)
 
 UNSET(Kokkos_DIR CACHE)
 set(Kokkos_DIR 3rdparty/kokkos/build/)
+
+set(Kokkos_NVCC_WRAPPER "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/kokkos/bin/nvcc_wrapper")
+set(Kokkos_COMPILE_LAUNCHER "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/kokkos/bin/kokkos_launch_compiler")
+set(Kokkos_HOST_COMPILER "g++")
+
 
 if(NOT DEFINED Kokkos_ENABLE_CONTAINERS)
     set(Kokkos_ENABLE_CONTAINERS ON)
@@ -56,7 +69,6 @@ add_custom_command(
 )
 
 add_custom_target(create_kokkoscore ALL DEPENDS ${KOKKOS_CORE_LIB})
-
 
 find_package(Kokkos REQUIRED)
 

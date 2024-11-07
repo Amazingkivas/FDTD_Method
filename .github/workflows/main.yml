@@ -3,7 +3,7 @@ name: Build|Test|Run
 on: [push, pull_request]
 
 jobs:
- linux-gcc-build:
+  linux-gcc-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -49,3 +49,44 @@ jobs:
         shell: bash
         run: |
           ${PWD}/build/PlotScript/src/Release/sample
+          
+  linux-gcc-build-gpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: 'recursive'
+      
+      - name: Build Kokkos with OpenMP
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nvidia-cuda-toolkit
+          sudo apt-get install -y g++-10
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
+          echo 'export PATH=/usr/lib/nvidia-cuda-toolkit/bin:$PATH' >> ~/.bashrc
+          echo 'export LD_LIBRARY_PATH=/usr/lib/nvidia-cuda-toolkit/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+          source ~/.bashrc
+          echo 'export PATH=/usr/lib/nvidia-cuda-toolkit/bin:$PATH' >> $GITHUB_ENV
+          echo 'export LD_LIBRARY_PATH=/usr/lib/nvidia-cuda-toolkit/lib64:$LD_LIBRARY_PATH' >> $GITHUB_ENV
+          nvcc --version
+          sudo rm -f /usr/bin/nvcc || echo "/usr/bin/nvcc not found"
+          /usr/lib/nvidia-cuda-toolkit/bin/nvcc --version || echo "/usr/lib/nvidia-cuda-toolkit/bin/nvcc not found"
+          cd 3rdparty/kokkos
+          mkdir build
+          cd build
+          cmake .. \
+              -DCMAKE_CXX_COMPILER=${PWD}/../bin/nvcc_wrapper \
+              -DCMAKE_CUDA_COMPILER=/usr/lib/nvidia-cuda-toolkit/bin/nvcc \
+              -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-10 \
+              -DKokkos_ENABLE_CUDA=ON \
+              -DKokkos_ARCH_AMPERE80=ON \
+              -DCMAKE_CXX_STANDARD=17
+          make -j4
+          cd ../../..
+
+      - name: Run kokkos_sample
+        shell: bash
+        run: |
+          find ${PWD}/build -name kokkos_sample
+          ${PWD}/build/PlotScript/src/Release/kokkos_sample
