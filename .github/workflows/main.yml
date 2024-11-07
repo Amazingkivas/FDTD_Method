@@ -68,7 +68,6 @@ jobs:
           source ~/.bashrc
           find /usr -name nvcc
           nvcc --version
-          nvidia-smi
           cd 3rdparty/kokkos
           mkdir build
           cd build
