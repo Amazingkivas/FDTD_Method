@@ -67,12 +67,14 @@ jobs:
           echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc
           source ~/.bashrc
           find /usr -name nvcc
+          nvcc --version
+          nvidia-smi
           cd 3rdparty/kokkos
           mkdir build
           cd build
           cmake .. \
               -DCMAKE_CXX_COMPILER=${PWD}/../bin/nvcc_wrapper \
-              -DCMAKE_CUDA_COMPILER=/usr/bin/nvcc \
+              -DCMAKE_CUDA_COMPILER=/usr/lib/nvidia-cuda-toolkit/bin/nvcc \
               -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-10 \
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_AMPERE80=ON \
