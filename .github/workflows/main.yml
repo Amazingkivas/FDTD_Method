@@ -68,6 +68,9 @@ jobs:
           source ~/.bashrc
           find /usr -name nvcc
           nvcc --version
+          sudo rm -f /usr/bin/nvcc || echo "/usr/bin/nvcc not found"
+          find /usr -name nvcc
+          /usr/lib/nvidia-cuda-toolkit/bin/nvcc --version || echo "/usr/lib/nvidia-cuda-toolkit/bin/nvcc not found"
           cd 3rdparty/kokkos
           mkdir build
           cd build
