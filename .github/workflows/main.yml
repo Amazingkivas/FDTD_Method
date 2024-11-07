@@ -66,12 +66,7 @@ jobs:
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
           echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc
           source ~/.bashrc
-          NVCC_PATH=$(which nvcc)
-          echo "The path to nvcc is: $NVCC_PATH"
-          if [ -z "$NVCC_PATH" ]; then
-            echo "nvcc not found. Please check your CUDA installation."
-            exit 1
-          fi
+          find /usr -name nvcc
           cd 3rdparty/kokkos
           mkdir build
           cd build
