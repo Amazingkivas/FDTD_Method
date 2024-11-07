@@ -67,6 +67,8 @@ jobs:
           echo 'export PATH=/usr/lib/nvidia-cuda-toolkit/bin:$PATH' >> ~/.bashrc
           echo 'export LD_LIBRARY_PATH=/usr/lib/nvidia-cuda-toolkit/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
           source ~/.bashrc
+          echo 'export PATH=/usr/lib/nvidia-cuda-toolkit/bin:$PATH' >> $GITHUB_ENV
+          echo 'export LD_LIBRARY_PATH=/usr/lib/nvidia-cuda-toolkit/lib64:$LD_LIBRARY_PATH' >> $GITHUB_ENV
           nvcc --version
           sudo rm -f /usr/bin/nvcc || echo "/usr/bin/nvcc not found"
           /usr/lib/nvidia-cuda-toolkit/bin/nvcc --version || echo "/usr/lib/nvidia-cuda-toolkit/bin/nvcc not found"
