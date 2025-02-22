@@ -103,7 +103,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     FDTD_kokkos::FDTD method(params, cur_param.dt, 0.1, it, cur_param, cur_func);
 
     auto start = std::chrono::high_resolution_clock::now();
-    method.update_fields(true, Axis::Z, base_path);
+    method.update_fields(false, Axis::Z, base_path);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 
         if (argc == 1)
         {
-            int N = 70;
+            int N = 120;
             int Iterations = 50;
             spherical_wave(N, Iterations, "../../");
         }

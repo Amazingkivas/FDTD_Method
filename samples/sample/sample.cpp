@@ -105,7 +105,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
     
     auto start = std::chrono::high_resolution_clock::now();
     test.initiialize_current(method, cur_param, it, cur_func);
-    method.update_fields(it, true, Axis::Z, base_path);
+    method.update_fields(it, false, Axis::Z, base_path);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
     std::vector<char*> arguments(argv, argv + argc);
     if (argc == 1) 
     {
-        int N = 70;
+        int N = 120;
         int Iterations = 50;
         spherical_wave(N, Iterations, "../../");
     }
