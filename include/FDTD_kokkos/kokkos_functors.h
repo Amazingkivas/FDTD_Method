@@ -4,7 +4,7 @@
 #include "Structures.h"
 #include "FDTD_boundaries.h"
 
-using namespace FDTDstruct;
+using namespace FDTD_struct;
 
 namespace FDTD_kokkos
 {
@@ -67,9 +67,9 @@ public:
     KOKKOS_INLINE_FUNCTION void operator()(const int& i, const int& j, const int& k) const
     {
         Esigma(i, j, k) = SGm * std::pow(static_cast<double>(dist(i, j, k))
-           / static_cast<double>(pml_size), FDTDconst::N);
+           / static_cast<double>(pml_size), FDTD_const::N);
         Bsigma(i, j, k) = SGm * std::pow(static_cast<double>(dist(i, j, k))
-           / static_cast<double>(pml_size), FDTDconst::N);
+           / static_cast<double>(pml_size), FDTD_const::N);
     }
 };
 
@@ -115,15 +115,15 @@ public:
 
         FDTD_boundaries::applyPeriodicBoundary(i_pred, j_pred, k_pred, Ni, Nj, Nk);
 
-        double Jx_val = (iters <= t) ? 0.0 : 4.0 * FDTDconst::PI * dt * Jx(t, i, j, k);
-        double Jy_val = (iters <= t) ? 0.0 : 4.0 * FDTDconst::PI * dt * Jy(t, i, j, k);
-        double Jz_val = (iters <= t) ? 0.0 : 4.0 * FDTDconst::PI * dt * Jz(t, i, j, k);
+        double Jx_val = (iters <= t) ? 0.0 : 4.0 * FDTD_const::PI * dt * Jx(t, i, j, k);
+        double Jy_val = (iters <= t) ? 0.0 : 4.0 * FDTD_const::PI * dt * Jy(t, i, j, k);
+        double Jz_val = (iters <= t) ? 0.0 : 4.0 * FDTD_const::PI * dt * Jz(t, i, j, k);
 
-        Ex(i, j, k) += -Jx_val + FDTDconst::C * dt * ((Bz(i, j, k) - Bz(i, j_pred, k)) / dy -
+        Ex(i, j, k) += -Jx_val + FDTD_const::C * dt * ((Bz(i, j, k) - Bz(i, j_pred, k)) / dy -
                                 (By(i, j, k) - By(i, j, k_pred)) / dz);
-        Ey(i, j, k) += -Jy_val + FDTDconst::C * dt * ((Bx(i, j, k) - Bx(i, j, k_pred)) / dz -
+        Ey(i, j, k) += -Jy_val + FDTD_const::C * dt * ((Bx(i, j, k) - Bx(i, j, k_pred)) / dz -
                                 (Bz(i, j, k) - Bz(i_pred, j, k)) / dx);
-        Ez(i, j, k) += -Jz_val + FDTDconst::C * dt * ((By(i, j, k) - By(i_pred, j, k)) / dx -
+        Ez(i, j, k) += -Jz_val + FDTD_const::C * dt * ((By(i, j, k) - By(i_pred, j, k)) / dx -
                                 (Bx(i, j, k) - Bx(i, j_pred, k)) / dy);
     }
 };
@@ -164,11 +164,11 @@ public:
 
         FDTD_boundaries::applyPeriodicBoundary(i_next, j_next, k_next, Ni, Nj, Nk);
 
-        Bx(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ey(i, j, k_next) - Ey(i, j, k)) / dz -
+        Bx(i, j, k) += FDTD_const::C * dt / 2.0 * ((Ey(i, j, k_next) - Ey(i, j, k)) / dz -
                         (Ez(i, j_next, k) - Ez(i, j, k)) / dy);
-        By(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ez(i_next, j, k) - Ez(i, j, k)) / dx -
+        By(i, j, k) += FDTD_const::C * dt / 2.0 * ((Ez(i_next, j, k) - Ez(i, j, k)) / dx -
                         (Ex(i, j, k_next) - Ex(i, j, k)) / dz);
-        Bz(i, j, k) += FDTDconst::C * dt / 2.0 * ((Ex(i, j_next, k) - Ex(i, j, k)) / dy -
+        Bz(i, j, k) += FDTD_const::C * dt / 2.0 * ((Ex(i, j_next, k) - Ex(i, j, k)) / dy -
                         (Ey(i_next, j, k) - Ey(i, j, k)) / dx);
     }
 };
@@ -185,7 +185,7 @@ private:
 
     double PMLcoef(double sigma) const
     {
-        return std::exp(-sigma * dt * FDTDconst::C);
+        return std::exp(-sigma * dt * FDTD_const::C);
     }
 public:
     ComputeE_PML_FieldFunctor(Field Ex, Field Ey, Field Ez,
@@ -232,17 +232,17 @@ public:
         if (EsigmaX(i, j, k) != 0.0)
             PMLcoef2_x = (1.0 - PMLcoef(EsigmaX(i, j, k))) / (EsigmaX(i, j, k) * dx);
         else
-            PMLcoef2_x = FDTDconst::C * dt / dx;
+            PMLcoef2_x = FDTD_const::C * dt / dx;
 
         if (EsigmaY(i, j, k) != 0.0)
             PMLcoef2_y = (1.0 - PMLcoef(EsigmaY(i, j, k))) / (EsigmaY(i, j, k) * dy);
         else
-            PMLcoef2_y = FDTDconst::C * dt / dy;
+            PMLcoef2_y = FDTD_const::C * dt / dy;
 
         if (EsigmaZ(i, j, k) != 0.0)
             PMLcoef2_z = (1.0 - PMLcoef(EsigmaZ(i, j, k))) / (EsigmaZ(i, j, k) * dz);
         else
-            PMLcoef2_z = FDTDconst::C * dt / dz;
+            PMLcoef2_z = FDTD_const::C * dt / dz;
 
         Eyx(i, j, k) = Eyx(i, j, k) * PMLcoef(EsigmaX(i, j, k)) -
                     PMLcoef2_x * (Bz(i, j, k) - Bz(i_pred, j, k));
@@ -277,7 +277,7 @@ private:
 
     double PMLcoef(double sigma) const
     {
-        return std::exp(-sigma * dt * FDTDconst::C);
+        return std::exp(-sigma * dt * FDTD_const::C);
     }
 public:
     ComputeB_PML_FieldFunctor(Field Ex, Field Ey, Field Ez,
@@ -324,17 +324,17 @@ public:
         if (BsigmaX(i, j, k) != 0.0)
             PMLcoef2_x = (1.0 - PMLcoef(BsigmaX(i, j, k))) / (BsigmaX(i, j, k) * dx);
         else
-            PMLcoef2_x = FDTDconst::C * dt / dx;
+            PMLcoef2_x = FDTD_const::C * dt / dx;
 
         if (BsigmaY(i, j, k) != 0.0)
             PMLcoef2_y = (1.0 - PMLcoef(BsigmaY(i, j, k))) / (BsigmaY(i, j, k) * dy);
         else
-            PMLcoef2_y = FDTDconst::C * dt / dy;
+            PMLcoef2_y = FDTD_const::C * dt / dy;
 
         if (BsigmaZ(i, j, k) != 0.0)
             PMLcoef2_z = (1.0 - PMLcoef(BsigmaZ(i, j, k))) / (BsigmaZ(i, j, k) * dz);
         else
-            PMLcoef2_z = FDTDconst::C * dt / dz;
+            PMLcoef2_z = FDTD_const::C * dt / dz;
 
         Byx(i, j, k) = Byx(i, j, k) * PMLcoef(BsigmaX(i, j, k)) +
                     PMLcoef2_x * (Ez(i_next, j, k) - Ez(i, j, k));

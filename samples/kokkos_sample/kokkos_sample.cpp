@@ -63,7 +63,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
             * pow(cos(2.0 * M_PI * z / Tz), 2.0);
     };
 
-    double d = FDTDconst::C;
+    double d = FDTD_const::C;
     double boundary = static_cast<double>(n) / 2.0 * d;
 
     Parameters params
@@ -100,7 +100,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
         clear_directory(dir_path);
     }
 
-    FDTD_kokkos::FDTD method(params, cur_param.dt, 0.1, it, cur_param, cur_func);
+    FDTD_kokkos::FDTD method(params, cur_param.dt, 0.0, it, cur_param, cur_func);
 
     auto start = std::chrono::high_resolution_clock::now();
     method.update_fields(false, Axis::Z, base_path);
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 
         if (argc == 1)
         {
-            int N = 120;
+            int N = 50;
             int Iterations = 50;
             spherical_wave(N, Iterations, "../../");
         }

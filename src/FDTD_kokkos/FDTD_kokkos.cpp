@@ -229,11 +229,11 @@ void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_pa
     };
 
     // Calculation of maximum permittivity and permeability
-    double SGm_x = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
+    double SGm_x = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
         / (static_cast<double>(pml_size_i) * parameters.dx);
-    double SGm_y = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
+    double SGm_y = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
         / (static_cast<double>(pml_size_j) * parameters.dy);
-    double SGm_z = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
+    double SGm_z = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
         / (static_cast<double>(pml_size_k) * parameters.dz);
 
     // Calculation of permittivity and permeability in the cells

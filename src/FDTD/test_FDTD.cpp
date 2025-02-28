@@ -2,45 +2,6 @@
 
 Test_FDTD::Test_FDTD(Parameters _parameters) : parameters(_parameters) {}
 
-void Test_FDTD::initiialize_current(FDTD& _test, CurrentParameters cParams, int iters,
-	std::function<double(double, double, double, double)>& init_function)
-{
-	double Tx = cParams.period_x;
-	double Ty = cParams.period_y;
-	double Tz = cParams.period_z;
-	double T = cParams.period;
-
-	int start_i = std::floor((-Tx / 4.0 - parameters.ax) / parameters.dx);
-	int start_j = std::floor((-Ty / 4.0 - parameters.ay) / parameters.dy);
-	int start_k = std::floor((-Tz / 4.0 - parameters.az) / parameters.dz);
-
-	int max_i = std::floor((Tx / 4.0 - parameters.ax) / parameters.dx);
-	int max_j = std::floor((Ty / 4.0 - parameters.ay) / parameters.dy);
-	int max_k = std::floor((Tz / 4.0 - parameters.az) / parameters.dz);
-
-	for (int iter = 0; iter < cParams.iterations; iter++)
-	{
-		Field J(parameters.Ni, parameters.Nj, parameters.Nk);
-#pragma omp parallel for collapse(3)
-		for (int i = start_i; i <= max_i; i++)
-		{
-			for (int j = start_j; j <= max_j; j++)
-			{
-				for (int k = start_k; k <= max_k; k++)
-				{
-					J(i, j, k) = init_function(static_cast<double>(i) * parameters.dx,
-						static_cast<double>(j) * parameters.dy,
-						static_cast<double>(k) * parameters.dz,
-						static_cast<double>(iter + 1) * cParams.dt);
-				}
-			}
-		}
-		_test.get_current(Component::JX)[iter] = J;
-		_test.get_current(Component::JY)[iter] = J;
-		_test.get_current(Component::JZ)[iter] = J;
-	}
-}
-
 void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	std::function<double(double, double[2])>& init_function)
 {
@@ -57,8 +18,8 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 			{
 				for (int k = 0; k < parameters.Nk; k++)
 				{
-					_test.get_field(fields.selected_E)(i, j, k) = sign * init_function(x, size_x);
-					_test.get_field(fields.selected_B)(i, j, k) = init_function(x_b + x, size_x);
+					_test.get_field(fields.selected_E)[i][j][k] = sign * init_function(x, size_x);
+					_test.get_field(fields.selected_B)[i][j][k] = init_function(x_b + x, size_x);
 				}
 			}
 		}
@@ -74,8 +35,8 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 			{
 				for (int i = 0; i < parameters.Ni; i++)
 				{
-					_test.get_field(fields.selected_E)(i, j, k) = sign * init_function(y, size_y);
-					_test.get_field(fields.selected_B)(i, j, k) = init_function(y_b + y, size_y);
+					_test.get_field(fields.selected_E)[i][j][k] = sign * init_function(y, size_y);
+					_test.get_field(fields.selected_B)[i][j][k] = init_function(y_b + y, size_y);
 				}
 			}
 		}
@@ -91,8 +52,8 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 			{
 				for (int j = 0; j < parameters.Nj; j++)
 				{
-					_test.get_field(fields.selected_E)(i, j, k) = sign * init_function(z, size_z);
-					_test.get_field(fields.selected_B)(i, j, k) = init_function(z_b + z, size_z);
+					_test.get_field(fields.selected_E)[i][j][k] = sign * init_function(z, size_z);
+					_test.get_field(fields.selected_B)[i][j][k] = init_function(z_b + z, size_z);
 				}
 			}
 		}
@@ -157,7 +118,7 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 		int k = 0;
 		for (int i = 0; i < parameters.Ni; ++i, x += parameters.dx)
 		{
-			this_error = fabs(sign * this_field(i, j, k) - true_function(x, time, size_x));
+			this_error = fabs(sign * this_field[i][j][k] - true_function(x, time, size_x));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
 		}
@@ -170,7 +131,7 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 		int k = 0;
 		for (int j = 0; j < parameters.Nj; ++j, y += parameters.dy)
 		{
-			this_error = fabs(sign * this_field(i, j, k) - true_function(y, time, size_y));
+			this_error = fabs(sign * this_field[i][j][k] - true_function(y, time, size_y));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
 		}
@@ -183,7 +144,7 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 		int j = 0;
 		for (int k = 0; k < parameters.Nk; ++k, z += parameters.dz)
 		{
-			this_error = fabs(sign * this_field(i, j, k) - true_function(z, time, size_z));
+			this_error = fabs(sign * this_field[i][j][k] - true_function(z, time, size_z));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
 		}

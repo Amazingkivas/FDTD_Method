@@ -7,9 +7,9 @@
 #include <fstream>
 #include <string>
 
-#include "Functors.h"
+#include "kokkos_functors.h"
 
-using namespace FDTDstruct;
+using namespace FDTD_struct;
 
 namespace FDTD_kokkos
 {
