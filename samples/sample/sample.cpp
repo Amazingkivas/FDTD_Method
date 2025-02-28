@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
     std::vector<char*> arguments(argv, argv + argc);
     if (argc == 1) 
     {
-        int N = 50;
+        int N = 120;
         int Iterations = 50;
         spherical_wave(N, Iterations, "../../");
     }
