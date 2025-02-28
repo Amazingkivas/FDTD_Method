@@ -29,7 +29,7 @@ jobs:
           export CMAKE_BUILD_PARALLEL_LEVEL=4
           export OMP_PROC_BIND=true
           export OMP_PLACES=cores
-          export OMP_NUM_THREADS=8
+          export OMP_NUM_THREADS=4
           mkdir build
           cmake \
               -DCMAKE_C_COMPILER=gcc \
@@ -42,7 +42,7 @@ jobs:
         run: |
           export OMP_PROC_BIND=true
           export OMP_PLACES=cores
-          export OMP_NUM_THREADS=8
+          export OMP_NUM_THREADS=4
           ${PWD}/build/test/test_FDTD_method --gtest_repeat=2 --gtest_break_on_failure
 
       - name: Run kokkos_sample
@@ -50,7 +50,7 @@ jobs:
         run: |
           export OMP_PROC_BIND=true
           export OMP_PLACES=cores
-          export OMP_NUM_THREADS=8
+          export OMP_NUM_THREADS=4
           find ${PWD}/build -name kokkos_sample
           ${PWD}/build/PlotScript/src/Release/kokkos_sample
       
@@ -59,5 +59,5 @@ jobs:
         run: |
           export OMP_PROC_BIND=true
           export OMP_PLACES=cores
-          export OMP_NUM_THREADS=8
+          export OMP_NUM_THREADS=4
           ${PWD}/build/PlotScript/src/Release/sample
