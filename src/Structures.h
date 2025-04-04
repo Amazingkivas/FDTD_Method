@@ -23,7 +23,6 @@ namespace FDTD_struct
 	struct CurrentParameters {
 		int period;
 		int m;
-		double dt;
 		int iterations;
 		double period_x = static_cast<double>(m) * FDTD_const::C;
 		double period_y = static_cast<double>(m) * FDTD_const::C;
@@ -34,6 +33,8 @@ namespace FDTD_struct
 		int Ni;
 		int Nj;
 		int Nk;
+
+		double dt;
 
 		double ax;
 		double bx;

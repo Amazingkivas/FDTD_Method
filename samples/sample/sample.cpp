@@ -1,15 +1,12 @@
-﻿#define _USE_MATH_DEFINES
-
-#include <iostream>
+﻿#include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <filesystem>
 #include <cmath>
 #include <chrono>
 
-namespace fs = std::filesystem;
-
 #include "test_FDTD.h"
+
+using namespace FDTD_struct;
 
 Axis get_axis(Component field_E, Component field_B)
 {
@@ -39,17 +36,19 @@ Axis get_axis(Component field_E, Component field_B)
 
 void spherical_wave(int n, int it, std::string base_path = "")
 {
+    double dt = 0.2;
     CurrentParameters cur_param
     {
         8,
         4,
-        0.2,
     };
+
     double T = cur_param.period;
     double Tx = cur_param.period_x;
     double Ty = cur_param.period_y;
     double Tz = cur_param.period_z;
-    cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt);
+    cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / dt);
+
     std::function<double(double, double, double, double)> cur_func 
         = [T, Tx, Ty, Tz](double x, double y, double z, double t)
     {
@@ -59,49 +58,66 @@ void spherical_wave(int n, int it, std::string base_path = "")
             * pow(cos(2.0 * M_PI * z / Tz), 2.0);
     };
     
-    // Initialization of the structures and method
     double d = FDTD_const::C;
-
     double boundary = static_cast<double>(n) / 2.0 * d;
 
     Parameters params
     {
-        n,
-        n,
-        n,
-        -boundary,
-        boundary,
-        -boundary,
-        boundary,
-        -boundary,
-        boundary,
-        d,
-        d,
-        d
+        n,          // Ni
+        n,          // Nj
+        n,          // Nk
+        dt,
+        -boundary,  // x_min
+        boundary,   // x_max
+        -boundary,  // y_min
+        boundary,   // y_max
+        -boundary,  // z_min
+        boundary,   // z_max
+        d,          // dx
+        d,          // dy
+        d           // dz
     };
 
-    auto clear_directory = [](const std::string& dir_path) {
-        if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
-            for (auto& file : fs::directory_iterator(dir_path)) {
-                if (fs::is_regular_file(file.path())) {
-                    fs::remove(file.path());
-                }
-            }
-        } else {
-            fs::create_directories(dir_path);
-        }
-    };
+    FDTD_openmp::FDTD method(params);
+    int first_iters = std::min(it, cur_param.iterations);
 
-    for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
-    {
-        std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
-        clear_directory(dir_path);
-    }
+    double dx = params.dx;
+    double dy = params.dy;
+    double dz = params.dz;
 
-    FDTD method(params, cur_param.dt, 0.0, it, cur_param, cur_func);
+    int start_i = static_cast<int>(std::floor((-cur_param.period_x / 4.0 - params.ax) / dx));
+    int start_j = static_cast<int>(std::floor((-cur_param.period_y / 4.0 - params.ay) / dy));
+    int start_k = static_cast<int>(std::floor((-cur_param.period_z / 4.0 - params.az) / dz));
+
+    int max_i = static_cast<int>(std::floor((cur_param.period_x / 4.0 - params.ax) / dx));
+    int max_j = static_cast<int>(std::floor((cur_param.period_y / 4.0 - params.ay) / dy));
+    int max_k = static_cast<int>(std::floor((cur_param.period_z / 4.0 - params.az) / dz));
     
     auto start = std::chrono::high_resolution_clock::now();
-    method.update_fields(false, Axis::Z, base_path);
+
+    for (int iter = 0; iter < first_iters; iter++) {
+        for (int k = start_k; k < max_k; ++k) {
+            for (int j = start_j; j < max_j; ++j) {
+                for (int i = start_i; i < max_i; ++i) {
+                    int index = i + j * params.Ni + k * params.Ni * params.Nj;
+
+                    double J_value = cur_func(i * dx, j * dy, k * dz, (iter + 1) * params.dt);
+
+                    method.get_field(Component::JX)[index] = J_value;
+                    method.get_field(Component::JY)[index] = J_value;
+                    method.get_field(Component::JZ)[index] = J_value;
+                }
+            }
+        }
+        method.update_fields();
+    }
+    method.zeroes_currents();
+
+    for (int iter = first_iters; iter < it; iter++)
+    {
+        method.update_fields();
+    }
+    
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;

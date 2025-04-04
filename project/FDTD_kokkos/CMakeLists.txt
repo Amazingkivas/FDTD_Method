@@ -1,7 +1,7 @@
 set(target "FDTD_kokkos")
 
-file(GLOB hdrs "../../include/FDTD_kokkos/*.h")
-file(GLOB srcs "../../src/FDTD_kokkos/*.cpp")
+file(GLOB hdrs "../../src/FDTD_kokkos/*.h")
+file(GLOB srcs "../../src/*.cpp")
 
 add_library(${target} STATIC ${srcs} ${hdrs})
 

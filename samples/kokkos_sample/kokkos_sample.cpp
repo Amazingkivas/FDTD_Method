@@ -1,16 +1,15 @@
-#define _USE_MATH_DEFINES
 
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <filesystem>
 #include <cmath>
 #include <chrono>
 #include <Kokkos_Core.hpp>
-
-namespace fs = std::filesystem;
+#include <cstdlib>
 
 #include "FDTD_kokkos.h"
+
+using namespace FDTD_struct;
 
 Axis get_axis(Component field_E, Component field_B)
 {
@@ -40,11 +39,11 @@ Axis get_axis(Component field_E, Component field_B)
 
 void spherical_wave(int n, int it, const std::string base_path = "../../PlotScript/")
 {
+    double dt = 0.2;
     CurrentParameters cur_param
     {
         8,
         4,
-        0.2
     };
 
     double T = cur_param.period;
@@ -52,7 +51,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     double Ty = cur_param.period_y;
     double Tz = cur_param.period_z;
 
-    cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt);
+    cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / dt);
 
     std::function<double(double, double, double, double)> cur_func =
         [T, Tx, Ty, Tz](double x, double y, double z, double t)
@@ -71,6 +70,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
         n,          // Ni
         n,          // Nj
         n,          // Nk
+        dt,
         -boundary,  // x_min
         boundary,   // x_max
         -boundary,  // y_min
@@ -82,28 +82,46 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
         d           // dz
     };
 
-    auto clear_directory = [](const std::string& dir_path) {
-        if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
-            for (auto& file : fs::directory_iterator(dir_path)) {
-                if (fs::is_regular_file(file.path())) {
-                    fs::remove(file.path());
-                }
-            }
-        } else {
-            fs::create_directories(dir_path);
-        }
-    };
+    FDTD_kokkos::FDTD method(params);
+    int first_iters = std::min(it, cur_param.iterations);
 
-    for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
-    {
-        std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
-        clear_directory(dir_path);
-    }
+    double dx = params.dx;
+    double dy = params.dy;
+    double dz = params.dz;
 
-    FDTD_kokkos::FDTD method(params, cur_param.dt, 0.0, it, cur_param, cur_func);
+    int start_i = static_cast<int>(std::floor((-cur_param.period_x / 4.0 - params.ax) / dx));
+    int start_j = static_cast<int>(std::floor((-cur_param.period_y / 4.0 - params.ay) / dy));
+    int start_k = static_cast<int>(std::floor((-cur_param.period_z / 4.0 - params.az) / dz));
+
+    int max_i = static_cast<int>(std::floor((cur_param.period_x / 4.0 - params.ax) / dx));
+    int max_j = static_cast<int>(std::floor((cur_param.period_y / 4.0 - params.ay) / dy));
+    int max_k = static_cast<int>(std::floor((cur_param.period_z / 4.0 - params.az) / dz));
 
     auto start = std::chrono::high_resolution_clock::now();
-    method.update_fields(false, Axis::Z, base_path);
+
+    for (int iter = 0; iter < first_iters; iter++) {
+        for (int k = start_k; k < max_k; ++k) {
+            for (int j = start_j; j < max_j; ++j) {
+                for (int i = start_i; i < max_i; ++i) {
+                    int index = i + j * params.Ni + k * params.Ni * params.Nj;
+
+                    double J_value = cur_func(i * dx, j * dy, k * dz, (iter + 1) * params.dt);
+
+                    method.get_field(Component::JX)[index] = J_value;
+                    method.get_field(Component::JY)[index] = J_value;
+                    method.get_field(Component::JZ)[index] = J_value;
+                }
+            }
+        }
+        method.update_fields();
+    }
+    method.zeroes_currents();
+
+    for (int iter = first_iters; iter < it; iter++)
+    {
+        method.update_fields();
+    }
+
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
@@ -112,7 +130,15 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
 
 int main(int argc, char* argv[])
 {
+#ifdef KOKKOS_HAVE_OPENMP
+    std::cout << "OMP AVAIL" << std::endl;
+    Kokkos::InitArguments init_args;
+    char *num_threads_string = std::getenv("OMP_NUM_THREADS");
+    init_args.num_threads = std::atoi(num_threads_string);
+    Kokkos::initialize(init_args);
+#else
     Kokkos::initialize(argc, argv);
+#endif
     {
         std::ifstream source_fin;
         std::vector<char*> arguments(argv, argv + argc);
