@@ -6,14 +6,14 @@
 #include <cmath>
 #include <fstream>
 #include <string>
+#include <chrono>
 
-#include "Functors.h"
+#include "kokkos_functors.h"
 
-using namespace FDTDstruct;
+using namespace FDTD_struct;
 
 namespace FDTD_kokkos
 {
-
 class FDTD
 {
 private:

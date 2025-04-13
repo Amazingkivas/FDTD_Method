@@ -15,38 +15,45 @@ FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, C
         throw std::invalid_argument("ERROR: invalid parameters");
     }
 
-    Jx = TimeField("Jx", time, parameters.Ni, parameters.Nj, parameters.Nk);
-    Jy = TimeField("Jy", time, parameters.Ni, parameters.Nj, parameters.Nk);
-    Jz = TimeField("Jz", time, parameters.Ni, parameters.Nj, parameters.Nk);
+    int size = (parameters.Ni + 2) * (parameters.Nj + 2) * (parameters.Nk + 2);
 
-    Ex = Field("Ex", parameters.Ni, parameters.Nj, parameters.Nk);
-    Ey = Field("Ey", parameters.Ni, parameters.Nj, parameters.Nk);
-    Ez = Field("Ez", parameters.Ni, parameters.Nj, parameters.Nk);
-    Bx = Field("Bx", parameters.Ni, parameters.Nj, parameters.Nk);
-    By = Field("By", parameters.Ni, parameters.Nj, parameters.Nk);
-    Bz = Field("Bz", parameters.Ni, parameters.Nj, parameters.Nk);
+    Jx = TimeField(time);
+    for (int i = 0; i < time; ++i) {
+        Jx[i] = Field("View_" + std::to_string(i), size);
+    }
 
-    Exy = Field("Exy", parameters.Ni, parameters.Nj, parameters.Nk);
-    Exz = Field("Exz", parameters.Ni, parameters.Nj, parameters.Nk);
-    Eyx = Field("Eyx", parameters.Ni, parameters.Nj, parameters.Nk);
-    Eyz = Field("Eyz", parameters.Ni, parameters.Nj, parameters.Nk);
-    Ezx = Field("Ezx", parameters.Ni, parameters.Nj, parameters.Nk);
-    Ezy = Field("Ezy", parameters.Ni, parameters.Nj, parameters.Nk);
+    //Jx = TimeField("Jx", cParams.iterations, size);
+    //Jy = TimeField("Jy", time, size);
+    //Jz = TimeField("Jz", time, size);
 
-    Bxy = Field("Bxy", parameters.Ni, parameters.Nj, parameters.Nk);
-    Bxz = Field("Bxz", parameters.Ni, parameters.Nj, parameters.Nk);
-    Byx = Field("Byx", parameters.Ni, parameters.Nj, parameters.Nk);
-    Byz = Field("Byz", parameters.Ni, parameters.Nj, parameters.Nk);
-    Bzx = Field("Bzx", parameters.Ni, parameters.Nj, parameters.Nk);
-    Bzy = Field("Bzy", parameters.Ni, parameters.Nj, parameters.Nk);
+    Ex = Field("Ex", size);
+    Ey = Field("Ey", size);
+    Ez = Field("Ez", size);
+    Bx = Field("Bx", size);
+    By = Field("By", size);
+    Bz = Field("Bz", size);
 
-    EsigmaX = Field("EsigmaX", parameters.Ni, parameters.Nj, parameters.Nk);
-    EsigmaY = Field("EsigmaY", parameters.Ni, parameters.Nj, parameters.Nk);
-    EsigmaZ = Field("EsigmaZ", parameters.Ni, parameters.Nj, parameters.Nk);
+    /*Exy = Field("Exy", size);
+    Exz = Field("Exz", size);
+    Eyx = Field("Eyx", size);
+    Eyz = Field("Eyz", size);
+    Ezx = Field("Ezx", size);
+    Ezy = Field("Ezy", size);
 
-    BsigmaX = Field("BsigmaX", parameters.Ni, parameters.Nj, parameters.Nk);
-    BsigmaY = Field("BsigmaY", parameters.Ni, parameters.Nj, parameters.Nk);
-    BsigmaZ = Field("BsigmaZ", parameters.Ni, parameters.Nj, parameters.Nk);
+    Bxy = Field("Bxy", size);
+    Bxz = Field("Bxz", size);
+    Byx = Field("Byx", size);
+    Byz = Field("Byz", size);
+    Bzx = Field("Bzx", size);
+    Bzy = Field("Bzy", size);
+
+    EsigmaX = Field("EsigmaX", size);
+    EsigmaY = Field("EsigmaY", size);
+    EsigmaZ = Field("EsigmaZ", size);
+
+    BsigmaX = Field("BsigmaX", size);
+    BsigmaY = Field("BsigmaY", size);
+    BsigmaZ = Field("BsigmaZ", size);*/
 
     pml_size_i = static_cast<int>(static_cast<double>(parameters.Ni) * pml_percent);
     pml_size_j = static_cast<int>(static_cast<double>(parameters.Nj) * pml_percent);
@@ -98,7 +105,6 @@ void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_pa
     }
 
     int cur_time;
-
     if (init_func)
     {
         cur_time = cParams.iterations;
@@ -119,66 +125,94 @@ void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_pa
         int size_j_cur[2] = { start_j, max_j };
         int size_k_cur[2] = { start_k, max_k };
 
-        InitializeCurrentFunctor::apply(Jx, cParams, parameters, init_func, cur_time,
-                                        size_i_cur, size_j_cur, size_k_cur);
-        InitializeCurrentFunctor::apply(Jy, cParams, parameters, init_func, cur_time,
-                                        size_i_cur, size_j_cur, size_k_cur);
-        InitializeCurrentFunctor::apply(Jz, cParams, parameters, init_func, cur_time,
-                                        size_i_cur, size_j_cur, size_k_cur);
+        int final_time = std::min(cur_time, time);
+	for (int iter = 0; iter < final_time; ++iter)
+        {
+            for (int i = start_i; i < max_i; ++i)
+            {
+                for (int j = start_j; j < max_j; ++j)
+                {
+                    for (int k = start_k; k < max_k; ++k)
+                    {
+                        int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+                        Jx[iter][index] = init_func(static_cast<double>(i) * parameters.dx,
+                                        static_cast<double>(j) * parameters.dy,
+                                        static_cast<double>(k) * parameters.dz,
+                                        static_cast<double>(iter + 1) * cParams.dt);
+                    }
+                }
+            }
+        }
+//        InitializeCurrentFunctor::apply(Jy, cParams, parameters, init_func, std::min(cur_time, time),
+//                                        size_i_cur, size_j_cur, size_k_cur);
+//        InitializeCurrentFunctor::apply(Jz, cParams, parameters, init_func, std::min(cur_time, time),
+//                                        size_i_cur, size_j_cur, size_k_cur);
     }
     else
     {
         cur_time = 0;
     }
 
+    int Ni = parameters.Ni + 2;
+    int Nj = parameters.Nj + 2;
+    int Nk = parameters.Nk + 2;
+
+    double coef_E = FDTD_const::C * dt;
+    double coef_B = FDTD_const::C * dt / 2.0;
+    double current_coef = 4.0 * FDTD_const::PI * dt;
     if (pml_percent == 0.0)
     {
         int size_i_main[2] = { 0, parameters.Ni };
         int size_j_main[2] = { 0, parameters.Nj };
         int size_k_main[2] = { 0, parameters.Nk };
+        auto start = std::chrono::high_resolution_clock::now();
         for (int t = 0; t < time; t++)
         {
-            std::cout << "Iteration: " << t + 1 << std::endl;
-
-            ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz, dt, 
-            parameters.dx, parameters.dy, parameters.dz,
+            ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz, 
             size_i_main, size_j_main, size_k_main,
-            parameters.Ni, parameters.Nj, parameters.Nk);
+            Ni, Nj, Nk,
+            coef_B / parameters.dx, coef_B / parameters.dy, coef_B / parameters.dz);
 
             ComputeE_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
-             Jx, Jy, Jz, dt, 
-            parameters.dx, parameters.dy, parameters.dz,
+             Jx[t], Jx[t], Jx[t], current_coef,
             size_i_main, size_j_main, size_k_main, t, cur_time,
-            parameters.Ni, parameters.Nj, parameters.Nk);
+            Ni, Nj, Nk,
+            coef_E / parameters.dx, coef_E / parameters.dy, coef_E / parameters.dz);
 
-            ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz, dt,
-            parameters.dx, parameters.dy, parameters.dz,
+            ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
             size_i_main, size_j_main, size_k_main,
-            parameters.Ni, parameters.Nj, parameters.Nk);
+            Ni, Nj, Nk,
+            coef_B / parameters.dx, coef_B / parameters.dy, coef_B / parameters.dz);
 
-            auto Ex_host = Kokkos::create_mirror_view(Ex);
-            auto Ey_host = Kokkos::create_mirror_view(Ey);
-            auto Ez_host = Kokkos::create_mirror_view(Ez);
-            auto Bx_host = Kokkos::create_mirror_view(Bx);
-            auto By_host = Kokkos::create_mirror_view(By);
-            auto Bz_host = Kokkos::create_mirror_view(Bz);
 
-            Kokkos::deep_copy(Ex_host, Ex);
-            Kokkos::deep_copy(Ey_host, Ey);
-            Kokkos::deep_copy(Ez_host, Ez);
-            Kokkos::deep_copy(Bx_host, Bx);
-            Kokkos::deep_copy(By_host, By);
-            Kokkos::deep_copy(Bz_host, Bz);
+            /*if (write_result) {
+                auto Ex_host = Kokkos::create_mirror_view(Ex);
+                auto Ey_host = Kokkos::create_mirror_view(Ey);
+                auto Ez_host = Kokkos::create_mirror_view(Ez);
+                auto Bx_host = Kokkos::create_mirror_view(Bx);
+                auto By_host = Kokkos::create_mirror_view(By);
+                auto Bz_host = Kokkos::create_mirror_view(Bz);
 
-            std::vector<Field> return_data{ Ex_host, Ey_host, Ez_host, Bx_host, By_host, Bz_host };
-            if (write_result)
+                Kokkos::deep_copy(Ex_host, Ex);
+                Kokkos::deep_copy(Ey_host, Ey);
+                Kokkos::deep_copy(Ez_host, Ez);
+                Kokkos::deep_copy(Bx_host, Bx);
+                Kokkos::deep_copy(By_host, By);
+                Kokkos::deep_copy(Bz_host, Bz);
+
+                std::vector<Field> return_data{ Ex_host, Ey_host, Ez_host, Bx_host, By_host, Bz_host };
                 write_spherical(return_data, write_axis, base_path, t);
+            }*/
         }
+        auto end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << "BETTER Execution time: " << elapsed.count() << " s" << std::endl;
         return;
     }
 
-    // Defining areas of computation
-    int size_i_main[] = { pml_size_i, parameters.Ni - pml_size_i };
+    
+    /*int size_i_main[] = { pml_size_i, parameters.Ni - pml_size_i };
     int size_j_main[] = { pml_size_j, parameters.Nj - pml_size_j };
     int size_k_main[] = { pml_size_k, parameters.Nk - pml_size_k };
 
@@ -229,11 +263,11 @@ void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_pa
     };
 
     // Calculation of maximum permittivity and permeability
-    double SGm_x = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
+    double SGm_x = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
         / (static_cast<double>(pml_size_i) * parameters.dx);
-    double SGm_y = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
+    double SGm_y = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
         / (static_cast<double>(pml_size_j) * parameters.dy);
-    double SGm_z = -(FDTDconst::N + 1.0) / 2.0 * std::log(FDTDconst::R)
+    double SGm_z = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
         / (static_cast<double>(pml_size_k) * parameters.dz);
 
     // Calculation of permittivity and permeability in the cells
@@ -304,7 +338,7 @@ void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_pa
         std::vector<Field> return_data{ Ex_host, Ey_host, Ez_host, Bx_host, By_host, Bz_host };
         if (write_result)
             write_spherical(return_data, write_axis, base_path, t);
-    }
+    }*/
 }
 
 void FDTD::write_spherical(std::vector<Field> fields, Axis axis, std::string base_path, int it)
@@ -322,7 +356,8 @@ void FDTD::write_spherical(std::vector<Field> fields, Axis axis, std::string bas
             {
                 for (int j = 0; j < parameters.Nj; ++j)
                 {
-                    test_fout << field(parameters.Ni / 2, j, k);
+                    int index = parameters.Ni / 2 + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+                    test_fout << field(index);
                     if (j == parameters.Nj - 1)
                     {
                         test_fout << std::endl;
@@ -347,7 +382,8 @@ void FDTD::write_spherical(std::vector<Field> fields, Axis axis, std::string bas
             {
                 for (int k = 0; k < parameters.Nk; ++k)
                 {
-                    test_fout << field(i, parameters.Nj / 2, k);
+                    int index = i + (parameters.Nj / 2) * parameters.Ni + k * parameters.Ni * parameters.Nj;
+                    test_fout << field(index);
                     if (k == parameters.Nk - 1)
                     {
                         test_fout << std::endl;
@@ -372,7 +408,8 @@ void FDTD::write_spherical(std::vector<Field> fields, Axis axis, std::string bas
             {
                 for (int j = 0; j < parameters.Nk; ++j)
                 {
-                    test_fout << field(i, j, parameters.Nk / 2);
+                    int index = i + j * parameters.Ni + (parameters.Nk / 2) * parameters.Ni * parameters.Nj;
+                    test_fout << field(index);
                     if (j == parameters.Nk - 1)
                     {
                         test_fout << std::endl;
@@ -390,4 +427,5 @@ void FDTD::write_spherical(std::vector<Field> fields, Axis axis, std::string bas
     default: throw std::logic_error("ERROR: Invalid axis");
     }
 }
+
 

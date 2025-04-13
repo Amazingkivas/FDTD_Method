@@ -7,7 +7,7 @@
 #include <cmath>
 #include <chrono>
 
-namespace fs = std::filesystem;
+//namespace fs = std::filesystem;
 
 #include "test_FDTD.h"
 
@@ -60,7 +60,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
     };
     
     // Initialization of the structures and method
-    double d = FDTDconst::C;
+    double d = FDTD_const::C;
 
     double boundary = static_cast<double>(n) / 2.0 * d;
 
@@ -80,7 +80,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
         d
     };
 
-    auto clear_directory = [](const std::string& dir_path) {
+    /*auto clear_directory = [](const std::string& dir_path) {
         if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
             for (auto& file : fs::directory_iterator(dir_path)) {
                 if (fs::is_regular_file(file.path())) {
@@ -96,16 +96,12 @@ void spherical_wave(int n, int it, std::string base_path = "")
     {
         std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
         clear_directory(dir_path);
-    }
+    }*/
 
-    FDTD method(params, cur_param.dt, 0.1, cur_param.iterations);
-
-    // Meaningful calculations
-    Test_FDTD test(params);
+    FDTD method(params, cur_param.dt, 0.0, it, cur_param, cur_func);
     
     auto start = std::chrono::high_resolution_clock::now();
-    test.initiialize_current(method, cur_param, it, cur_func);
-    method.update_fields(it, false, Axis::Z, base_path);
+    method.update_fields(false, Axis::Z, base_path);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
@@ -118,8 +114,8 @@ int main(int argc, char* argv[])
     std::vector<char*> arguments(argv, argv + argc);
     if (argc == 1) 
     {
-        int N = 120;
-        int Iterations = 50;
+        int N = 512;
+        int Iterations = 5;
         spherical_wave(N, Iterations, "../../");
     }
     else if (argc == 4)

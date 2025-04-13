@@ -7,8 +7,9 @@
 #include <cmath>
 #include <chrono>
 #include <Kokkos_Core.hpp>
+#include <cstdlib>
 
-namespace fs = std::filesystem;
+//namespace fs = std::filesystem;
 
 #include "FDTD_kokkos.h"
 
@@ -63,7 +64,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
             * pow(cos(2.0 * M_PI * z / Tz), 2.0);
     };
 
-    double d = FDTDconst::C;
+    double d = FDTD_const::C;
     double boundary = static_cast<double>(n) / 2.0 * d;
 
     Parameters params
@@ -82,7 +83,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
         d           // dz
     };
 
-    auto clear_directory = [](const std::string& dir_path) {
+    /*auto clear_directory = [](const std::string& dir_path) {
         if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
             for (auto& file : fs::directory_iterator(dir_path)) {
                 if (fs::is_regular_file(file.path())) {
@@ -98,9 +99,9 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     {
         std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
         clear_directory(dir_path);
-    }
+    }*/
 
-    FDTD_kokkos::FDTD method(params, cur_param.dt, 0.1, it, cur_param, cur_func);
+    FDTD_kokkos::FDTD method(params, cur_param.dt, 0.0, it, cur_param, cur_func);
 
     auto start = std::chrono::high_resolution_clock::now();
     method.update_fields(false, Axis::Z, base_path);
@@ -112,15 +113,23 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
 
 int main(int argc, char* argv[])
 {
+#ifdef KOKKOS_HAVE_OPENMP
+    std::cout << "OMP AVAIL" << std::endl;
+    Kokkos::InitArguments init_args;
+    char *num_threads_string = std::getenv("OMP_NUM_THREADS");
+    init_args.num_threads = std::atoi(num_threads_string);
+    Kokkos::initialize(init_args);
+#else
     Kokkos::initialize(argc, argv);
+#endif
     {
         std::ifstream source_fin;
         std::vector<char*> arguments(argv, argv + argc);
 
         if (argc == 1)
         {
-            int N = 120;
-            int Iterations = 50;
+            int N = 512;
+            int Iterations = 5;
             spherical_wave(N, Iterations, "../../");
         }
         else if (argc == 4)

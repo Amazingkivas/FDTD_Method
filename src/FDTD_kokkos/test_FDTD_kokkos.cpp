@@ -20,8 +20,9 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 			{
 				for (int k = 0; k < parameters.Nk; k++)
 				{
-					_test.get_field(fields.selected_E)(i, j, k) = sign * init_function(x, size_x);
-					_test.get_field(fields.selected_B)(i, j, k) = init_function(x_b + x, size_x);
+					int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+					_test.get_field(fields.selected_E)(index) = sign * init_function(x, size_x);
+					_test.get_field(fields.selected_B)(index) = init_function(x_b + x, size_x);
 				}
 			}
 		}
@@ -37,8 +38,9 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 			{
 				for (int i = 0; i < parameters.Ni; i++)
 				{
-					_test.get_field(fields.selected_E)(i, j, k) = sign * init_function(y, size_y);
-					_test.get_field(fields.selected_B)(i, j, k) = init_function(y_b + y, size_y);
+					int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+					_test.get_field(fields.selected_E)(index) = sign * init_function(y, size_y);
+					_test.get_field(fields.selected_B)(index) = init_function(y_b + y, size_y);
 				}
 			}
 		}
@@ -54,8 +56,9 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 			{
 				for (int j = 0; j < parameters.Nj; j++)
 				{
-					_test.get_field(fields.selected_E)(i, j, k) = sign * init_function(z, size_z);
-					_test.get_field(fields.selected_B)(i, j, k) = init_function(z_b + z, size_z);
+					int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+					_test.get_field(fields.selected_E)(index) = sign * init_function(z, size_z);
+					_test.get_field(fields.selected_B)(index) = init_function(z_b + z, size_z);
 				}
 			}
 		}
@@ -120,7 +123,8 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 		int k = 0;
 		for (int i = 0; i < parameters.Ni; ++i, x += parameters.dx)
 		{
-			this_error = fabs(sign * this_field(i, j, k) - true_function(x, time, size_x));
+			int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+			this_error = fabs(sign * this_field(index) - true_function(x, time, size_x));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
 		}
@@ -133,7 +137,8 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 		int k = 0;
 		for (int j = 0; j < parameters.Nj; ++j, y += parameters.dy)
 		{
-			this_error = fabs(sign * this_field(i, j, k) - true_function(y, time, size_y));
+			int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+			this_error = fabs(sign * this_field(index) - true_function(y, time, size_y));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
 		}
@@ -146,10 +151,12 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 		int j = 0;
 		for (int k = 0; k < parameters.Nk; ++k, z += parameters.dz)
 		{
-			this_error = fabs(sign * this_field(i, j, k) - true_function(z, time, size_z));
+			int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
+			this_error = fabs(sign * this_field(index) - true_function(z, time, size_z));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
 		}
 	}
 	return max_abs_error;
 }
+

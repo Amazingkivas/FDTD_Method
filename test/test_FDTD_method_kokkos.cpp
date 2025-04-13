@@ -12,7 +12,7 @@ std::function<double(double, double[2])> initial_func_k = [](double x, double si
 };
 std::function<double(double, double, double[2])> true_func_k = [](double x, double t, double size[2])
 {
-	return sin(2.0 * M_PI * (x - size[0] - FDTDconst::C * t) / (size[1] - size[0]));
+	return sin(2.0 * M_PI * (x - size[0] - FDTD_const::C * t) / (size[1] - size[0]));
 };
 
 double run_test_kokkos(Component test_field, SelectedFields current_fields, int Ni, int Nj, int Nk) {
