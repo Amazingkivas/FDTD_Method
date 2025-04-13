@@ -92,7 +92,7 @@ public:
         //int end = bounds_i[1] + bounds_j[1] * Ni + bounds_k[1] * Ni * Nj;
 
         Kokkos::MDRangePolicy<Kokkos::Rank<3>> policy({bounds_k[0] + 1, bounds_j[0] + 1, bounds_i[0] + 1},
-                                                      {bounds_k[1], bounds_j[1], bounds_i[1]});
+                                                      {bounds_k[1] + 1, bounds_j[1] + 1, bounds_i[1] + 1});
 
         Kokkos::parallel_for("UpdateEField", policy, functor);
     }
@@ -163,7 +163,7 @@ public:
         //int end = bounds_i[1] + bounds_j[1] * Ni + bounds_k[1] * Ni * Nj;
 
         Kokkos::MDRangePolicy<Kokkos::Rank<3>> policy({bounds_k[0] + 1, bounds_j[0] + 1, bounds_i[0] + 1},
-                                                      {bounds_k[1], bounds_j[1], bounds_i[1]});
+                                                      {bounds_k[1] + 1, bounds_j[1] + 1, bounds_i[1] + 1});
 
         Kokkos::parallel_for("UpdateBField", policy, functor);
     }
