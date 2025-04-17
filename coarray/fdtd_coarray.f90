@@ -82,7 +82,6 @@ program fdtd_coarray
 contains
     !===============================================================
     subroutine init_decomposition
-        ! Распределение индексов по оси Z
         integer :: remainder, offset
 
         remainder = mod(Nk, total_imgs)
@@ -187,36 +186,29 @@ contains
         integer :: k_print, i, j, idx
         character(len=100) :: filename
 
-        ! Выбираем срез примерно по середине локальной области k
         k_print = k_local / 2
-        if (k_slice == 0) k_slice = k_print  ! Запоминаем для вывода
-
-        ! Создаем уникальное имя файла для каждого образа и итерации
+        if (k_slice == 0) k_slice = k_print
         write(filename, '(A,I0,A,I0,A,I0,A)') 'Bx_slice_img_', this_img, &
                                             '_iter_', iteration, &
                                             '_k_', k_start + k_slice - 1, &
                                             '.dat'
 
-        ! Открываем файл для записи
         open(unit=20, file=filename, status='replace', action='write')
 
-        ! Записываем заголовок
         write(20, '(A,I0,A,I0,A,I0)') '# Slice Bx at k=', k_start + k_slice - 1, &
                                     ' (local k=', k_slice, ') on image ', this_img
         write(20, '(A)') '# i, j, Bx_value'
 
-        ! Выводим срез для всех i и j при фиксированном k_slice
         do j = 1, Nj
             do i = 1, Ni
                 idx = i + (j-1)*Ni + (k_slice-1)*Ni*Nj
                 write(20, '(I5,I5,E15.6)') i, j, Bx(idx)
             end do
-            write(20, *)  ! Пустая строка для gnuplot
+            write(20, *)
         end do
 
         close(20)
 
-        ! Синхронизация перед выводом в консоль
         sync all
         if (this_img == 1) then
             print *, 'Bx slices written for iteration ', iteration
