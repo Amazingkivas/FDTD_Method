@@ -1,13 +1,33 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
+    message(FATAL_ERROR "The build must be performed in the 'build' folder. Please run the following commands:\n\n"
+                        "  mkdir -p build && cd build && cmake ..\n\n"
+                        "The 'build' folder has been created for you.")
+endif()
 
 project(FDTD)
 
 find_package(OpenMP REQUIRED)
 
 if(OPENMP_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -DNDEBUG -xAVX -qopenmp -qopt-report=5 -qopt-report-phase=vec -fp-model precise")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    message(STATUS "OPENMP FOUND")
+endif()
+
+message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS}")
+message(STATUS "CXX Flags (Release): ${CMAKE_CXX_FLAGS_RELEASE}")
+message(STATUS "CXX Flags (Debug): ${CMAKE_CXX_FLAGS_DEBUG}")
+
+if(CMAKE_CXX_FLAGS MATCHES "-S")
+    message(STATUS "Flag -S detected")
+else()
+    message(STATUS "Flag -S not found")
 endif()
 
 include_directories(3rdparty)
