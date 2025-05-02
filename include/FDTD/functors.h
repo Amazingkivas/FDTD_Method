@@ -2,7 +2,6 @@
 
 #include "shared.h"
 #include "Structures.h"
-#include "FDTD_boundaries.h"
 
 using namespace FDTD_openmp;
 using namespace FDTD_struct;
