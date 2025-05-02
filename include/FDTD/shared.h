@@ -9,7 +9,7 @@
 
 namespace FDTD_openmp {
 
-template <class T, size_t Alignment = 64>
+template <class T, size_t Alignment = 32>
 class AlignedNUMA_Allocator {
 public:
     using value_type = T;
@@ -42,6 +42,11 @@ public:
         if (posix_memalign(&ptr, Alignment, size) != 0) {
             throw std::bad_alloc();
         }
+
+        //ptr = malloc(size);
+        //if (ptr == nullptr) {
+        //    throw std::bad_alloc();
+        //}
 
         const int num_threads = omp_get_max_threads();
         if (num_threads > 1 && size >= Alignment * num_threads) {

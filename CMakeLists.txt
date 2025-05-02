@@ -14,7 +14,7 @@ project(FDTD)
 find_package(OpenMP REQUIRED)
 
 if(OPENMP_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -DNDEBUG -xAVX -qopenmp -qopt-report=5 -qopt-report-phase=vec -fp-model precise")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -xAVX -DNDEBUG -qopenmp -qopt-report-phase=vec -fp-model precise")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
     message(STATUS "OPENMP FOUND")
@@ -46,6 +46,7 @@ endif()
 set(KOKKOS_SIMD_LIB "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/kokkos/build/simd/src/libkokkossimd.a")
 set(KOKKOS_CORE_LIB "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/kokkos/build/core/src/libkokkoscore.a")
 set(KOKKOS_CONTAINERS_LIB "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/kokkos/build/containers/src/libkokkoscontainers.a")
+#set(KOKKOS_ARCH_AVX512XEON ON)
 
 add_custom_command(
     OUTPUT ${KOKKOS_CONTAINERS_LIB}

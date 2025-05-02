@@ -9,7 +9,6 @@
 #include <Kokkos_Core.hpp>
 #include <cstdlib>
 
-//namespace fs = std::filesystem;
 
 #include "FDTD_kokkos.h"
 
@@ -83,24 +82,6 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
         d           // dz
     };
 
-    /*auto clear_directory = [](const std::string& dir_path) {
-        if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
-            for (auto& file : fs::directory_iterator(dir_path)) {
-                if (fs::is_regular_file(file.path())) {
-                    fs::remove(file.path());
-                }
-            }
-        } else {
-            fs::create_directories(dir_path);
-        }
-    };
-
-    for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
-    {
-        std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
-        clear_directory(dir_path);
-    }*/
-
     FDTD_kokkos::FDTD method(params, cur_param.dt, 0.0, it, cur_param, cur_func);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -113,23 +94,25 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
 
 int main(int argc, char* argv[])
 {
-#ifdef KOKKOS_HAVE_OPENMP
-    std::cout << "OMP AVAIL" << std::endl;
-    Kokkos::InitArguments init_args;
-    char *num_threads_string = std::getenv("OMP_NUM_THREADS");
-    init_args.num_threads = std::atoi(num_threads_string);
-    Kokkos::initialize(init_args);
-#else
     Kokkos::initialize(argc, argv);
-#endif
     {
+        if (Kokkos::hwloc::available())
+            std::cout << "hwloc available" << std::endl;
+        std::ostringstream msg;
+        msg << "hwloc( NUMA[" << Kokkos::hwloc::get_available_numa_count() << "] x CORE["
+          << Kokkos::hwloc::get_available_cores_per_numa() << "] x HT["
+          << Kokkos::hwloc::get_available_threads_per_core() << "] )" << std::endl;
+        Kokkos::print_configuration(msg);
+        std::cout << msg.str();
+
+
         std::ifstream source_fin;
         std::vector<char*> arguments(argv, argv + argc);
 
         if (argc == 1)
         {
             int N = 512;
-            int Iterations = 5;
+            int Iterations = 25;
             spherical_wave(N, Iterations, "../../");
         }
         else if (argc == 4)
