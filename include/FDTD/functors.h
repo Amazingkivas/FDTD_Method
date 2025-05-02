@@ -5,7 +5,6 @@
 
 using namespace FDTD_openmp;
 using namespace FDTD_struct;
-using namespace FDTD_boundaries;
 
 using std::cout;
 using std::endl;
