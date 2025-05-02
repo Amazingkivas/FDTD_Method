@@ -10,7 +10,6 @@
 #include <cmath>
 #include <chrono>
 
-#include "FDTD_boundaries.h"
 #include "functors.h"
 
 using namespace FDTD_struct;

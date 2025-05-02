@@ -2,8 +2,6 @@
 
 #include "kokkos_shared.h"
 #include "Structures.h"
-#include "FDTD_boundaries.h"
-#include <numa.h>
 
 #include <iostream>
 #include <chrono>
