@@ -17,14 +17,13 @@ FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, C
 
     int size = (parameters.Ni) * (parameters.Nj) * (parameters.Nk);
 
-    Jx = Field("Jx", size);
-
-    Ex = Field("Ex", size);
-    Ey = Field("Ey", size);
-    Ez = Field("Ez", size);
-    Bx = Field("Bx", size);
-    By = Field("By", size);
-    Bz = Field("Bz", size);
+    Jx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jx"), size);
+    Ex = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ex"), size);
+    Ey = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ey"), size);
+    Ez = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ez"), size);
+    Bx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bx"), size);
+    By = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "By"), size);
+    Bz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bz"), size);
 
     Kokkos::parallel_for("FirstTouch", Kokkos::RangePolicy<>(0, size), KOKKOS_LAMBDA(int i) {
         Ex(i) = 0.0;
@@ -33,11 +32,8 @@ FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, C
         Bx(i) = 0.0;
         By(i) = 0.0;
         Bz(i) = 0.0;
+        Jx(i) = 0.0;
     });
-
-    pml_size_i = static_cast<int>(static_cast<double>(parameters.Ni) * pml_percent);
-    pml_size_j = static_cast<int>(static_cast<double>(parameters.Nj) * pml_percent);
-    pml_size_k = static_cast<int>(static_cast<double>(parameters.Nk) * pml_percent);
 }
 
 Field& FDTD::get_field(Component this_field)
