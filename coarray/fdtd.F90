@@ -1,6 +1,5 @@
 program fdtd_coarray_optimized
     use iso_fortran_env
-    use omp_lib
     implicit none
 
     ! Parameters
@@ -17,12 +16,12 @@ program fdtd_coarray_optimized
     real, allocatable :: B(:,:,:,:)[:]   ! (3, Ni, Nj, k_local) - Bx,By,Bz components
     real, allocatable :: Jx(:,:,:)[:]    ! Current density
 
-    real, allocatable :: next_Ex(:,:), next_Ey(:,:), pred_Bx(:,:), pred_By(:,:)
+    real, allocatable :: next_Ex(:,:)[:], next_Ey(:,:)[:], pred_Bx(:,:)[:], pred_By(:,:)[:]
 
     ! Local variables
     integer :: this_img, total_imgs, next_img, pred_img
     integer :: k_start, k_end, k_local
-    integer :: i, j, k, idx, t
+    integer :: idx, t
     integer(int64) :: start_time, end_time, rate
     integer :: start_i, start_j, start_k, max_i, max_j, max_k
     real :: elapsed_time
@@ -57,10 +56,10 @@ program fdtd_coarray_optimized
     allocate(B(3, Ni, Nj, k_local)[*])
     allocate(Jx(Ni, Nj, k_local)[*])
     
-    allocate(next_Ex(Ni, Nj))
-    allocate(next_Ey(Ni, Nj))
-    allocate(pred_Bx(Ni, Nj))
-    allocate(pred_By(Ni, Nj))
+    allocate(next_Ex(Ni, Nj)[*])
+    allocate(next_Ey(Ni, Nj)[*])
+    allocate(pred_Bx(Ni, Nj)[*])
+    allocate(pred_By(Ni, Nj)[*])
     
     ! Initialize fields
     call init_fields()
@@ -75,27 +74,29 @@ program fdtd_coarray_optimized
     ! Main FDTD loop
     do t = 1, num_iterations
         if (this_img == 1) print '(A, I3)', 'Iteration ', t
-        
+
         if (this_img == 1) then
             call init_currents(t)
         end if
         sync all
-        
+
         call update_B_field()
         sync all
         
         call update_E_field()
         sync all
-        
+
         call update_B_field()
         sync all
 
-        ! Print slice every 5 iterations
-        !if (mod(t,5) == 0 .or. t == 1) then
-        !    call print_full_E_slice()
-        !end if
     end do
+
+    sync all
+    if ((this_image() == 1)) then !.and. (Nk <= 16)) then
+        call print_full_E_slice()
+    end if
     
+    sync all
     ! Final timing and cleanup
     if (this_img == 1) then
         call system_clock(count=end_time)
@@ -135,16 +136,17 @@ contains
     !===============================================================
     subroutine init_currents(this_t)
         integer, intent(in) :: this_t
-        integer :: this_img
+        integer :: i, j, k
+        integer :: this_cur_img
 
         do k = start_k, max_k
             do j = start_j, max_j
                 do i = start_i, max_i
-                    this_img = ceiling(real(k) / real(k_local))
-                    Jx(i,j,k - (this_img - 1) * k_local)[this_img] = sin(2.0 * PI * this_t * dt / TT) &
-                                * cos(2.0 * PI * i * dx / Tx)**2 &
-                                * cos(2.0 * PI * j * dy / Ty)**2 &
-                                * cos(2.0 * PI * k * dz / Tz)**2
+                    this_cur_img = ceiling(real(k) / real(k_local))
+                    Jx(i,j,k - (this_cur_img - 1) * k_local)[this_cur_img] = (sin(2.0 * PI * this_t * dt / TT)) &
+                                * (cos(2.0 * PI * (i-1) * dx / Tx)**2) &
+                                * (cos(2.0 * PI * (j-1) * dy / Ty)**2) &
+                                * (cos(2.0 * PI * (k-1) * dz / Tz)**2)
                 end do
             end do
         end do
@@ -153,13 +155,14 @@ contains
     !===============================================================
     subroutine update_B_field
         integer :: ip, jp, kp
-        next_Ex(:,:) = B(1, :, :, 1)[next_img]
-        next_Ey(:,:) = B(2, :, :, 1)[next_img]
+        integer :: i, j, k
+
+        next_Ex(:,:) = E(1, :, :, 1)[next_img]
+        next_Ey(:,:) = E(2, :, :, 1)[next_img]
         sync all
 
         do k = 1, k_local - 1
             do j = 1, Nj
-                !$OMP SIMD
                 do i = 1, Ni
                     ip = merge(i+1, 1, i < Ni)
                     jp = merge(j+1, 1, j < Nj)
@@ -179,7 +182,6 @@ contains
             end do
         end do
         do j = 1, Nj
-            !$OMP SIMD
             do i = 1, Ni
                 ip = merge(i+1, 1, i < Ni)
                 jp = merge(j+1, 1, j < Nj)
@@ -203,12 +205,13 @@ contains
     !===============================================================
     subroutine update_E_field
         integer :: im, jm, km
+        integer :: i, j, k
+
         pred_Bx(:,:) = B(1, :, :, k_local)[pred_img]
         pred_By(:,:) = B(2, :, :, k_local)[pred_img]
         sync all
 
         do j = 1, Nj
-            !$OMP SIMD
             do i = 1, Ni
                 im = merge(i-1, Ni, i > 1)
                 jm = merge(j-1, Nj, j > 1)
@@ -231,7 +234,6 @@ contains
         end do
         do k = 2, k_local
             do j = 1, Nj
-                !$OMP SIMD
                 do i = 1, Ni
                     im = merge(i-1, Ni, i > 1)
                     jm = merge(j-1, Nj, j > 1)
@@ -258,23 +260,14 @@ contains
     !===============================================================
 subroutine print_full_E_slice()
     integer :: img, ik, ij
-
-    do img = 1, num_images()
-        if (this_image() == img) then
-            
-            print '(/,A,I0,A)', "===== Образ ", img, " ====="
-            
-            do ik = 1, k_local
-                do ij = 1, Nj
-                    print '(A,I0,A,I0,A,I0,A,F12.6)', &
-                          "E(1,4,", ij, ",", ik, ")[", img, "] = ", E(1,8,ij,ik)
-                end do
-            end do
-            
-            flush output_unit
-        end if
-        
-        sync all
+    do ik = Ni/2-5, Ni/2+5
+        do ij = Nj/2-5, Nj/2+5
+            img = ceiling(real(Nk/2+1) / real(k_local))
+            write(*, '(F12.6)', advance='no')  E(1,ik,ij,Nk/2+1 - (img - 1) * k_local)[img]
+!            write(*, '(F12.6)', advance='no') next_Ex(ik, ij)
+        end do
+        print *
     end do
+
 end subroutine print_full_E_slice
 end program fdtd_coarray_optimized
