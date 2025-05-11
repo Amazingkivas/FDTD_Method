@@ -9,13 +9,23 @@ FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, C
 
     int size = (parameters.Nk + 2) * (parameters.Nj + 2) * (parameters.Ni + 2);
 
-    Jx = Field(size);
-    Ex = Field(size);
-    Ey = Field(size);
-    Ez = Field(size);
-    Bx = Field(size);
-    By = Field(size);
-    Bz = Field(size);
+    Jx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jx"), size);
+    Ex = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ex"), size);
+    Ey = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ey"), size);
+    Ez = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ez"), size);
+    Bx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bx"), size);
+    By = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "By"), size);
+    Bz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bz"), size);
+
+    Kokkos::parallel_for("FirstTouch", Kokkos::RangePolicy<>(0, size), KOKKOS_LAMBDA(int i) {
+        Ex(i) = 0.0;
+        Ey(i) = 0.0;
+        Ez(i) = 0.0;
+        Bx(i) = 0.0;
+        By(i) = 0.0;
+        Bz(i) = 0.0;
+        Jx(i) = 0.0;
+    });
 
     pml_size_i = static_cast<int>(static_cast<double>(parameters.Ni) * pml_percent);
     pml_size_j = static_cast<int>(static_cast<double>(parameters.Nj) * pml_percent);
