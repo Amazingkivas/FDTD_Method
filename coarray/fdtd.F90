@@ -5,18 +5,17 @@ program fdtd_coarray_optimized
     ! Parameters
     integer, parameter :: Ni = 512, Nj = 512, Nk = 512
     integer, parameter :: num_iterations = 25
-    real, parameter :: C = 3e10, PI = 3.14159265358
-    real, parameter :: dx = C, dy = C, dz = C, dt = 0.2
-    real, parameter :: coef_B_dx = C * dt / (2 * dx), coef_B_dy = C * dt / (2 * dy), coef_B_dz = C * dt / (2 * dz)
-    real, parameter :: coef_E_dx = C * dt / dx, coef_E_dy = C * dt / dy, coef_E_dz = C * dt / dz
-    real, parameter :: coef_J = 4*PI*dt
+    real(8), parameter :: C = 3e10, PI = 3.14159265358
+    real(8), parameter :: dx = C, dy = C, dz = C, dt = 0.2
+    real(8), parameter :: coef_B_dx = C * dt / (2 * dx), coef_B_dy = C * dt / (2 * dy), coef_B_dz = C * dt / (2 * dz)
+    real(8), parameter :: coef_E_dx = C * dt / dx, coef_E_dy = C * dt / dy, coef_E_dz = C * dt / dz
+    real(8), parameter :: coef_J = 4*PI*dt
 
     ! Field arrays (optimized layout for vectorization)
-    real, allocatable :: E(:,:,:,:)[:]   ! (3, Ni, Nj, k_local) - Ex,Ey,Ez components
-    real, allocatable :: B(:,:,:,:)[:]   ! (3, Ni, Nj, k_local) - Bx,By,Bz components
-    real, allocatable :: Jx(:,:,:)[:]    ! Current density
-
-    real, allocatable :: next_Ex(:,:)[:], next_Ey(:,:)[:], pred_Bx(:,:)[:], pred_By(:,:)[:]
+    real(8), allocatable :: Ex(:,:,:)[:], Ey(:,:,:)[:], Ez(:,:,:)[:]
+    real(8), allocatable :: Bx(:,:,:)[:], By(:,:,:)[:], Bz(:,:,:)[:]
+    real(8), allocatable :: Jx(:,:,:)[:]
+    real(8), allocatable :: next_Ex(:,:)[:], next_Ey(:,:)[:], pred_Bx(:,:)[:], pred_By(:,:)[:]
 
     ! Local variables
     integer :: this_img, total_imgs, next_img, pred_img
@@ -24,8 +23,8 @@ program fdtd_coarray_optimized
     integer :: idx, t
     integer(int64) :: start_time, end_time, rate
     integer :: start_i, start_j, start_k, max_i, max_j, max_k
-    real :: elapsed_time
-    real :: Tx, Ty, Tz, TT, bnd
+    real(8) :: elapsed_time
+    real(8) :: Tx, Ty, Tz, TT, bnd
     
     ! Coarray initialization
     this_img = this_image()
@@ -52,8 +51,12 @@ program fdtd_coarray_optimized
     call init_decomposition()
     
     ! Allocate arrays with optimized layout
-    allocate(E(3, Ni, Nj, k_local)[*])
-    allocate(B(3, Ni, Nj, k_local)[*])
+    allocate(Ex(Ni, Nj, k_local)[*])
+    allocate(Ey(Ni, Nj, k_local)[*])
+    allocate(Ez(Ni, Nj, k_local)[*])
+    allocate(Bx(Ni, Nj, k_local)[*])
+    allocate(By(Ni, Nj, k_local)[*])
+    allocate(Bz(Ni, Nj, k_local)[*])
     allocate(Jx(Ni, Nj, k_local)[*])
     
     allocate(next_Ex(Ni, Nj)[*])
@@ -82,8 +85,16 @@ program fdtd_coarray_optimized
 
         call update_B_field()
         sync all
+
+        pred_Bx(:,:) = Bx(:, :, k_local)[pred_img]
+        pred_By(:,:) = By(:, :, k_local)[pred_img]
+        sync all
         
         call update_E_field()
+        sync all
+        
+        next_Ex(:,:) = Ex(:, :, 1)[next_img]
+        next_Ey(:,:) = Ey(:, :, 1)[next_img]
         sync all
 
         call update_B_field()
@@ -92,19 +103,19 @@ program fdtd_coarray_optimized
     end do
 
     sync all
-    if ((this_image() == 1)) then !.and. (Nk <= 16)) then
-        call print_full_E_slice()
-    end if
-    
-    sync all
     ! Final timing and cleanup
     if (this_img == 1) then
         call system_clock(count=end_time)
         elapsed_time = real(end_time - start_time)/real(rate)
         print '(A, F0.2, A)', 'Total execution time: ', elapsed_time, ' seconds'
     end if
+
+    sync all
+    if ((this_image() == 1)) then !.and. (Nk <= 16)) then
+        call print_full_E_slice()
+    end if
     
-    deallocate(E, B, Jx)
+    deallocate(Ex, Ey, Ez, Bx, By, Bz, Jx)
     deallocate(next_Ex, next_Ey, pred_Bx, pred_By)
 
 contains
@@ -128,8 +139,16 @@ contains
 
     !===============================================================
     subroutine init_fields
-        E = 0.0
-        B = 0.0
+        Ex = 0.0
+        Ey = 0.0
+        Ez = 0.0
+        next_Ex = 0.0
+        next_Ey = 0.0
+        pred_Bx = 0.0
+        pred_By = 0.0
+        Bx = 0.0
+        By = 0.0
+        Bz = 0.0
         Jx = 0.0
     end subroutine init_fields
 
@@ -143,7 +162,8 @@ contains
             do j = start_j, max_j
                 do i = start_i, max_i
                     this_cur_img = ceiling(real(k) / real(k_local))
-                    Jx(i,j,k - (this_cur_img - 1) * k_local)[this_cur_img] = (sin(2.0 * PI * this_t * dt / TT)) &
+                    Jx(i,j,k - (this_cur_img - 1) * k_local)[this_cur_img] = &
+                                  (sin(2.0 * PI * this_t * dt / TT)) &
                                 * (cos(2.0 * PI * (i-1) * dx / Tx)**2) &
                                 * (cos(2.0 * PI * (j-1) * dy / Ty)**2) &
                                 * (cos(2.0 * PI * (k-1) * dz / Tz)**2)
@@ -157,46 +177,36 @@ contains
         integer :: ip, jp, kp
         integer :: i, j, k
 
-        next_Ex(:,:) = E(1, :, :, 1)[next_img]
-        next_Ey(:,:) = E(2, :, :, 1)[next_img]
-        sync all
-
         do k = 1, k_local - 1
             do j = 1, Nj
+                jp = merge(j+1, 1, j < Nj)
                 do i = 1, Ni
                     ip = merge(i+1, 1, i < Ni)
-                    jp = merge(j+1, 1, j < Nj)
 	                    
-                    ! Update Bx component
-                    B(1,i,j,k) = B(1,i,j,k) + coef_B_dz * (E(2,i,j,k+1) - E(2,i,j,k)) - &
-                                                coef_B_dy * (E(3,i,jp,k) - E(3,i,j,k))
+                    Bx(i,j,k) = Bx(i,j,k) + coef_B_dz * (Ey(i,j,k+1) - Ey(i,j,k)) - &
+                                            coef_B_dy * (Ez(i,jp,k) - Ez(i,j,k))
                     
-                    ! Update By component
-                    B(2,i,j,k) = B(2,i,j,k) + coef_B_dx * (E(3,ip,j,k) - E(3,i,j,k)) - &
-                                                coef_B_dz * (E(1,i,j,k+1) - E(1,i,j,k))
+                    By(i,j,k) = By(i,j,k) + coef_B_dx * (Ez(ip,j,k) - Ez(i,j,k)) - &
+                                            coef_B_dz * (Ex(i,j,k+1) - Ex(i,j,k))
                     
-                    ! Update Bz component
-                    B(3,i,j,k) = B(3,i,j,k) + coef_B_dy * (E(1,i,jp,k) - E(1,i,j,k)) - &
-                                                coef_B_dx * (E(2,ip,j,k) - E(2,i,j,k))
+                    Bz(i,j,k) = Bz(i,j,k) + coef_B_dy * (Ex(i,jp,k) - Ex(i,j,k)) - &
+                                            coef_B_dx * (Ey(ip,j,k) - Ey(i,j,k))
                 end do
             end do
         end do
         do j = 1, Nj
+            jp = merge(j+1, 1, j < Nj)
             do i = 1, Ni
                 ip = merge(i+1, 1, i < Ni)
-                jp = merge(j+1, 1, j < Nj)
 
-                ! Update Bx component
-                B(1,i,j,k_local) = B(1,i,j,k_local) + coef_B_dz * (next_Ey(i,j) - E(2,i,j,k_local)) - &
-                                            coef_B_dy * (E(3,i,jp,k_local) - E(3,i,j,k_local))
+                Bx(i,j,k_local) = Bx(i,j,k_local) + coef_B_dz * (next_Ey(i,j) - Ey(i,j,k_local)) - &
+                                                    coef_B_dy * (Ez(i,jp,k_local) - Ez(i,j,k_local))
 
-                ! Update By component
-                B(2,i,j,k_local) = B(2,i,j,k_local) + coef_B_dx * (E(3,ip,j,k_local) - E(3,i,j,k)) - &
-                                            coef_B_dz * (next_Ex(i,j) - E(1,i,j,k_local))
+                By(i,j,k_local) = By(i,j,k_local) + coef_B_dx * (Ez(ip,j,k_local) - Ez(i,j,k)) - &
+                                                    coef_B_dz * (next_Ex(i,j) - Ex(i,j,k_local))
 
-                ! Update Bz component
-                B(3,i,j,k_local) = B(3,i,j,k_local) + coef_B_dy * (E(1,i,jp,k_local) - E(1,i,j,k_local)) - &
-                                            coef_B_dx * (E(2,ip,j,k_local) - E(2,i,j,k_local))
+                Bz(i,j,k_local) = Bz(i,j,k_local) + coef_B_dy * (Ex(i,jp,k_local) - Ex(i,j,k_local)) - &
+                                                    coef_B_dx * (Ey(ip,j,k_local) - Ey(i,j,k_local))
             end do
         end do
 
@@ -207,51 +217,41 @@ contains
         integer :: im, jm, km
         integer :: i, j, k
 
-        pred_Bx(:,:) = B(1, :, :, k_local)[pred_img]
-        pred_By(:,:) = B(2, :, :, k_local)[pred_img]
-        sync all
-
         do j = 1, Nj
+            jm = merge(j-1, Nj, j > 1)
             do i = 1, Ni
                 im = merge(i-1, Ni, i > 1)
-                jm = merge(j-1, Nj, j > 1)
 
-                ! Update Ex component
-                E(1,i,j,1) = E(1,i,j,1) - coef_J * Jx(i,j,1) + &
-                            coef_E_dy * (B(3,i,j,1) - B(3,i,jm,1)) - &
-                            coef_E_dz * (B(2,i,j,1) - pred_By(i,j))
+                Ex(i,j,1) = Ex(i,j,1) - coef_J * Jx(i,j,1) + &
+                            coef_E_dy * (Bz(i,j,1) - Bz(i,jm,1)) - &
+                            coef_E_dz * (By(i,j,1) - pred_By(i,j))
 
-                ! Update Ey component
-                E(2,i,j,1) = E(2,i,j,1) - coef_J * Jx(i,j,1) + &
-                            coef_E_dz * (B(1,i,j,1) - pred_Bx(i,j)) - &
-                            coef_E_dx * (B(3,i,j,1) - B(3,im,j,1))
+                Ey(i,j,1) = Ey(i,j,1) - coef_J * Jx(i,j,1) + &
+                            coef_E_dz * (Bx(i,j,1) - pred_Bx(i,j)) - &
+                            coef_E_dx * (Bz(i,j,1) - Bz(im,j,1))
 
-                ! Update Ez component
-                E(3,i,j,1) = E(3,i,j,1) - coef_J * Jx(i,j,1) + &
-                            coef_E_dx * (B(2,i,j,1) - B(2,im,j,1)) - &
-                            coef_E_dy * (B(1,i,j,1) - B(1,i,jm,1))
+                Ez(i,j,1) = Ez(i,j,1) - coef_J * Jx(i,j,1) + &
+                            coef_E_dx * (By(i,j,1) - By(im,j,1)) - &
+                            coef_E_dy * (Bx(i,j,1) - Bx(i,jm,1))
             end do
         end do
         do k = 2, k_local
             do j = 1, Nj
+                jm = merge(j-1, Nj, j > 1)
                 do i = 1, Ni
                     im = merge(i-1, Ni, i > 1)
-                    jm = merge(j-1, Nj, j > 1)
                     
-                    ! Update Ex component
-                    E(1,i,j,k) = E(1,i,j,k) - coef_J * Jx(i,j,k) + &
-                                coef_E_dy * (B(3,i,j,k) - B(3,i,jm,k)) - &
-                                coef_E_dz * (B(2,i,j,k) - B(2,i,j,k-1))
+                    Ex(i,j,k) = Ex(i,j,k) - coef_J * Jx(i,j,k) + &
+                                coef_E_dy * (Bz(i,j,k) - Bz(i,jm,k)) - &
+                                coef_E_dz * (By(i,j,k) - By(i,j,k-1))
+
+                    Ey(i,j,k) = Ey(i,j,k) - coef_J * Jx(i,j,k) + &
+                                coef_E_dz * (Bx(i,j,k) - Bx(i,j,k-1)) - &
+                                coef_E_dx * (Bz(i,j,k) - Bz(im,j,k))
                     
-                    ! Update Ey component
-                    E(2,i,j,k) = E(2,i,j,k) - coef_J * Jx(i,j,k) + &
-                                coef_E_dz * (B(1,i,j,k) - B(1,i,j,k-1)) - &
-                                coef_E_dx * (B(3,i,j,k) - B(3,im,j,k))
-                    
-                    ! Update Ez component
-                    E(3,i,j,k) = E(3,i,j,k) - coef_J * Jx(i,j,k) + &
-                                coef_E_dx * (B(2,i,j,k) - B(2,im,j,k)) - &
-                                coef_E_dy * (B(1,i,j,k) - B(1,i,jm,k))
+                    Ez(i,j,k) = Ez(i,j,k) - coef_J * Jx(i,j,k) + &
+                                coef_E_dx * (By(i,j,k) - By(im,j,k)) - &
+                                coef_E_dy * (Bx(i,j,k) - Bx(i,jm,k))
                 end do
             end do
         end do
@@ -263,8 +263,7 @@ subroutine print_full_E_slice()
     do ik = Ni/2-5, Ni/2+5
         do ij = Nj/2-5, Nj/2+5
             img = ceiling(real(Nk/2+1) / real(k_local))
-            write(*, '(F12.6)', advance='no')  E(1,ik,ij,Nk/2+1 - (img - 1) * k_local)[img]
-!            write(*, '(F12.6)', advance='no') next_Ex(ik, ij)
+            write(*, '(F12.6)', advance='no')  Ex(ik,ij,Nk/2+1 - (img - 1) * k_local)[img]
         end do
         print *
     end do
