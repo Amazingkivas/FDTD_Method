@@ -2,22 +2,20 @@
 
 using namespace FDTD_kokkos;
 
-FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, CurrentParameters _Cpar,
-    std::function<double(double, double, double, double)> init_function) :
-    parameters(_parameters), cParams(_Cpar), dt(_dt), pml_percent(_pml_percent), time(time_), init_func(init_function)
-
-{
+FDTD::FDTD(Parameters _parameters, double _dt) :
+    parameters(_parameters), dt(_dt) {
     if (parameters.Ni <= 0 ||
         parameters.Nj <= 0 ||
         parameters.Nk <= 0 ||
-        dt <= 0)
-    {
+        dt <= 0) {
         throw std::invalid_argument("ERROR: invalid parameters");
     }
 
-    int size = (parameters.Ni) * (parameters.Nj) * (parameters.Nk);
+    int size = parameters.Ni * parameters.Nj * parameters.Nk;
 
     Jx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jx"), size);
+    Jy = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jy"), size);
+    Jz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jz"), size);
     Ex = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ex"), size);
     Ey = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ey"), size);
     Ez = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ez"), size);
@@ -33,6 +31,39 @@ FDTD::FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, C
         By(i) = 0.0;
         Bz(i) = 0.0;
         Jx(i) = 0.0;
+        Jy(i) = 0.0;
+        Jz(i) = 0.0;
+    });
+
+    coef_Ex = FDTD_const::C * dt / parameters.dx;
+    coef_Ey = FDTD_const::C * dt / parameters.dy;
+    coef_Ez = FDTD_const::C * dt / parameters.dz;
+    coef_Bx = FDTD_const::C * dt / (2.0 * parameters.dx);
+    coef_By = FDTD_const::C * dt / (2.0 * parameters.dy);
+    coef_Bz = FDTD_const::C * dt / (2.0 * parameters.dz);
+    current_coef = -4.0 * FDTD_const::PI * dt;
+
+    Ni = parameters.Ni;
+    Nj = parameters.Nj;
+    Nk = parameters.Nk;
+
+    begin_main_i = 0;
+    begin_main_j = 0; 
+    begin_main_k = 0;
+    end_main_i = parameters.Ni;
+    end_main_j = parameters.Nj;
+    end_main_k = parameters.Nk;
+}
+
+void FDTD::zeroed_currents() {
+    Kokkos::parallel_for("ZeroJx", Jx.extent(0), KOKKOS_LAMBDA(const int i) {
+        Jx(i) = 0.0;
+    });
+    Kokkos::parallel_for("ZeroJy", Jx.extent(0), KOKKOS_LAMBDA(const int i) {
+        Jy(i) = 0.0;
+    });
+    Kokkos::parallel_for("ZeroJz", Jx.extent(0), KOKKOS_LAMBDA(const int i) {
+        Jz(i) = 0.0;
     });
 }
 
@@ -40,110 +71,38 @@ Field& FDTD::get_field(Component this_field)
 {
     switch (this_field)
     {
+    case Component::JX: return Jx;
+    case Component::JY: return Jy;
+    case Component::JZ: return Jz;
     case Component::EX: return Ex;
-
     case Component::EY: return Ey;
-
     case Component::EZ: return Ez;
-
     case Component::BX: return Bx;
-
     case Component::BY: return By;
-
     case Component::BZ: return Bz;
 
     default: throw std::logic_error("ERROR: Invalid field component");
     }
 }
 
-void FDTD::update_fields(bool write_result, Axis write_axis, std::string base_path)
+void FDTD::update_fields()
 {
-    if (time < 0)
-    {
-        throw std::invalid_argument("ERROR: Invalid update field argument");
-    }
+    int size_i_main[2] = { 0, parameters.Ni };
+    int size_j_main[2] = { 0, parameters.Nj };
+    int size_k_main[2] = { 0, parameters.Nk };
 
-    int cur_time;
-    if (init_func)
-    {
-        cur_time = cParams.iterations;
-    }
-    else
-    {
-        cur_time = 0;
-    }
+    ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
+    size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
+    coef_Bx, coef_By, coef_Bz);
 
-    cur_time = cParams.iterations;
+    ComputeE_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
+    Jx, Jx, Jx, current_coef,
+    size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
+    coef_Ex, coef_Ey, coef_Ez);
 
-    double Tx = cParams.period_x;
-    double Ty = cParams.period_y;
-    double Tz = cParams.period_z;
-
-    int start_i = static_cast<int>(floor((-Tx / 4.0 - parameters.ax) / parameters.dx));
-    int start_j = static_cast<int>(floor((-Ty / 4.0 - parameters.ay) / parameters.dy));
-    int start_k = static_cast<int>(floor((-Tz / 4.0 - parameters.az) / parameters.dz));
-
-    int max_i = static_cast<int>(floor((Tx / 4.0 - parameters.ax) / parameters.dx));
-    int max_j = static_cast<int>(floor((Ty / 4.0 - parameters.ay) / parameters.dy));
-    int max_k = static_cast<int>(floor((Tz / 4.0 - parameters.az) / parameters.dz));
-
-    int size_i_cur[2] = { start_i, max_i };
-    int size_j_cur[2] = { start_j, max_j };
-    int size_k_cur[2] = { start_k, max_k };
-
-    int Ni = parameters.Ni;
-    int Nj = parameters.Nj;
-    int Nk = parameters.Nk;
-
-    double coef_E = FDTD_const::C * dt;
-    double coef_B = FDTD_const::C * dt / 2.0;
-    double current_coef = 4.0 * FDTD_const::PI * dt;
-    if (pml_percent == 0.0)
-    {
-        int size_i_main[2] = { 0, parameters.Ni };
-        int size_j_main[2] = { 0, parameters.Nj };
-        int size_k_main[2] = { 0, parameters.Nk };
-        auto start = std::chrono::high_resolution_clock::now();
-        for (int t = 0; t < time; t++)
-        {
-
-            for (int i = start_i; i < max_i; ++i)
-            {
-                for (int j = start_j; j < max_j; ++j)
-                {
-                    for (int k = start_k; k < max_k; ++k)
-                    {
-                        int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
-                        Jx[index] = init_func(static_cast<double>(i) * parameters.dx,
-                                        static_cast<double>(j) * parameters.dy,
-                                        static_cast<double>(k) * parameters.dz,
-                                        static_cast<double>(t + 1) * cParams.dt);
-                    }
-                }
-            }
-
-            ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz, 
-            size_i_main, size_j_main, size_k_main,
-            Ni, Nj, Nk,
-            coef_B / parameters.dx, coef_B / parameters.dy, coef_B / parameters.dz);
-
-            ComputeE_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
-             Jx, Jx, Jx, current_coef,
-            size_i_main, size_j_main, size_k_main, t, cur_time,
-            Ni, Nj, Nk,
-            coef_E / parameters.dx, coef_E / parameters.dy, coef_E / parameters.dz);
-
-            ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
-            size_i_main, size_j_main, size_k_main,
-            Ni, Nj, Nk,
-            coef_B / parameters.dx, coef_B / parameters.dy, coef_B / parameters.dz);
-        }
-        auto end = std::chrono::high_resolution_clock::now();
-
-        std::chrono::duration<double> elapsed = end - start;
-        std::cout << "BETTER Execution time: " << elapsed.count() << " s" << std::endl;
-        return;
-    }
+    ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
+    size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
+    coef_Bx, coef_By, coef_Bz);
 }
 
 

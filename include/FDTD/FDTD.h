@@ -1,42 +1,46 @@
 #pragma once
 
-#define _USE_MATH_DEFINES
-
-#include <vector>
-#include <omp.h>
-#include <functional>
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <chrono>
-
-#include "functors.h"
+#include "shared.h"
+#include "Structures.h"
 
 using namespace FDTD_struct;
 
+namespace FDTD_openmp {
+
 class FDTD {
 public:
-FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, CurrentParameters _Cpar = {},
-    std::function<double(double, double, double, double)> init_function = [](double a, double b, double c, double d){return 0.0;});
+FDTD(Parameters _parameters, double _dt);
 
     Field& get_field(Component this_field);
-    void update_fields(bool write_result = false, Axis write_axis = Axis::X, std::string base_path = "");
+    virtual void update_fields();
+    void zeroed_currents();
     
-private:
+protected:
     Parameters parameters;
-    CurrentParameters cParams;
-    double dt;
-    double pml_percent;
-    int time;
-    std::function<double(double, double, double, double)> init_func;
+
+    int Ni, Nj, Nk;
+    double dx, dy, dz, dt;
+    double cur_coef;
+    double coef_E_dx, coef_E_dy, coef_E_dz;
+    double coef_B_dx, coef_B_dy, coef_B_dz;
+    int begin_main_i, begin_main_j, begin_main_k;
+    int end_main_i, end_main_j, end_main_k;
 
     Field Jx, Jy, Jz;
     Field Ex, Ey, Ez;
     Field Bx, By, Bz;
 
-    int pml_size_i, pml_size_j, pml_size_k;
+    inline void applyPeriodicBoundary(int& i, const int& N) {
+        int i_isMinusOne = (i < 0);
+    
+        int i_isNi = (i == N);
+    
+        i = (N - 1) * i_isMinusOne + i *
+            !(i_isMinusOne || i_isNi);
+    }
 
-    void applyPeriodicBoundaryB();
-    void applyPeriodicBoundaryE();
+    void update_E();
+    void update_B();
 };
 
+}

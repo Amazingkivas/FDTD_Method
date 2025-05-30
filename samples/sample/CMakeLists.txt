@@ -3,11 +3,7 @@ file(GLOB srcs "*.cpp" "../../src/*.cpp" "../../src/FDTD/*.cpp" "sample.cpp")
 
 add_executable(sample ${srcs} ${hdrs})
 
-if(WIN32)
-    set(output_dir "../../PlotScript/src")
-else()
-    set(output_dir "../../PlotScript/src/Release")
-endif()
+set(output_dir "${CMAKE_SOURCE_DIR}/bin")
 
 set_target_properties(sample PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${output_dir})
 

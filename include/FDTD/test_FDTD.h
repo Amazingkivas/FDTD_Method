@@ -6,6 +6,8 @@
 
 #include "FDTD.h"
 
+namespace FDTD_openmp {
+
 class Test_FDTD
 {
 private:
@@ -26,3 +28,5 @@ public:
 	double get_max_abs_error(Field& this_field, Component field,
 		std::function<double(double, double, double[2])>& true_function, double time);
 };
+
+}

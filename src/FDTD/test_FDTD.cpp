@@ -1,8 +1,8 @@
 #include "test_FDTD.h" 
 
-Test_FDTD::Test_FDTD(Parameters _parameters) : parameters(_parameters) {}
+FDTD_openmp::Test_FDTD::Test_FDTD(Parameters _parameters) : parameters(_parameters) {}
 
-void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
+void FDTD_openmp::Test_FDTD::initial_filling(FDTD_openmp::FDTD& _test, SelectedFields fields, int iters,
 	std::function<double(double, double[2])>& init_function)
 {
 	set_axis(fields.selected_E, fields.selected_B);
@@ -11,14 +11,14 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	{
 		double x_b = parameters.dx / 2.0;
 		double size_x[2] = { parameters.ax, parameters.bx };
-		for (int i = 1; i <= parameters.Ni; i++)
+		for (int i = 0; i < parameters.Ni; i++)
 		{
-			double x = static_cast<double>(i - 1) * parameters.dx;
-			for (int j = 1; j <= parameters.Nj; j++)
+			double x = static_cast<double>(i) * parameters.dx;
+			for (int j = 0; j < parameters.Nj; j++)
 			{
-				for (int k = 1; k <= parameters.Nk; k++)
+				for (int k = 0; k < parameters.Nk; k++)
 				{
-                                        int index = i + j * (parameters.Ni + 2) + k * (parameters.Ni + 2) * (parameters.Nj + 2);
+                    int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
 					_test.get_field(fields.selected_E)[index] = sign * init_function(x, size_x);
 					_test.get_field(fields.selected_B)[index] = init_function(x_b + x, size_x);
 				}
@@ -29,14 +29,14 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	{
 		double y_b = parameters.dy / 2.0;
 		double size_y[2] = { parameters.ay, parameters.by };
-		for (int j = 1; j <= parameters.Nj; j++)
+		for (int j = 0; j < parameters.Nj; j++)
 		{
-			double y = static_cast<double>(j - 1) * parameters.dy;
-			for (int k = 1; k <= parameters.Nk; k++)
+			double y = static_cast<double>(j) * parameters.dy;
+			for (int k = 0; k < parameters.Nk; k++)
 			{
-				for (int i = 1; i <= parameters.Ni; i++)
+				for (int i = 0; i < parameters.Ni; i++)
 				{
-                                        int index = i + j * (parameters.Ni + 2) + k * (parameters.Ni + 2) * (parameters.Nj + 2);
+                    int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
 					_test.get_field(fields.selected_E)[index] = sign * init_function(y, size_y);
 					_test.get_field(fields.selected_B)[index] = init_function(y_b + y, size_y);
 				}
@@ -47,14 +47,14 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	{
 		double z_b = parameters.dz / 2.0;
 		double size_z[2] = { parameters.az, parameters.bz };
-		for (int k = 1; k <= parameters.Nk; k++)
+		for (int k = 0; k < parameters.Nk; k++)
 		{
-			double z = static_cast<double>(k - 1) * parameters.dz;
-			for (int i = 1; i <= parameters.Ni; i++)
+			double z = static_cast<double>(k) * parameters.dz;
+			for (int i = 0; i < parameters.Ni; i++)
 			{
-				for (int j = 1; j <= parameters.Nj; j++)
+				for (int j = 0; j < parameters.Nj; j++)
 				{
-                                        int index = i + j * (parameters.Ni + 2) + k * (parameters.Ni + 2) * (parameters.Nj + 2);
+                    int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
 					_test.get_field(fields.selected_E)[index] = sign * init_function(z, size_z);
 					_test.get_field(fields.selected_B)[index] = init_function(z_b + z, size_z);
 				}
@@ -63,7 +63,7 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	}
 }
 
-void Test_FDTD::set_sign(Component field_E, Component field_B)
+void FDTD_openmp::Test_FDTD::set_sign(Component field_E, Component field_B)
 {
 	if (field_E == Component::EX && field_B == Component::BZ ||
 		field_E == Component::EZ && field_B == Component::BY ||
@@ -79,7 +79,7 @@ void Test_FDTD::set_sign(Component field_E, Component field_B)
 	}
 	else throw std::logic_error("ERROR: invalid selected fields");
 }
-void Test_FDTD::set_axis(Component field_E, Component field_B)
+void FDTD_openmp::Test_FDTD::set_axis(Component field_E, Component field_B)
 {
 	if (field_E == Component::EY && field_B == Component::BZ ||
 		field_E == Component::EZ && field_B == Component::BY)
@@ -98,7 +98,7 @@ void Test_FDTD::set_axis(Component field_E, Component field_B)
 	}
 	else throw std::logic_error("ERROR: invalid selected fields");
 }
-double Test_FDTD::get_shift(Component _field, double step)
+double FDTD_openmp::Test_FDTD::get_shift(Component _field, double step)
 {
 	if (static_cast<int>(_field) > static_cast<int>(Component::EZ))
 	{
@@ -108,7 +108,7 @@ double Test_FDTD::get_shift(Component _field, double step)
 	return 0.0;
 }
 
-double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
+double FDTD_openmp::Test_FDTD::get_max_abs_error(FDTD_openmp::Field& this_field, Component field,
 	std::function<double(double, double, double[2])>& true_function, double time)
 {
 	double this_error = 0.0;
@@ -117,11 +117,11 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	{
 		double x = get_shift(field, parameters.dx);
 		double size_x[2] = { parameters.ax, parameters.bx };
-		int j = 1;
-		int k = 1;
-		for (int i = 1; i <= parameters.Ni; ++i, x += parameters.dx)
+		int j = 0;
+		int k = 0;
+		for (int i = 0; i < parameters.Ni; ++i, x += parameters.dx)
 		{
-                        int index = i + j * (parameters.Ni + 2) + k * (parameters.Ni + 2) * (parameters.Nj + 2);
+            int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
 			this_error = fabs(sign * this_field[index] - true_function(x, time, size_x));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
@@ -131,11 +131,11 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	{
 		double y = get_shift(field, parameters.dy);
 		double size_y[2] = { parameters.ay, parameters.by };
-		int i = 1;
-		int k = 1;
-		for (int j = 1; j <= parameters.Nj; ++j, y += parameters.dy)
+		int i = 0;
+		int k = 0;
+		for (int j = 0; j < parameters.Nj; ++j, y += parameters.dy)
 		{
-                        int index = i + j * (parameters.Ni + 2) + k * (parameters.Ni + 2) * (parameters.Nj + 2);
+            int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
 			this_error = fabs(sign * this_field[index] - true_function(y, time, size_y));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
@@ -145,11 +145,11 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	{
 		double z = get_shift(field, parameters.dz);
 		double size_z[2] = { parameters.az, parameters.bz };
-		int i = 1;
-		int j = 1;
-		for (int k = 1; k <= parameters.Nk; ++k, z += parameters.dz)
+		int i = 0;
+		int j = 0;
+		for (int k = 0; k < parameters.Nk; ++k, z += parameters.dz)
 		{
-                        int index = i + j * (parameters.Ni + 2) + k * (parameters.Ni + 2) * (parameters.Nj + 2);
+            int index = i + j * parameters.Ni + k * parameters.Ni * parameters.Nj;
 			this_error = fabs(sign * this_field[index] - true_function(z, time, size_z));
 			if (this_error > max_abs_error)
 				max_abs_error = this_error;
@@ -157,4 +157,3 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	}
 	return max_abs_error;
 }
-

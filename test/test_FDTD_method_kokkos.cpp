@@ -28,11 +28,13 @@ double run_test_kokkos(Component test_field, SelectedFields current_fields, int 
     };
 	int iters_1 = 16;
     double dt_1 = default_time_k / static_cast<double>(iters_1);
-    FDTD_kokkos::FDTD method_1(params_1, dt_1, 0.0, iters_1);
+    FDTD_kokkos::FDTD method_1(params_1, dt_1);
 
     FDTD_kokkos::Test_FDTD test_1(params_1);
     test_1.initial_filling(method_1, current_fields, iters_1, initial_func_k);
-    method_1.update_fields(iters_1);
+    for (int t = 0; t < iters_1; t++) {
+		method_1.update_fields();
+	}
 
     double err_1 = test_1.get_max_abs_error(method_1.get_field(test_field), test_field, true_func_k, default_time_k);
     //---------------------
@@ -49,11 +51,13 @@ double run_test_kokkos(Component test_field, SelectedFields current_fields, int 
     };
 	int iters_2 = iters_1 * 2;
     double dt_2 = default_time_k / static_cast<double>(iters_2);
-    FDTD_kokkos::FDTD method_2(params_2, dt_2, 0.0, iters_2);
+    FDTD_kokkos::FDTD method_2(params_2, dt_2);
 
     FDTD_kokkos::Test_FDTD test_2(params_2);
     test_2.initial_filling(method_2, current_fields, iters_2, initial_func_k);
-    method_2.update_fields(iters_2);
+    for (int t = 0; t < iters_2; t++) {
+		method_2.update_fields();
+	}
 
     double err_2 = test_2.get_max_abs_error(method_2.get_field(test_field), test_field, true_func_k, default_time_k);
     //---------------------

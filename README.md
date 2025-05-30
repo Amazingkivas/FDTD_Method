@@ -28,7 +28,7 @@ This repository contains a C++ project with the main implementation of the metho
 
 ## Run and visualize
 
-![](https://github.com/Amazingkivas/FDTD_Method/blob/main/PlotScript/Animations/animation_Ez.gif)
+![](https://github.com/Amazingkivas/FDTD_Method/blob/main/animations/animation_Ez.gif)
 
 ### 1. Setting up a virtual environment
   ```
