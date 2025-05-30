@@ -43,9 +43,9 @@ jobs:
         shell: bash
         run: |
           find ${PWD}/build -name kokkos_sample
-          ${PWD}/build/PlotScript/src/Release/kokkos_sample
+          ${PWD}/bin/kokkos_sample
       
       - name: Run sample
         shell: bash
         run: |
-          ${PWD}/build/PlotScript/src/Release/sample
+          ${PWD}/bin/sample
