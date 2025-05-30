@@ -21,8 +21,17 @@ This repository contains a C++ project with the main implementation of the metho
   ```
 ## 2. Build the project
   ```
-  cmake .
+  mkdir build
+  cd build
+  cmake ..
   cmake --build . --config RELEASE
+  cd ..
+  ```
+## 3. Run samples
+  ```
+  cd bin
+  ./sample
+  ./kokkos_sample
   ```
 
 # Visualization
