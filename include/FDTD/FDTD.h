@@ -1,61 +1,46 @@
 #pragma once
 
-#define _USE_MATH_DEFINES
+#include "shared.h"
+#include "Structures.h"
 
-#include <vector>
-#include <omp.h>
-#include <functional>
-#include <iostream>
-#include <cmath>
+using namespace FDTD_struct;
 
-#include "Writer.h"
-#include "Field.h"
-#include "Current.h"
+namespace FDTD_openmp {
 
-#include "FDTD_boundaries.h"
-
-using namespace FDTDstruct;
-
-class FDTD
-{
-private:
-    Field Ex, Ey, Ez, Bx, By, Bz;
-
-    Current Jx, Jy, Jz;
-
-    Field Exy, Exz, Eyx, Eyz, Ezx, Ezy;
-    Field Bxy, Bxz, Byx, Byz, Bzx, Bzy;
-
-    // Permittivity and permeability of the medium
-    Field EsigmaX, EsigmaY, EsigmaZ, 
-          BsigmaX, BsigmaY, BsigmaZ;
-
-    Parameters parameters;
-    double pml_percent, dt;
-    int pml_size_i, pml_size_j, pml_size_k;
-
-    void applyPeriodicBoundary(int& i, int& j, int& k, int Ni, int Nj, int Nk);
-
-    void update_E(int bounds_i[2], int bounds_j[2], int bounds_k[2], int t);
-    void update_B(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
-
-    double PMLcoef(const double& sigma);
-    void update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
-    void update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
-
-    void set_sigma_x(int bounds_i[2], int bounds_j[2], int bounds_k[2],
-        double SGm, std::function<int(int, int, int)> dist);
-    void set_sigma_y(int bounds_i[2], int bounds_j[2], int bounds_k[2],
-        double SGm, std::function<int(int, int, int)> dist);
-    void set_sigma_z(int bounds_i[2], int bounds_j[2], int bounds_k[2],
-        double SGm, std::function<int(int, int, int)> dist);
-
+class FDTD {
 public:
-    FDTD(Parameters _parameters, double _dt, double _pml_percent, int current_iters = 1);
+FDTD(Parameters _parameters, double _dt);
 
-    Field& get_field(Component);
-    Current& get_current(Component);
+    Field& get_field(Component this_field);
+    virtual void update_fields();
+    void zeroed_currents();
+    
+protected:
+    Parameters parameters;
 
-    std::vector<Field> update_fields(const int time, bool write_result = false, 
-        Axis write_axis = Axis::X, std::string base_path = "");
+    int Ni, Nj, Nk;
+    double dx, dy, dz, dt;
+    double cur_coef;
+    double coef_E_dx, coef_E_dy, coef_E_dz;
+    double coef_B_dx, coef_B_dy, coef_B_dz;
+    int begin_main_i, begin_main_j, begin_main_k;
+    int end_main_i, end_main_j, end_main_k;
+
+    Field Jx, Jy, Jz;
+    Field Ex, Ey, Ez;
+    Field Bx, By, Bz;
+
+    inline void applyPeriodicBoundary(int& i, const int& N) {
+        int i_isMinusOne = (i < 0);
+    
+        int i_isNi = (i == N);
+    
+        i = (N - 1) * i_isMinusOne + i *
+            !(i_isMinusOne || i_isNi);
+    }
+
+    void update_E();
+    void update_B();
 };
+
+}

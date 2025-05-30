@@ -1,6 +1,6 @@
 #pragma once
 
-namespace FDTDconst
+namespace FDTD_const
 {
 	const double C = 3e10;
 	const double R = 1e-12;
@@ -10,7 +10,7 @@ namespace FDTDconst
 	const double PI = 3.14159265358;
 }
 
-namespace FDTDstruct
+namespace FDTD_struct
 {
 	enum class Component { EX, EY, EZ, BX, BY, BZ, JX, JY, JZ };
 	enum class Axis { X, Y, Z };
@@ -25,9 +25,9 @@ namespace FDTDstruct
 		int m;
 		double dt;
 		int iterations;
-		double period_x = static_cast<double>(m) * FDTDconst::C;
-		double period_y = static_cast<double>(m) * FDTDconst::C;
-		double period_z = static_cast<double>(m) * FDTDconst::C;
+		double period_x = static_cast<double>(m) * FDTD_const::C;
+		double period_y = static_cast<double>(m) * FDTD_const::C;
+		double period_z = static_cast<double>(m) * FDTD_const::C;
 	};
 
 	struct Parameters {

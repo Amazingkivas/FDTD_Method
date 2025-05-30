@@ -6,46 +6,39 @@
 #include <cmath>
 #include <fstream>
 #include <string>
+#include <chrono>
 
-#include "Functors.h"
+#include "kokkos_functors.h"
 
-using namespace FDTDstruct;
+using namespace FDTD_struct;
 
 namespace FDTD_kokkos
 {
-
 class FDTD
 {
-private:
-    Field Ex, Ey, Ez, Bx, By, Bz;
+protected:
+    Field Jx, Jy, Jz;
+    Field Ex, Ey, Ez;
+    Field Bx, By, Bz;
 
-    TimeField Jx, Jy, Jz;
-
-    Field Exy, Exz, Eyx, Eyz, Ezx, Ezy;
-    Field Bxy, Bxz, Byx, Byz, Bzx, Bzy;
-
-    // Permittivity and permeability of the medium
-    Field EsigmaX, EsigmaY, EsigmaZ, 
-          BsigmaX, BsigmaY, BsigmaZ;
+    int Ni, Nj, Nk;
+    double dx, dy, dz, dt;
+    double current_coef;
+    double coef_Ex, coef_Ey, coef_Ez;
+    double coef_Bx, coef_By, coef_Bz;
+    int begin_main_i, begin_main_j, begin_main_k;
+    int end_main_i, end_main_j, end_main_k;
 
     Parameters parameters;
-    CurrentParameters cParams;
-    double pml_percent, dt;
-    int pml_size_i, pml_size_j, pml_size_k, time;
-    std::function<double(double, double, double, double)> init_func;
-
-    void update_B_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
-    void update_E_PML(int bounds_i[2], int bounds_j[2], int bounds_k[2]);
-    void write_spherical(std::vector<Field> fields, Axis axis, std::string base_path, int it);
 
 public:
-    FDTD(Parameters _parameters, double _dt, double _pml_percent, int time_, CurrentParameters _Cpar = CurrentParameters(),
-    std::function<double(double, double, double, double)> init_function = nullptr);
+    FDTD(Parameters _parameters, double _dt);
 
     Field& get_field(Component);
 
-    void update_fields(bool write_result = false, 
-        Axis write_axis = Axis::X, std::string base_path = "");
+    virtual void update_fields();
+
+    void zeroed_currents();
 };
 
 }

@@ -1,5 +1,3 @@
-#define _USE_MATH_DEFINES
-
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -7,10 +5,10 @@
 #include <cmath>
 #include <chrono>
 #include <Kokkos_Core.hpp>
-
-namespace fs = std::filesystem;
+#include <cstdlib>
 
 #include "FDTD_kokkos.h"
+#include "FDTD_PML_kokkos.h"
 
 Axis get_axis(Component field_E, Component field_B)
 {
@@ -57,13 +55,13 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     std::function<double(double, double, double, double)> cur_func =
         [T, Tx, Ty, Tz](double x, double y, double z, double t)
     {
-        return sin(2.0 * M_PI * t / T)
-            * pow(cos(2.0 * M_PI * x / Tx), 2.0)
-            * pow(cos(2.0 * M_PI * y / Ty), 2.0)
-            * pow(cos(2.0 * M_PI * z / Tz), 2.0);
+        return sin(2.0 * FDTD_const::PI * t / T)
+            * pow(cos(2.0 * FDTD_const::PI * x / Tx), 2.0)
+            * pow(cos(2.0 * FDTD_const::PI * y / Ty), 2.0)
+            * pow(cos(2.0 * FDTD_const::PI * z / Tz), 2.0);
     };
 
-    double d = FDTDconst::C;
+    double d = FDTD_const::C;
     double boundary = static_cast<double>(n) / 2.0 * d;
 
     Parameters params
@@ -82,45 +80,128 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
         d           // dz
     };
 
-    auto clear_directory = [](const std::string& dir_path) {
-        if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
-            for (auto& file : fs::directory_iterator(dir_path)) {
-                if (fs::is_regular_file(file.path())) {
-                    fs::remove(file.path());
-                }
-            }
-        } else {
-            fs::create_directories(dir_path);
-        }
-    };
+    FDTD_kokkos::FDTD method(params, cur_param.dt);
 
-    for (int c = static_cast<int>(Component::EX); c <= static_cast<int>(Component::BZ); ++c)
-    {
-        std::string dir_path = base_path + "OutFiles_" + std::to_string(c + 1) + "/";
-        clear_directory(dir_path);
-    }
+    int cur_time = std::min(cur_param.iterations, it);
 
-    FDTD_kokkos::FDTD method(params, cur_param.dt, 0.1, it, cur_param, cur_func);
+    int start_i = static_cast<int>(floor((-Tx / 4.0 - params.ax) / params.dx));
+    int start_j = static_cast<int>(floor((-Ty / 4.0 - params.ay) / params.dy));
+    int start_k = static_cast<int>(floor((-Tz / 4.0 - params.az) / params.dz));
+
+    int max_i = static_cast<int>(floor((Tx / 4.0 - params.ax) / params.dx));
+    int max_j = static_cast<int>(floor((Ty / 4.0 - params.ay) / params.dy));
+    int max_k = static_cast<int>(floor((Tz / 4.0 - params.az) / params.dz));
 
     auto start = std::chrono::high_resolution_clock::now();
-    method.update_fields(false, Axis::Z, base_path);
+    for (int t = 0; t < cur_time; t++)
+    {
+        for (int i = start_i; i < max_i; ++i)
+        {
+            for (int j = start_j; j < max_j; ++j)
+            {
+                for (int k = start_k; k < max_k; ++k)
+                {
+                    int index = i + j * params.Ni + k * params.Ni * params.Nj;
+                    double value = cur_func(static_cast<double>(i) * params.dx,
+                                            static_cast<double>(j) * params.dy,
+                                            static_cast<double>(k) * params.dz,
+                                            static_cast<double>(t + 1) * cur_param.dt);
+
+                    method.get_field(Component::JX)[index] = value;
+                    method.get_field(Component::JY)[index] = value;
+                    method.get_field(Component::JZ)[index] = value;
+                }
+            }
+        }
+        method.update_fields();
+    }
+    method.zeroed_currents();
+    for (int t = cur_time; t < it; t++) {
+        method.update_fields();
+    }
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Execution time: " << elapsed.count() << " s" << std::endl;
+
+
+    FDTD_kokkos::FDTD_PML pml_method(params, cur_param.dt, 0.2);
+
+    auto start_pml = std::chrono::high_resolution_clock::now();
+    for (int t = 0; t < cur_time; t++)
+    {
+        for (int i = start_i; i < max_i; ++i)
+        {
+            for (int j = start_j; j < max_j; ++j)
+            {
+                for (int k = start_k; k < max_k; ++k)
+                {
+                    int index = i + j * params.Ni + k * params.Ni * params.Nj;
+                    double value = cur_func(static_cast<double>(i) * params.dx,
+                                            static_cast<double>(j) * params.dy,
+                                            static_cast<double>(k) * params.dz,
+                                            static_cast<double>(t + 1) * cur_param.dt);
+
+                    pml_method.get_field(Component::JX)[index] = value;
+                    pml_method.get_field(Component::JY)[index] = value;
+                    pml_method.get_field(Component::JZ)[index] = value;
+                }
+            }
+        }
+        pml_method.update_fields();
+    }
+    pml_method.zeroed_currents();
+    for (int t = cur_time; t < it; t++) {
+        pml_method.update_fields();
+    }
+    auto end_pml = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed_pml = end_pml - start_pml;
+    std::cout << "Execution time: " << elapsed_pml.count() << " s" << std::endl;
+
+    int k = params.Nk/2;
+    for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
+        for (int i = params.Ni/2 - 5; i < params.Ni/2 + 5; i++) {
+            int index = i + j * params.Ni + k * params.Ni * params.Nj;
+            std::cout << std::setw(12) << std::fixed << std::setprecision(5) 
+                  << method.get_field(Component::EX)[index];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
+        for (int i = params.Ni/2 - 5; i < params.Ni/2 + 5; i++) {
+            int index = i + j * params.Ni + k * params.Ni * params.Nj;
+            std::cout << std::setw(12) << std::fixed << std::setprecision(5) 
+                  << pml_method.get_field(Component::EX)[index];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
     Kokkos::initialize(argc, argv);
     {
+        if (Kokkos::hwloc::available())
+            std::cout << "hwloc available" << std::endl;
+        std::ostringstream msg;
+        msg << "hwloc( NUMA[" << Kokkos::hwloc::get_available_numa_count() << "] x CORE["
+          << Kokkos::hwloc::get_available_cores_per_numa() << "] x HT["
+          << Kokkos::hwloc::get_available_threads_per_core() << "] )" << std::endl;
+        Kokkos::print_configuration(msg);
+        std::cout << msg.str();
+
+
         std::ifstream source_fin;
         std::vector<char*> arguments(argv, argv + argc);
 
         if (argc == 1)
         {
-            int N = 120;
-            int Iterations = 50;
+            int N = 128;
+            int Iterations = 25;
             spherical_wave(N, Iterations, "../../");
         }
         else if (argc == 4)

@@ -3,11 +3,7 @@ file(GLOB srcs "*.cpp" "../../src/*.cpp" "../../src/FDTD_kokkos/*.cpp" "kokkos_s
 
 add_executable(kokkos_sample ${srcs} ${hdrs})
 
-if(WIN32)
-    set(output_dir "../../PlotScript/src")
-else()
-    set(output_dir "../../PlotScript/src/Release")
-endif()
+set(output_dir "${CMAKE_SOURCE_DIR}/bin")
 
 target_link_libraries(kokkos_sample Kokkos::kokkos)
 
