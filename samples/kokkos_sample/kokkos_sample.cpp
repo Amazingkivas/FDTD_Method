@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
 
         if (argc == 1)
         {
-            int N = 512;
+            int N = 128;
             int Iterations = 25;
             spherical_wave(N, Iterations, "../../");
         }
