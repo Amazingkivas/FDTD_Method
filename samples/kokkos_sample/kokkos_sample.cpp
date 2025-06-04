@@ -10,36 +10,13 @@
 #include "FDTD_kokkos.h"
 #include "FDTD_PML_kokkos.h"
 
-Axis get_axis(Component field_E, Component field_B)
-{
-    Axis selected_axis;
-    if (field_E == Component::EY && field_B == Component::BZ ||
-        field_E == Component::EZ && field_B == Component::BY)
-    {
-        selected_axis = Axis::X;
-    }
-    else if (field_E == Component::EX && field_B == Component::BZ ||
-        field_E == Component::EZ && field_B == Component::BX)
-    {
-        selected_axis = Axis::Y;
-    }
-    else if (field_E == Component::EX && field_B == Component::BY ||
-        field_E == Component::EY && field_B == Component::BX)
-    {
-        selected_axis = Axis::Z;
-    }
-    else
-    {
-        std::cout << "ERROR: invalid selected fields" << std::endl;
-        exit(1);
-    }
-    return selected_axis;
-}
+#define __PML_TEST__
 
-void spherical_wave(int n, int it, const std::string base_path = "../../PlotScript/")
-{
-    CurrentParameters cur_param
-    {
+using namespace FDTD_kokkos;
+
+
+void spherical_wave(int n, int it, const std::string base_path = "../../PlotScript/") {
+    CurrentParameters cur_param {
         8,
         4,
         0.2
@@ -53,8 +30,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt);
 
     std::function<double(double, double, double, double)> cur_func =
-        [T, Tx, Ty, Tz](double x, double y, double z, double t)
-    {
+        [T, Tx, Ty, Tz](double x, double y, double z, double t) {
         return sin(2.0 * FDTD_const::PI * t / T)
             * pow(cos(2.0 * FDTD_const::PI * x / Tx), 2.0)
             * pow(cos(2.0 * FDTD_const::PI * y / Ty), 2.0)
@@ -64,8 +40,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     double d = FDTD_const::C;
     double boundary = static_cast<double>(n) / 2.0 * d;
 
-    Parameters params
-    {
+    Parameters params {
         n,          // Ni
         n,          // Nj
         n,          // Nk
@@ -93,14 +68,10 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     int max_k = static_cast<int>(floor((Tz / 4.0 - params.az) / params.dz));
 
     auto start = std::chrono::high_resolution_clock::now();
-    for (int t = 0; t < cur_time; t++)
-    {
-        for (int i = start_i; i < max_i; ++i)
-        {
-            for (int j = start_j; j < max_j; ++j)
-            {
-                for (int k = start_k; k < max_k; ++k)
-                {
+    for (int t = 0; t < cur_time; t++) {
+        for (int i = start_i; i < max_i; ++i) {
+            for (int j = start_j; j < max_j; ++j) {
+                for (int k = start_k; k < max_k; ++k) {
                     int index = i + j * params.Ni + k * params.Ni * params.Nj;
                     double value = cur_func(static_cast<double>(i) * params.dx,
                                             static_cast<double>(j) * params.dy,
@@ -124,18 +95,14 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Execution time: " << elapsed.count() << " s" << std::endl;
 
-
+#ifdef __PML_TEST__
     FDTD_kokkos::FDTD_PML pml_method(params, cur_param.dt, 0.2);
 
     auto start_pml = std::chrono::high_resolution_clock::now();
-    for (int t = 0; t < cur_time; t++)
-    {
-        for (int i = start_i; i < max_i; ++i)
-        {
-            for (int j = start_j; j < max_j; ++j)
-            {
-                for (int k = start_k; k < max_k; ++k)
-                {
+    for (int t = 0; t < cur_time; t++) {
+        for (int i = start_i; i < max_i; ++i) {
+            for (int j = start_j; j < max_j; ++j) {
+                for (int k = start_k; k < max_k; ++k) {
                     int index = i + j * params.Ni + k * params.Ni * params.Nj;
                     double value = cur_func(static_cast<double>(i) * params.dx,
                                             static_cast<double>(j) * params.dy,
@@ -158,6 +125,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
 
     std::chrono::duration<double> elapsed_pml = end_pml - start_pml;
     std::cout << "Execution time: " << elapsed_pml.count() << " s" << std::endl;
+#endif //__PML_TEST__
 
     int k = params.Nk/2;
     for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
@@ -170,6 +138,7 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     }
     std::cout << std::endl;
 
+#ifdef __PML_TEST__
     for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
         for (int i = params.Ni/2 - 5; i < params.Ni/2 + 5; i++) {
             int index = i + j * params.Ni + k * params.Ni * params.Nj;
@@ -179,12 +148,11 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
         std::cout << std::endl;
     }
     std::cout << std::endl;
+#endif //__PML_TEST__
 }
 
-int main(int argc, char* argv[])
-{
-    Kokkos::initialize(argc, argv);
-    {
+int main(int argc, char* argv[]) {
+    Kokkos::initialize(argc, argv); {
         if (Kokkos::hwloc::available())
             std::cout << "hwloc available" << std::endl;
         std::ostringstream msg;
@@ -198,20 +166,17 @@ int main(int argc, char* argv[])
         std::ifstream source_fin;
         std::vector<char*> arguments(argv, argv + argc);
 
-        if (argc == 1)
-        {
+        if (argc == 1) {
             int N = 128;
-            int Iterations = 25;
+            int Iterations = 500;
             spherical_wave(N, Iterations, "../../");
         }
-        else if (argc == 4)
-        {
+        else if (argc == 4) {
             int N = std::atoi(arguments[1]);
             int Iterations = std::atoi(arguments[2]);
             spherical_wave(N, Iterations, "");
         }
-        else
-        {
+        else {
             std::cout << "ERROR: Incorrect number of parameters" << std::endl;
             exit(1);
         }

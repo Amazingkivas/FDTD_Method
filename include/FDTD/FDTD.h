@@ -1,20 +1,11 @@
 #pragma once
 
 #include "shared.h"
-#include "Structures.h"
 
-using namespace FDTD_struct;
 
 namespace FDTD_openmp {
 
 class FDTD {
-public:
-FDTD(Parameters _parameters, double _dt);
-
-    Field& get_field(Component this_field);
-    virtual void update_fields();
-    void zeroed_currents();
-    
 protected:
     Parameters parameters;
 
@@ -41,6 +32,12 @@ protected:
 
     void update_E();
     void update_B();
+public:
+    FDTD(Parameters _parameters, double _dt);
+
+    Field& get_field(Component this_field);
+    virtual void update_fields();
+    void zeroed_currents();
 };
 
 }

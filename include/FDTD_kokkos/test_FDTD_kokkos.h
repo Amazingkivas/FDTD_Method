@@ -2,32 +2,27 @@
 
 #include "FDTD_kokkos.h"
 
-#include <iostream>
-#include <cmath>
-#include <functional>
 
-namespace FDTD_kokkos
-{
+namespace FDTD_kokkos {
 
-class Test_FDTD
-{
+class Test_FDTD {
 private:
 	Parameters parameters;
-	double sign = 1.0;
+	FP sign = 1.0;
 	Axis axis = Axis::X;
 	
 	void set_sign(Component field_E, Component field_B);
 	void set_axis(Component field_E, Component field_B);
-	double get_shift(Component _field, double step);
+	FP get_shift(Component _field, FP step);
 
 public:
 	Test_FDTD(Parameters);
 
 	void initial_filling(FDTD& _test, SelectedFields, int iters,
-		std::function<double(double, double[2])>& init_function);
+		std::function<FP(FP, FP[2])>& init_function);
 
-	double get_max_abs_error(Field& this_field, Component field,
-		std::function<double(double, double, double[2])>& true_function, double time);
+	FP get_max_abs_error(Field& this_field, Component field,
+		std::function<FP(FP, FP, FP[2])>& true_function, FP time);
 };
 
 }

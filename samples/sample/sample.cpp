@@ -8,36 +8,13 @@
 #include "test_FDTD.h"
 #include "FDTD_PML.h"
 
-Axis get_axis(Component field_E, Component field_B)
-{
-    Axis selected_axis;
-    if (field_E == Component::EY && field_B == Component::BZ ||
-        field_E == Component::EZ && field_B == Component::BY)
-    {
-        selected_axis = Axis::X;
-    }
-    else if (field_E == Component::EX && field_B == Component::BZ ||
-        field_E == Component::EZ && field_B == Component::BX)
-    {
-        selected_axis = Axis::Y;
-    }
-    else if (field_E == Component::EX && field_B == Component::BY ||
-        field_E == Component::EY && field_B == Component::BX)
-    {
-        selected_axis = Axis::Z;
-    }
-    else
-    {
-        std::cout << "ERROR: invalid selected fields" << std::endl;
-        exit(1);
-    }
-    return selected_axis;
-}
+#define __PML_TEST__
 
-void spherical_wave(int n, int it, std::string base_path = "")
-{
-    CurrentParameters cur_param
-    {
+using namespace FDTD_openmp;
+
+
+void spherical_wave(int n, int it, std::string base_path = "") {
+    CurrentParameters cur_param {
         8,
         4,
         0.2,
@@ -48,8 +25,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
     double Tz = cur_param.period_z;
     cur_param.iterations = static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt);
     std::function<double(double, double, double, double)> cur_func 
-        = [T, Tx, Ty, Tz](double x, double y, double z, double t)
-    {
+        = [T, Tx, Ty, Tz](double x, double y, double z, double t) {
         return sin(2.0 * FDTD_const::PI * t / T) 
             * pow(cos(2.0 * FDTD_const::PI * x / Tx), 2.0) 
             * pow(cos(2.0 * FDTD_const::PI * y / Ty), 2.0) 
@@ -61,8 +37,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
 
     double boundary = static_cast<double>(n) / 2.0 * d;
 
-    Parameters params
-    {
+    Parameters params {
         n,          // Ni
         n,          // Nj
         n,          // Nk
@@ -117,7 +92,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Execution time: " << elapsed.count() << " s" << std::endl;
 
-
+#ifdef __PML_TEST__
     FDTD_openmp::FDTD_PML pml_method(params, cur_param.dt, 0.2);
 
     auto start_pml = std::chrono::high_resolution_clock::now();
@@ -147,6 +122,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
 
     std::chrono::duration<double> elapsed_pml = end_pml - start_pml;
     std::cout << "Execution time: " << elapsed_pml.count() << " s" << std::endl;
+#endif //__PML_TEST__
 
     int k = params.Nk/2;
     for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
@@ -159,6 +135,7 @@ void spherical_wave(int n, int it, std::string base_path = "")
     }
     std::cout << std::endl;
 
+#ifdef __PML_TEST__
     for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
         for (int i = params.Ni/2 - 5; i < params.Ni/2 + 5; i++) {
             int index = i + j * params.Ni + k * params.Ni * params.Nj;
@@ -168,27 +145,23 @@ void spherical_wave(int n, int it, std::string base_path = "")
         std::cout << std::endl;
     }
     std::cout << std::endl;
-    
+#endif //__PML_TEST__
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     std::ifstream source_fin;
     std::vector<char*> arguments(argv, argv + argc);
-    if (argc == 1) 
-    {
+    if (argc == 1) {
         int N = 128;
-        int Iterations = 25;
+        int Iterations = 500;
         spherical_wave(N, Iterations, "../../");
     }
-    else if (argc == 4)
-    {
+    else if (argc == 4) {
         int N = std::atoi(arguments[1]);
         int Iterations = std::atoi(arguments[2]);
         spherical_wave(N, Iterations);
     }
-    else
-    {
+    else {
         std::cout << "ERROR: Incorrect number of parameters" << std::endl;
         exit(1);
     }

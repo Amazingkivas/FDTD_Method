@@ -2,7 +2,7 @@
 
 using namespace FDTD_kokkos;
 
-FDTD::FDTD(Parameters _parameters, double _dt) :
+FDTD::FDTD(Parameters _parameters, FP _dt) :
     parameters(_parameters), dt(_dt) {
     if (parameters.Ni <= 0 ||
         parameters.Nj <= 0 ||
@@ -11,7 +11,7 @@ FDTD::FDTD(Parameters _parameters, double _dt) :
         throw std::invalid_argument("ERROR: invalid parameters");
     }
 
-    int size = parameters.Ni * parameters.Nj * parameters.Nk;
+    const int size = parameters.Ni * parameters.Nj * parameters.Nk;
 
     Jx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jx"), size);
     Jy = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jy"), size);
@@ -67,10 +67,8 @@ void FDTD::zeroed_currents() {
     });
 }
 
-Field& FDTD::get_field(Component this_field)
-{
-    switch (this_field)
-    {
+Field& FDTD::get_field(Component this_field) {
+    switch (this_field) {
     case Component::JX: return Jx;
     case Component::JY: return Jy;
     case Component::JZ: return Jz;
@@ -85,11 +83,10 @@ Field& FDTD::get_field(Component this_field)
     }
 }
 
-void FDTD::update_fields()
-{
-    int size_i_main[2] = { 0, parameters.Ni };
-    int size_j_main[2] = { 0, parameters.Nj };
-    int size_k_main[2] = { 0, parameters.Nk };
+void FDTD::update_fields() {
+    const int size_i_main[2] = { 0, parameters.Ni };
+    const int size_j_main[2] = { 0, parameters.Nj };
+    const int size_k_main[2] = { 0, parameters.Nk };
 
     ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
     size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
@@ -104,7 +101,3 @@ void FDTD::update_fields()
     size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
     coef_Bx, coef_By, coef_Bz);
 }
-
-
-
-

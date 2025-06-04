@@ -5,17 +5,17 @@ using namespace FDTD_kokkos;
 Test_FDTD::Test_FDTD(Parameters _parameters) : parameters(_parameters) {}
 
 void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
-	std::function<double(double, double[2])>& init_function)
+	std::function<FP(FP, FP[2])>& init_function)
 {
 	set_axis(fields.selected_E, fields.selected_B);
 	set_sign(fields.selected_E, fields.selected_B);
 	if (axis == Axis::X)
 	{
-		double x_b = parameters.dx / 2.0;
-		double size_x[2] = { parameters.ax, parameters.bx };
+		FP x_b = parameters.dx / 2.0;
+		FP size_x[2] = { parameters.ax, parameters.bx };
 		for (int i = 0; i < parameters.Ni; i++)
 		{
-			double x = static_cast<double>(i) * parameters.dx;
+			FP x = static_cast<FP>(i) * parameters.dx;
 			for (int j = 0; j < parameters.Nj; j++)
 			{
 				for (int k = 0; k < parameters.Nk; k++)
@@ -29,11 +29,11 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	}
 	else if (axis == Axis::Y)
 	{
-		double y_b = parameters.dy / 2.0;
-		double size_y[2] = { parameters.ay, parameters.by };
+		FP y_b = parameters.dy / 2.0;
+		FP size_y[2] = { parameters.ay, parameters.by };
 		for (int j = 0; j < parameters.Nj; j++)
 		{
-			double y = static_cast<double>(j) * parameters.dy;
+			FP y = static_cast<FP>(j) * parameters.dy;
 			for (int k = 0; k < parameters.Nk; k++)
 			{
 				for (int i = 0; i < parameters.Ni; i++)
@@ -47,11 +47,11 @@ void Test_FDTD::initial_filling(FDTD& _test, SelectedFields fields, int iters,
 	}
 	else
 	{
-		double z_b = parameters.dz / 2.0;
-		double size_z[2] = { parameters.az, parameters.bz };
+		FP z_b = parameters.dz / 2.0;
+		FP size_z[2] = { parameters.az, parameters.bz };
 		for (int k = 0; k < parameters.Nk; k++)
 		{
-			double z = static_cast<double>(k) * parameters.dz;
+			FP z = static_cast<FP>(k) * parameters.dz;
 			for (int i = 0; i < parameters.Ni; i++)
 			{
 				for (int j = 0; j < parameters.Nj; j++)
@@ -100,7 +100,7 @@ void Test_FDTD::set_axis(Component field_E, Component field_B)
 	}
 	else throw std::logic_error("ERROR: invalid selected fields");
 }
-double Test_FDTD::get_shift(Component _field, double step)
+FP Test_FDTD::get_shift(Component _field, FP step)
 {
 	if (static_cast<int>(_field) > static_cast<int>(Component::EZ))
 	{
@@ -110,15 +110,15 @@ double Test_FDTD::get_shift(Component _field, double step)
 	return 0.0;
 }
 
-double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
-	std::function<double(double, double, double[2])>& true_function, double time)
+FP Test_FDTD::get_max_abs_error(Field& this_field, Component field,
+	std::function<FP(FP, FP, FP[2])>& true_function, FP time)
 {
-	double this_error = 0.0;
-	double max_abs_error = 0.0;
+	FP this_error = 0.0;
+	FP max_abs_error = 0.0;
 	if (axis == Axis::X)
 	{
-		double x = get_shift(field, parameters.dx);
-		double size_x[2] = { parameters.ax, parameters.bx };
+		FP x = get_shift(field, parameters.dx);
+		FP size_x[2] = { parameters.ax, parameters.bx };
 		int j = 0;
 		int k = 0;
 		for (int i = 0; i < parameters.Ni; ++i, x += parameters.dx)
@@ -131,8 +131,8 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	}
 	else if (axis == Axis::Y)
 	{
-		double y = get_shift(field, parameters.dy);
-		double size_y[2] = { parameters.ay, parameters.by };
+		FP y = get_shift(field, parameters.dy);
+		FP size_y[2] = { parameters.ay, parameters.by };
 		int i = 0;
 		int k = 0;
 		for (int j = 0; j < parameters.Nj; ++j, y += parameters.dy)
@@ -145,8 +145,8 @@ double Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	}
 	else
 	{
-		double z = get_shift(field, parameters.dz);
-		double size_z[2] = { parameters.az, parameters.bz };
+		FP z = get_shift(field, parameters.dz);
+		FP size_z[2] = { parameters.az, parameters.bz };
 		int i = 0;
 		int j = 0;
 		for (int k = 0; k < parameters.Nk; ++k, z += parameters.dz)

@@ -1,12 +1,12 @@
 #include "FDTD.h"
 
-FDTD_openmp::FDTD::FDTD(Parameters _parameters, double _dt)
+FDTD_openmp::FDTD::FDTD(Parameters _parameters, FP _dt)
     : parameters(_parameters), dt(_dt) {
     if (parameters.Ni <= 0 || parameters.Nj <= 0 || parameters.Nk <= 0 || dt <= 0) {
         throw std::invalid_argument("ERROR: invalid parameters");
     }
 
-    int size = parameters.Nk * parameters.Nj * parameters.Ni;
+    const int size = parameters.Nk * parameters.Nj * parameters.Ni;
 
     Jx = Field(size);
     Jy = Field(size);
@@ -19,8 +19,7 @@ FDTD_openmp::FDTD::FDTD(Parameters _parameters, double _dt)
     Bz = Field(size);
 
     #pragma omp parallel for schedule(static)
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
        Jx[i] = 0.0;
        Jy[i] = 0.0;
        Jz[i] = 0.0;

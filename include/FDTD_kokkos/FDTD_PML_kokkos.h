@@ -2,6 +2,7 @@
 
 #include "FDTD_kokkos.h"
 
+
 namespace FDTD_kokkos {
 
 using Boundaries = std::pair<int, int>;
@@ -27,7 +28,7 @@ private:
     void update_E_PML(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k);
 
 public:
-    FDTD_PML(Parameters _parameters, double _dt, double pml_percent);
+    FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent);
 
     void update_fields() override;
 };

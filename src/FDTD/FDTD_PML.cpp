@@ -2,7 +2,7 @@
 
 inline void FDTD_openmp::FDTD_PML::set_sigma_x(Boundaries bounds_i,
     Boundaries bounds_j, Boundaries bounds_k,
-    double SGm, Function dist) {
+    FP SGm, Function dist) {
     #pragma omp parallel for collapse(2) schedule(static)
     for (int k = bounds_k.first; k < bounds_k.second; k++) {
         for (int j = bounds_j.first; j < bounds_j.second; j++) {
@@ -11,18 +11,18 @@ inline void FDTD_openmp::FDTD_PML::set_sigma_x(Boundaries bounds_i,
                 int index = i + j * Ni + k * Ni * Nj;
 
                 EsigmaX[index] = SGm *
-                    std::pow((static_cast<double>(dist(i, j, k))) /
-                    static_cast<double>(pml_size_i), FDTD_const::N);
+                    std::pow((static_cast<FP>(dist(i, j, k))) /
+                    static_cast<FP>(pml_size_i), FDTD_const::N);
                 BsigmaX[index] = SGm *
-                    std::pow((static_cast<double>(dist(i, j, k))) /
-                    static_cast<double>(pml_size_i), FDTD_const::N);
+                    std::pow((static_cast<FP>(dist(i, j, k))) /
+                    static_cast<FP>(pml_size_i), FDTD_const::N);
             }
         }
     }
 }
 inline void FDTD_openmp::FDTD_PML::set_sigma_y(Boundaries bounds_i,
     Boundaries bounds_j, Boundaries bounds_k,
-    double SGm, Function dist) {
+    FP SGm, Function dist) {
     #pragma omp parallel for collapse(2) schedule(static)
     for (int k = bounds_k.first; k < bounds_k.second; k++) {
         for (int j = bounds_j.first; j < bounds_j.second; j++) {
@@ -31,17 +31,17 @@ inline void FDTD_openmp::FDTD_PML::set_sigma_y(Boundaries bounds_i,
                 int index = i + j * Ni + k * Ni * Nj;
 
                 EsigmaY[index] = SGm *
-                    std::pow((static_cast<double>(dist(i, j, k))) /
-                    static_cast<double>(pml_size_j), FDTD_const::N);
+                    std::pow((static_cast<FP>(dist(i, j, k))) /
+                    static_cast<FP>(pml_size_j), FDTD_const::N);
                 BsigmaY[index] = SGm *
-                    std::pow((static_cast<double>(dist(i, j, k))) /
-                    static_cast<double>(pml_size_j), FDTD_const::N);
+                    std::pow((static_cast<FP>(dist(i, j, k))) /
+                    static_cast<FP>(pml_size_j), FDTD_const::N);
             }
         }
     }
 }
 inline void FDTD_openmp::FDTD_PML::set_sigma_z(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k,
-    double SGm, Function dist) {
+    FP SGm, Function dist) {
     #pragma omp parallel for collapse(2) schedule(static)
     for (int k = bounds_k.first; k < bounds_k.second; k++) {
         for (int j = bounds_j.first; j < bounds_j.second; j++) {
@@ -50,28 +50,36 @@ inline void FDTD_openmp::FDTD_PML::set_sigma_z(Boundaries bounds_i, Boundaries b
                 int index = i + j * Ni + k * Ni * Nj;
 
                 EsigmaZ[index] = SGm *
-                    std::pow((static_cast<double>(dist(i, j, k))) /
-                    static_cast<double>(pml_size_k), FDTD_const::N);
+                    std::pow((static_cast<FP>(dist(i, j, k))) /
+                    static_cast<FP>(pml_size_k), FDTD_const::N);
                 BsigmaZ[index] = SGm *
-                    std::pow((static_cast<double>(dist(i, j, k))) /
-                    static_cast<double>(pml_size_k), FDTD_const::N);
+                    std::pow((static_cast<FP>(dist(i, j, k))) /
+                    static_cast<FP>(pml_size_k), FDTD_const::N);
             }
         }
     }
 }
 
-inline double FDTD_openmp::FDTD_PML::PMLcoef(double sigma) const {
+inline FP FDTD_openmp::FDTD_PML::PMLcoef(FP sigma) const {
     return std::exp(-sigma * this->dt * FDTD_const::C);
 }
 
-inline void FDTD_openmp::FDTD_PML::update_E_PML(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k) {
-    double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
+inline void FDTD_openmp::FDTD_PML::update_E_PML(Boundaries bounds_i,
+    Boundaries bounds_j, Boundaries bounds_k) {
+    FP PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
+
+    int k_start = bounds_k.first;
+    int k_end = bounds_k.second;
+    int j_start = bounds_j.first;
+    int j_end = bounds_j.second;
+    int i_start = bounds_i.first;
+    int i_end = bounds_i.second;
 
     #pragma omp parallel for collapse(2) schedule(static)
-    for (int k = bounds_k.first; k < bounds_k.second; k++)  {
-        for (int j = bounds_j.first; j < bounds_j.second; j++) {
+    for (int k = k_start; k < k_end; k++)  {
+        for (int j = j_start; j < j_end; j++) {
             #pragma omp simd
-            for (int i = bounds_i.first; i < bounds_i.second; i++) {
+            for (int i = i_start; i < i_end; i++) {
                 int i_pred = i - 1;
                 int j_pred = j - 1;
                 int k_pred = k - 1;
@@ -124,14 +132,22 @@ inline void FDTD_openmp::FDTD_PML::update_E_PML(Boundaries bounds_i, Boundaries 
     }
 }
 
-inline void FDTD_openmp::FDTD_PML::update_B_PML(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k) {
-    double PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
+inline void FDTD_openmp::FDTD_PML::update_B_PML(Boundaries bounds_i,
+    Boundaries bounds_j, Boundaries bounds_k) {
+    FP PMLcoef2_x, PMLcoef2_y, PMLcoef2_z;
+
+    int k_start = bounds_k.first;
+    int k_end = bounds_k.second;
+    int j_start = bounds_j.first;
+    int j_end = bounds_j.second;
+    int i_start = bounds_i.first;
+    int i_end = bounds_i.second;
 
     #pragma omp parallel for collapse(2) schedule(static)
-    for (int k = bounds_k.first; k < bounds_k.second; k++) {
-        for (int j = bounds_j.first; j < bounds_j.second; j++) {
+    for (int k = k_start; k < k_end; k++) {
+        for (int j = j_start; j < j_end; j++) {
             #pragma omp simd
-            for (int i = bounds_i.first; i < bounds_i.second; i++) {
+            for (int i = i_start; i < i_end; i++) {
                 int i_next = i + 1;
                 int j_next = j + 1;
                 int k_next = k + 1;
@@ -184,16 +200,17 @@ inline void FDTD_openmp::FDTD_PML::update_B_PML(Boundaries bounds_i, Boundaries 
     }
 }
 
-FDTD_openmp::FDTD_PML::FDTD_PML(Parameters _parameters, double _dt, double pml_percent) : FDTD(_parameters, _dt) {
-    int size = _parameters.Ni * _parameters.Nj * _parameters.Nk;
+FDTD_openmp::FDTD_PML::FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent) :
+    FDTD(_parameters, _dt) {
+    const int size = _parameters.Ni * _parameters.Nj * _parameters.Nk;
 
     Exy = Exz = Eyx = Eyz = Ezx = Ezy = Field(size, 0.0);
     Bxy = Bxz = Byx = Byz = Bzx = Bzy = Field(size, 0.0);
     EsigmaX = EsigmaY = EsigmaZ = BsigmaX = BsigmaY = BsigmaZ = Field(size, 0.0);
 
-    pml_size_i = static_cast<int>(static_cast<double>(_parameters.Ni) * pml_percent);
-    pml_size_j = static_cast<int>(static_cast<double>(_parameters.Nj) * pml_percent);
-    pml_size_k = static_cast<int>(static_cast<double>(_parameters.Nk) * pml_percent);
+    pml_size_i = static_cast<int>(static_cast<FP>(_parameters.Ni) * pml_percent);
+    pml_size_j = static_cast<int>(static_cast<FP>(_parameters.Nj) * pml_percent);
+    pml_size_k = static_cast<int>(static_cast<FP>(_parameters.Nk) * pml_percent);
 
     // Defining areas of computation
     // ======================================================================
@@ -253,12 +270,12 @@ FDTD_openmp::FDTD_PML::FDTD_PML(Parameters _parameters, double _dt, double pml_p
 
     // Calculation of maximum permittivity and permeability
     // ======================================================================
-    double SGm_x = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
-        / (static_cast<double>(pml_size_i) * _parameters.dx);
-    double SGm_y = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
-        / (static_cast<double>(pml_size_j) * _parameters.dy);
-    double SGm_z = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
-        / (static_cast<double>(pml_size_k) * _parameters.dz);
+    FP SGm_x = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
+        / (static_cast<FP>(pml_size_i) * _parameters.dx);
+    FP SGm_y = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
+        / (static_cast<FP>(pml_size_j) * _parameters.dy);
+    FP SGm_z = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
+        / (static_cast<FP>(pml_size_k) * _parameters.dz);
     // ======================================================================
 
     // Calculation of permittivity and permeability in the cells

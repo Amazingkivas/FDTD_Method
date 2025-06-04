@@ -1,10 +1,7 @@
 #pragma once
 
-#include "shared.h"
-#include "Structures.h"
 #include "FDTD.h"
 
-using namespace FDTD_struct;
 
 namespace FDTD_openmp {
 
@@ -12,27 +9,11 @@ using Boundaries = std::pair<int, int>;
 
 class FDTD_PML : public FDTD {
 private:
-    Field Exy;
-    Field Exz;
-    Field Eyx;
-    Field Eyz;
-    Field Ezx;
-    Field Ezy;
+    Field Exy, Exz, Eyx, Eyz, Ezx, Ezy;
+    Field Bxy, Bxz, Byx, Byz, Bzx, Bzy;
 
-    Field Bxy;
-    Field Bxz;
-    Field Byx;
-    Field Byz;
-    Field Bzx;
-    Field Bzy;
-
-    Field EsigmaX;
-    Field EsigmaY;
-    Field EsigmaZ;
-
-    Field BsigmaX;
-    Field BsigmaY;
-    Field BsigmaZ;
+    Field EsigmaX, EsigmaY, EsigmaZ;
+    Field BsigmaX, BsigmaY, BsigmaZ;
 
     Boundaries size_i_main, size_j_main, size_k_main;
     Boundaries size_i_solid, size_j_solid, size_k_solid;
@@ -45,20 +26,20 @@ private:
     int pml_size_i, pml_size_j, pml_size_k;
 
     inline void set_sigma_x(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k,
-        double SGm, Function dist);
+        FP SGm, Function dist);
     inline void set_sigma_y(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k,
-        double SGm, Function dist);
+        FP SGm, Function dist);
     inline void set_sigma_z(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k,
-        double SGm, Function dist);
+        FP SGm, Function dist);
 
-    inline double PMLcoef(double sigma) const;
+    inline FP PMLcoef(FP sigma) const;
 
     inline void update_E_PML(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k);
 
     inline void update_B_PML(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k);
 
 public:
-    FDTD_PML(Parameters _parameters, double _dt, double pml_percent);
+    FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent);
 
     void update_fields() override;
 };

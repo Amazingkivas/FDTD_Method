@@ -1,22 +1,27 @@
 #include "FDTD_PML_kokkos.h"
 
-void FDTD_kokkos::FDTD_PML::update_B_PML(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k) {
-    ComputeB_PML_FieldFunctor::apply(Ex, Ey, Ez, Bxy, Byx, Bzy, Byz, Bzx, Bxz,
+void FDTD_kokkos::FDTD_PML::update_B_PML(Boundaries bounds_i,
+    Boundaries bounds_j, Boundaries bounds_k) {
+    ComputeB_PML_FieldFunctor::apply(Ex, Ey, Ez, Bxy,
+        Byx, Bzy, Byz, Bzx, Bxz,
         Bx, By, Bz, BsigmaX, BsigmaY, BsigmaZ,
         this->dt, this->parameters.dx, this->parameters.dy, this->parameters.dz,
         bounds_i, bounds_j, bounds_k,
         this->parameters.Ni, this->parameters.Nj, this->parameters.Nk);
 }
-void FDTD_kokkos::FDTD_PML::update_E_PML(Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k) {
-    ComputeE_PML_FieldFunctor::apply(Ex, Ey, Ez, Exy, Eyx, Ezy, Eyz, Ezx, Exz,
+void FDTD_kokkos::FDTD_PML::update_E_PML(Boundaries bounds_i,
+    Boundaries bounds_j, Boundaries bounds_k) {
+    ComputeE_PML_FieldFunctor::apply(Ex, Ey, Ez, Exy,
+        Eyx, Ezy, Eyz, Ezx, Exz,
         Bx, By, Bz, EsigmaX, EsigmaY, EsigmaZ,
         this->dt, this->parameters.dx, this->parameters.dy, this->parameters.dz,
         bounds_i, bounds_j, bounds_k,
         this->parameters.Ni, this->parameters.Nj, this->parameters.Nk);
 }
 
-FDTD_kokkos::FDTD_PML::FDTD_PML(Parameters _parameters, double _dt, double pml_percent) : FDTD(_parameters, _dt) {
-    int size = _parameters.Ni * _parameters.Nj * _parameters.Nk;
+FDTD_kokkos::FDTD_PML::FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent) :
+    FDTD(_parameters, _dt) {
+    const int size = _parameters.Ni * _parameters.Nj * _parameters.Nk;
 
     Exy = Field("Exy", size);
     Exz = Field("Exz", size);
@@ -39,9 +44,9 @@ FDTD_kokkos::FDTD_PML::FDTD_PML(Parameters _parameters, double _dt, double pml_p
     BsigmaY = Field("BsigmaY", size);
     BsigmaZ = Field("BsigmaZ", size);
 
-    pml_size_i = static_cast<int>(static_cast<double>(_parameters.Ni) * pml_percent);
-    pml_size_j = static_cast<int>(static_cast<double>(_parameters.Nj) * pml_percent);
-    pml_size_k = static_cast<int>(static_cast<double>(_parameters.Nk) * pml_percent);
+    pml_size_i = static_cast<int>(static_cast<FP>(_parameters.Ni) * pml_percent);
+    pml_size_j = static_cast<int>(static_cast<FP>(_parameters.Nj) * pml_percent);
+    pml_size_k = static_cast<int>(static_cast<FP>(_parameters.Nk) * pml_percent);
 
     // Defining areas of computation
     // ======================================================================
@@ -101,12 +106,12 @@ FDTD_kokkos::FDTD_PML::FDTD_PML(Parameters _parameters, double _dt, double pml_p
 
     // Calculation of maximum permittivity and permeability
     // ======================================================================
-    double SGm_x = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
-        / (static_cast<double>(pml_size_i) * _parameters.dx);
-    double SGm_y = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
-        / (static_cast<double>(pml_size_j) * _parameters.dy);
-    double SGm_z = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
-        / (static_cast<double>(pml_size_k) * _parameters.dz);
+    FP SGm_x = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
+        / (static_cast<FP>(pml_size_i) * _parameters.dx);
+    FP SGm_y = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
+        / (static_cast<FP>(pml_size_j) * _parameters.dy);
+    FP SGm_z = -(FDTD_const::N + 1.0) / 2.0 * std::log(FDTD_const::R)
+        / (static_cast<FP>(pml_size_k) * _parameters.dz);
     // ======================================================================
 
     // Calculation of permittivity and permeability in the cells
