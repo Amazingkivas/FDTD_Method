@@ -121,7 +121,7 @@ void spherical_wave(int n, int it, std::string base_path = "") {
     auto end_pml = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed_pml = end_pml - start_pml;
-    std::cout << "Execution time: " << elapsed_pml.count() << " s" << std::endl;
+    std::cout << "Execution time (PML): " << elapsed_pml.count() << " s" << std::endl;
 #endif //__PML_TEST__
 
     int k = params.Nk/2;
@@ -136,6 +136,7 @@ void spherical_wave(int n, int it, std::string base_path = "") {
     std::cout << std::endl;
 
 #ifdef __PML_TEST__
+    std::cout << "PML: \n" << std::endl;
     for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
         for (int i = params.Ni/2 - 5; i < params.Ni/2 + 5; i++) {
             int index = i + j * params.Ni + k * params.Ni * params.Nj;
@@ -152,11 +153,11 @@ int main(int argc, char* argv[]) {
     std::ifstream source_fin;
     std::vector<char*> arguments(argv, argv + argc);
     if (argc == 1) {
-        int N = 128;
-        int Iterations = 500;
+        int N = 32;
+        int Iterations = 100;
         spherical_wave(N, Iterations, "../../");
     }
-    else if (argc == 4) {
+    else if (argc == 3) {
         int N = std::atoi(arguments[1]);
         int Iterations = std::atoi(arguments[2]);
         spherical_wave(N, Iterations);
