@@ -40,13 +40,15 @@ FDTD_openmp::FDTD::FDTD(Parameters _parameters, FP _dt)
     dz = parameters.dz;
     dt = _dt;
 
-    coef_E_dx = FDTD_const::C * dt / dx;
-    coef_E_dy = FDTD_const::C * dt / dy;
-    coef_E_dz = FDTD_const::C * dt / dz;
+    const FP cdt = FDTD_const::C * dt;
 
-    coef_B_dx = FDTD_const::C * dt / (2.0 * dx);
-    coef_B_dy = FDTD_const::C * dt / (2.0 * dy);
-    coef_B_dz = FDTD_const::C * dt / (2.0 * dz);
+    coef_E_dx = cdt / dx;
+    coef_E_dy = cdt / dy;
+    coef_E_dz = cdt / dz;
+
+    coef_B_dx = cdt / (2.0 * dx);
+    coef_B_dy = cdt / (2.0 * dy);
+    coef_B_dz = cdt / (2.0 * dz);
 
     cur_coef = -4.0 * FDTD_const::PI * dt;
 

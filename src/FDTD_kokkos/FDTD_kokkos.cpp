@@ -23,7 +23,8 @@ FDTD::FDTD(Parameters _parameters, FP _dt) :
     By = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "By"), size);
     Bz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bz"), size);
 
-    Kokkos::parallel_for("FirstTouch", Kokkos::RangePolicy<>(0, size), KOKKOS_LAMBDA(int i) {
+    Kokkos::parallel_for("FirstTouch", Kokkos::RangePolicy<>(0, size),
+        KOKKOS_LAMBDA(int i) {
         Ex(i) = 0.0;
         Ey(i) = 0.0;
         Ez(i) = 0.0;
@@ -35,12 +36,16 @@ FDTD::FDTD(Parameters _parameters, FP _dt) :
         Jz(i) = 0.0;
     });
 
-    coef_Ex = FDTD_const::C * dt / parameters.dx;
-    coef_Ey = FDTD_const::C * dt / parameters.dy;
-    coef_Ez = FDTD_const::C * dt / parameters.dz;
-    coef_Bx = FDTD_const::C * dt / (2.0 * parameters.dx);
-    coef_By = FDTD_const::C * dt / (2.0 * parameters.dy);
-    coef_Bz = FDTD_const::C * dt / (2.0 * parameters.dz);
+    const FP cdt = FDTD_const::C * dt;
+
+    coef_Ex = cdt / parameters.dx;
+    coef_Ey = cdt / parameters.dy;
+    coef_Ez = cdt / parameters.dz;
+
+    coef_Bx = cdt / (2.0 * parameters.dx);
+    coef_By = cdt / (2.0 * parameters.dy);
+    coef_Bz = cdt / (2.0 * parameters.dz);
+    
     current_coef = -4.0 * FDTD_const::PI * dt;
 
     Ni = parameters.Ni;
@@ -93,7 +98,7 @@ void FDTD::update_fields() {
     coef_Bx, coef_By, coef_Bz);
 
     ComputeE_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
-    Jx, Jx, Jx, current_coef,
+    Jx, Jy, Jz, current_coef,
     size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
     coef_Ex, coef_Ey, coef_Ez);
 

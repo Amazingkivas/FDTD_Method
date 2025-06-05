@@ -159,4 +159,3 @@ FP Test_FDTD::get_max_abs_error(Field& this_field, Component field,
 	}
 	return max_abs_error;
 }
-

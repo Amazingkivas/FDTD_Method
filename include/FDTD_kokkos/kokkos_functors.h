@@ -86,24 +86,38 @@ public:
         simd_type Ex_simd, Ey_simd, Ez_simd;
         simd_type Bx_simd, By_simd, Bz_simd;
         simd_type Jx_simd, Jy_simd, Jz_simd;
-        simd_type Bz_pred_simd, Bx_j_pred_simd, By_pred_simd, Bx_pred_simd, Bz_i_pred_simd, By_i_pred_simd;
+        simd_type Bz_pred_simd, Bx_j_pred_simd, By_pred_simd,
+            Bx_pred_simd, Bz_i_pred_simd, By_i_pred_simd;
 
-        Ex_simd.copy_from(Ex.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ey_simd.copy_from(Ey.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ez_simd.copy_from(Ez.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Ex_simd.copy_from(Ex.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ey_simd.copy_from(Ey.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ez_simd.copy_from(Ez.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
 
-        Bx_simd.copy_from(Bx.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        By_simd.copy_from(By.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Bz_simd.copy_from(Bz.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Bx_simd.copy_from(Bx.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        By_simd.copy_from(By.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Bz_simd.copy_from(Bz.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
 
-        Jx_simd.copy_from(Jx.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Jy_simd.copy_from(Jy.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Jz_simd.copy_from(Jz.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Jx_simd.copy_from(Jx.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Jy_simd.copy_from(Jy.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Jz_simd.copy_from(Jz.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
 
-        Bz_pred_simd.copy_from(Bz.data() + j_pred_simd_block_start_idx, Kokkos::Experimental::simd_flag_default); // Bz(i, j-1, k)
-        Bx_j_pred_simd.copy_from(Bx.data() + j_pred_simd_block_start_idx, Kokkos::Experimental::simd_flag_default); // Bx(i, j-1, k)
-        By_pred_simd.copy_from(By.data() + k_pred_simd_block_start_idx, Kokkos::Experimental::simd_flag_default); // By(i, j, k-1)
-        Bx_pred_simd.copy_from(Bx.data() + k_pred_simd_block_start_idx, Kokkos::Experimental::simd_flag_default); // Bx(i, j, k-1)
+        Bz_pred_simd.copy_from(Bz.data() + j_pred_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default); // Bz(i, j-1, k)
+        Bx_j_pred_simd.copy_from(Bx.data() + j_pred_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default); // Bx(i, j-1, k)
+        By_pred_simd.copy_from(By.data() + k_pred_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default); // By(i, j, k-1)
+        Bx_pred_simd.copy_from(Bx.data() + k_pred_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default); // Bx(i, j, k-1)
 
         #pragma unroll
         for (int lane = 0; lane < simd_width; ++lane) {
@@ -130,9 +144,12 @@ public:
                    coef_dx * (By_simd - By_i_pred_simd) -
                    coef_dy * (Bx_simd - Bx_j_pred_simd);
 
-        Ex_simd.copy_to(Ex.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ey_simd.copy_to(Ey.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ez_simd.copy_to(Ez.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Ex_simd.copy_to(Ex.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ey_simd.copy_to(Ey.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ez_simd.copy_to(Ez.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
     }
     for (int i = i_base; i < end_i; ++i) {
         const int index = i + index_kj_offset;
@@ -216,19 +233,29 @@ public:
         simd_type Ez_i_next_simd, Ey_i_next_simd;
         simd_type Ez_j_next_simd, Ex_k_next_simd;
 
-        Bx_simd.copy_from(Bx.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        By_simd.copy_from(By.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Bz_simd.copy_from(Bz.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Bx_simd.copy_from(Bx.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        By_simd.copy_from(By.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Bz_simd.copy_from(Bz.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
 
-        Ex_simd.copy_from(Ex.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ey_simd.copy_from(Ey.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ez_simd.copy_from(Ez.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Ex_simd.copy_from(Ex.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ey_simd.copy_from(Ey.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ez_simd.copy_from(Ez.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
 
-        Ey_k_next_simd.copy_from(Ey.data() + k_next_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ex_k_next_simd.copy_from(Ex.data() + k_next_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Ey_k_next_simd.copy_from(Ey.data() + k_next_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ex_k_next_simd.copy_from(Ex.data() + k_next_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
 
-        Ex_j_next_simd.copy_from(Ex.data() + j_next_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Ez_j_next_simd.copy_from(Ez.data() + j_next_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Ex_j_next_simd.copy_from(Ex.data() + j_next_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Ez_j_next_simd.copy_from(Ez.data() + j_next_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
 
         #pragma unroll
         for (int lane = 0; lane < simd_width; ++lane) {
@@ -251,9 +278,12 @@ public:
         Bz_simd += coef_dy * (Ex_j_next_simd - Ex_simd) -
                    coef_dx * (Ey_i_next_simd - Ey_simd);
 
-        Bx_simd.copy_to(Bx.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        By_simd.copy_to(By.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
-        Bz_simd.copy_to(Bz.data() + current_simd_block_start_idx, Kokkos::Experimental::simd_flag_default);
+        Bx_simd.copy_to(Bx.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        By_simd.copy_to(By.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
+        Bz_simd.copy_to(Bz.data() + current_simd_block_start_idx,
+            Kokkos::Experimental::simd_flag_default);
     }
 
     for (int i = i_base; i < end_i; ++i) {
@@ -295,13 +325,15 @@ public:
         const int& _pml_size, const FP& dt,
         Boundaries bounds_i, Boundaries bounds_j, Boundaries bounds_k,
         const int& _Ni, const int& _Nj, const int& _Nk) {
-        ComputeSigmaFunctor functor(_Esigma, _Bsigma, _SGm, distance, _pml_size, dt, _Ni, _Nj, _Nk);
+        ComputeSigmaFunctor functor(_Esigma, _Bsigma, _SGm, distance,
+            _pml_size, dt, _Ni, _Nj, _Nk);
         Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<3>>(
             { bounds_k.first, bounds_j.first, bounds_i.first },
             { bounds_k.second, bounds_j.second, bounds_i.second }), functor);
     }
 
-    KOKKOS_INLINE_FUNCTION void operator()(const int& k, const int& j, const int& i) const {
+    KOKKOS_INLINE_FUNCTION void
+    operator()(const int& k, const int& j, const int& i) const {
         const int index = i + j * Ni + k * Ni * Nj;
 
         Esigma[index] = SGm * std::pow(static_cast<FP>(dist(i, j, k))
