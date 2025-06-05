@@ -23,26 +23,50 @@ FDTD_kokkos::FDTD_PML::FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent) 
     FDTD(_parameters, _dt) {
     const int size = _parameters.Ni * _parameters.Nj * _parameters.Nk;
 
-    Exy = Field("Exy", size);
-    Exz = Field("Exz", size);
-    Eyx = Field("Eyx", size);
-    Eyz = Field("Eyz", size);
-    Ezx = Field("Ezx", size);
-    Ezy = Field("Ezy", size);
+    Exy = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Exy"), size);
+    Exz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Exz"), size);
+    Eyx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Eyx"), size);
+    Eyz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Eyz"), size);
+    Ezx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ezx"), size);
+    Ezy = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ezy"), size);
 
-    Bxy = Field("Bxy", size);
-    Bxz = Field("Bxz", size);
-    Byx = Field("Byx", size);
-    Byz = Field("Byz", size);
-    Bzx = Field("Bzx", size);
-    Bzy = Field("Bzy", size);
+    Bxy = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bxy"), size);
+    Bxz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bxz"), size);
+    Byx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Byx"), size);
+    Byz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Byz"), size);
+    Bzx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bzx"), size);
+    Bzy = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bzy"), size);
 
-    EsigmaX = Field("EsigmaX", size);
-    EsigmaY = Field("EsigmaY", size);
-    EsigmaZ = Field("EsigmaZ", size);
-    BsigmaX = Field("BsigmaX", size);
-    BsigmaY = Field("BsigmaY", size);
-    BsigmaZ = Field("BsigmaZ", size);
+    EsigmaX = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "EsigmaX"), size);
+    EsigmaY = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "EsigmaZ"), size);
+    EsigmaZ = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "EsigmaZ"), size);
+    BsigmaX = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "BsigmaX"), size);
+    BsigmaY = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "BsigmaY"), size);
+    BsigmaZ = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "BsigmaZ"), size);
+
+    Kokkos::parallel_for("FirstTouchPML", Kokkos::RangePolicy<>(0, size),
+        KOKKOS_LAMBDA(int i) {
+        Exy(i) = 0.0;
+        Exz(i) = 0.0;
+        Eyx(i) = 0.0;
+        Eyz(i) = 0.0;
+        Ezx(i) = 0.0;
+        Ezy(i) = 0.0;
+
+        Bxy(i) = 0.0;
+        Bxz(i) = 0.0;
+        Byx(i) = 0.0;
+        Byz(i) = 0.0;
+        Bzx(i) = 0.0;
+        Bzy(i) = 0.0;
+
+        EsigmaX(i) = 0.0;
+        EsigmaY(i) = 0.0;
+        EsigmaZ(i) = 0.0;
+        BsigmaX(i) = 0.0;
+        BsigmaY(i) = 0.0;
+        BsigmaZ(i) = 0.0;
+    });
 
     pml_size_i = static_cast<int>(static_cast<FP>(_parameters.Ni) * pml_percent);
     pml_size_j = static_cast<int>(static_cast<FP>(_parameters.Nj) * pml_percent);
@@ -149,7 +173,7 @@ void FDTD_kokkos::FDTD_PML::update_fields() {
     update_B_PML(size_yz_upper_i_pml, size_j_solid, size_k_part_from_start);
 
     ComputeE_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
-        Jx, Jx, Jx, current_coef,
+        Jx, Jy, Jz, current_coef,
         i_main, j_main, k_main, Ni, Nj, Nk, coef_Ex, coef_Ey, coef_Ez);
 
     update_E_PML(size_i_part_from_start, size_j_solid, size_xy_lower_k_pml);

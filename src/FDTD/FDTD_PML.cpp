@@ -78,21 +78,22 @@ inline void FDTD_openmp::FDTD_PML::update_E_PML(Boundaries bounds_i,
     #pragma omp parallel for collapse(2) schedule(static)
     for (int k = k_start; k < k_end; k++)  {
         for (int j = j_start; j < j_end; j++) {
+            int index_kj = j * Ni + k * Ni * Nj;
+            int j_pred_kj = j - 1;
+            int k_pred_k = k - 1;
+            applyPeriodicBoundary(j_pred_kj, Nj);
+            applyPeriodicBoundary(k_pred_k, Nk);
+            k_pred_k = k_pred_k * Ni * Nj;
+            j_pred_kj = j_pred_kj * Ni + k * Ni * Nj;
+            int k_pred_kj = j * Ni + k_pred_k;
             #pragma omp simd
             for (int i = i_start; i < i_end; i++) {
+                int index = i + index_kj;
                 int i_pred = i - 1;
-                int j_pred = j - 1;
-                int k_pred = k - 1;
-        
-                this->applyPeriodicBoundary(i_pred, Ni);
-                this->applyPeriodicBoundary(j_pred, Nj);
-                this->applyPeriodicBoundary(k_pred, Nk);
-        
-                i_pred = i_pred + j * Ni + k * Ni * Nj;
-                j_pred = i + j_pred * Ni + k * Ni * Nj;
-                k_pred = i + j * Ni + k_pred * Ni * Nj;
-        
-                int index = i + j * Ni + k * Ni * Nj;
+                applyPeriodicBoundary(i_pred, Ni);
+                i_pred = i_pred + index_kj;
+                int j_pred = i + j_pred_kj;
+                int k_pred = i + k_pred_kj;
 
                 if (EsigmaX[index] != 0.0)
                     PMLcoef2_x = (1.0 - PMLcoef(EsigmaX[index])) / (EsigmaX[index] * dx);
@@ -146,21 +147,22 @@ inline void FDTD_openmp::FDTD_PML::update_B_PML(Boundaries bounds_i,
     #pragma omp parallel for collapse(2) schedule(static)
     for (int k = k_start; k < k_end; k++) {
         for (int j = j_start; j < j_end; j++) {
+            int index_kj = j * Ni + k * Ni * Nj;
+            int j_next_kj = j + 1;
+            int k_next_k = k + 1;
+            applyPeriodicBoundary(j_next_kj, Nj);
+            applyPeriodicBoundary(k_next_k, Nk);
+            k_next_k = k_next_k * Ni * Nj;
+            j_next_kj = j_next_kj * Ni + k * Ni * Nj;
+            int k_next_kj = j * Ni + k_next_k;
             #pragma omp simd
             for (int i = i_start; i < i_end; i++) {
+                int index = i + index_kj;
                 int i_next = i + 1;
-                int j_next = j + 1;
-                int k_next = k + 1;
-        
-                this->applyPeriodicBoundary(i_next, Ni);
-                this->applyPeriodicBoundary(j_next, Nj);
-                this->applyPeriodicBoundary(k_next, Nk);
-        
-                i_next = i_next + j * Ni + k * Ni * Nj;
-                j_next = i + j_next * Ni + k * Ni * Nj;
-                k_next = i + j * Ni + k_next * Ni * Nj;
-        
-                int index = i + j * Ni + k * Ni * Nj;
+                applyPeriodicBoundary(i_next, Ni);
+                i_next = i_next + index_kj;
+                int j_next = i + j_next_kj;
+                int k_next = i + k_next_kj;
 
                 if (BsigmaX[index] != 0.0)
                     PMLcoef2_x = (1.0 - PMLcoef(BsigmaX[index])) / (BsigmaX[index] * dx);
@@ -204,9 +206,50 @@ FDTD_openmp::FDTD_PML::FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent) 
     FDTD(_parameters, _dt) {
     const int size = _parameters.Ni * _parameters.Nj * _parameters.Nk;
 
-    Exy = Exz = Eyx = Eyz = Ezx = Ezy = Field(size, 0.0);
-    Bxy = Bxz = Byx = Byz = Bzx = Bzy = Field(size, 0.0);
-    EsigmaX = EsigmaY = EsigmaZ = BsigmaX = BsigmaY = BsigmaZ = Field(size, 0.0);
+    Exy = Field(size);
+    Exz = Field(size);
+    Eyx = Field(size);
+    Eyz = Field(size);
+    Ezx = Field(size);
+    Ezy = Field(size);
+
+    Bxy = Field(size);
+    Bxz = Field(size);
+    Byx = Field(size);
+    Byz = Field(size);
+    Bzx = Field(size);
+    Bzy = Field(size);
+
+    EsigmaX = Field(size);
+    EsigmaY = Field(size);
+    EsigmaZ = Field(size);
+    BsigmaX = Field(size);
+    BsigmaY = Field(size);
+    BsigmaZ = Field(size);
+
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < size; i++) {
+        Exy[i] = 0.0;
+        Exz[i] = 0.0;
+        Eyx[i] = 0.0;
+        Eyz[i] = 0.0;
+        Ezx[i] = 0.0;
+        Ezy[i] = 0.0;
+    
+        Bxy[i] = 0.0;
+        Bxz[i] = 0.0;
+        Byx[i] = 0.0;
+        Byz[i] = 0.0;
+        Bzx[i] = 0.0;
+        Bzy[i] = 0.0;
+        
+        EsigmaX[i] = 0.0;
+        EsigmaY[i] = 0.0;
+        EsigmaZ[i] = 0.0;
+        BsigmaX[i] = 0.0;
+        BsigmaY[i] = 0.0;
+        BsigmaZ[i] = 0.0;
+    }
 
     pml_size_i = static_cast<int>(static_cast<FP>(_parameters.Ni) * pml_percent);
     pml_size_j = static_cast<int>(static_cast<FP>(_parameters.Nj) * pml_percent);
