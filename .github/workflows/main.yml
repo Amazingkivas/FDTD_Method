@@ -61,9 +61,15 @@ jobs:
         shell: bash
         run: |
           source /opt/intel/oneapi/setvars.sh
-          echo "IFORT_CONFIGURED=1" >> $GITHUB_ENV
+          echo "source /opt/intel/oneapi/setvars.sh" >> ~/.bashrc
           echo "PATH=$PATH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+      - name: Verify installation
+        shell: bash
+        run: |
+          which ifort
+          ifort --version
 
       - name: Compile Coarray program with ifort
         run: |
