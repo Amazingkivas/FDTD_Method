@@ -67,8 +67,8 @@ jobs:
           ifx -v
 
           echo "--- Compiling Coarray program ---"
-          ifx -coarray /coarray/fdtd.F90 -o fdtd
+          ifx -coarray ${PWD}/coarray/fdtd.F90 -o fdtd
 
           echo "--- Running Coarray program ---"
           export FOR_COARRAY_NUM_IMAGES=4
-          ./fdtd
+          ${PWD}/fdtd
