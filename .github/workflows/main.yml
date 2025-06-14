@@ -49,3 +49,26 @@ jobs:
         shell: bash
         run: |
           ${PWD}/bin/sample
+
+      - name: Install Intel OneAPI (ifort)
+        run: |
+          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+          sudo apt-get install -y intel-oneapi-compiler-fortran
+
+      - name: Compile and Run Coarray program with ifx
+        shell: bash
+        run: |
+          source /opt/intel/oneapi/setvars.sh intel64
+
+          echo "--- Verifying installation ---"
+          which ifx
+          ifx -v
+
+          echo "--- Compiling Coarray program ---"
+          ifx -coarray ${PWD}/coarray/fdtd.F90 -o fdtd
+
+          echo "--- Running Coarray program ---"
+          export FOR_COARRAY_NUM_IMAGES=4
+          ${PWD}/fdtd
