@@ -3,8 +3,8 @@ program fdtd_coarray_optimized
     implicit none
 
     ! Parameters
-    integer, parameter :: Ni = 512, Nj = 512, Nk = 512
-    integer, parameter :: num_iterations = 25
+    integer, parameter :: Ni = 32, Nj = 32, Nk = 32
+    integer, parameter :: num_iterations = 100
     real(8), parameter :: C = 3e10, PI = 3.14159265358
     real(8), parameter :: dx = C, dy = C, dz = C, dt = 0.2
     real(8), parameter :: coef_B_dx = C * dt / (2 * dx), coef_B_dy = C * dt / (2 * dy), coef_B_dz = C * dt / (2 * dz)
@@ -14,7 +14,7 @@ program fdtd_coarray_optimized
     ! Field arrays (optimized layout for vectorization)
     real(8), allocatable :: Ex(:,:,:)[:], Ey(:,:,:)[:], Ez(:,:,:)[:]
     real(8), allocatable :: Bx(:,:,:)[:], By(:,:,:)[:], Bz(:,:,:)[:]
-    real(8), allocatable :: Jx(:,:,:)[:]
+    real(8), allocatable :: Jx(:,:,:)[:], Jy(:,:,:)[:], Jz(:,:,:)[:]
     real(8), allocatable :: next_Ex(:,:)[:], next_Ey(:,:)[:], pred_Bx(:,:)[:], pred_By(:,:)[:]
 
     ! Local variables
@@ -58,7 +58,9 @@ program fdtd_coarray_optimized
     allocate(By(Ni, Nj, k_local)[*])
     allocate(Bz(Ni, Nj, k_local)[*])
     allocate(Jx(Ni, Nj, k_local)[*])
-    
+    allocate(Jy(Ni, Nj, k_local)[*])
+    allocate(Jz(Ni, Nj, k_local)[*])
+
     allocate(next_Ex(Ni, Nj)[*])
     allocate(next_Ey(Ni, Nj)[*])
     allocate(pred_Bx(Ni, Nj)[*])
@@ -115,7 +117,7 @@ program fdtd_coarray_optimized
         call print_full_E_slice()
     end if
     
-    deallocate(Ex, Ey, Ez, Bx, By, Bz, Jx)
+    deallocate(Ex, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz)
     deallocate(next_Ex, next_Ey, pred_Bx, pred_By)
 
 contains
@@ -150,6 +152,8 @@ contains
         By = 0.0
         Bz = 0.0
         Jx = 0.0
+        Jy = 0.0
+        Jz = 0.0
     end subroutine init_fields
 
     !===============================================================
@@ -157,16 +161,19 @@ contains
         integer, intent(in) :: this_t
         integer :: i, j, k
         integer :: this_cur_img
+        real(8) :: value
 
         do k = start_k, max_k
             do j = start_j, max_j
                 do i = start_i, max_i
                     this_cur_img = ceiling(real(k) / real(k_local))
-                    Jx(i,j,k - (this_cur_img - 1) * k_local)[this_cur_img] = &
-                                  (sin(2.0 * PI * this_t * dt / TT)) &
-                                * (cos(2.0 * PI * (i-1) * dx / Tx)**2) &
-                                * (cos(2.0 * PI * (j-1) * dy / Ty)**2) &
-                                * (cos(2.0 * PI * (k-1) * dz / Tz)**2)
+                    value = (sin(2.0 * PI * this_t * dt / TT)) &
+                          * (cos(2.0 * PI * (i-1) * dx / Tx)**2) &
+                          * (cos(2.0 * PI * (j-1) * dy / Ty)**2) &
+                          * (cos(2.0 * PI * (k-1) * dz / Tz)**2)
+                    Jx(i,j,k - (this_cur_img - 1) * k_local)[this_cur_img] = value
+                    Jy(i,j,k - (this_cur_img - 1) * k_local)[this_cur_img] = value
+                    Jz(i,j,k - (this_cur_img - 1) * k_local)[this_cur_img] = value
                 end do
             end do
         end do
@@ -226,11 +233,11 @@ contains
                             coef_E_dy * (Bz(i,j,1) - Bz(i,jm,1)) - &
                             coef_E_dz * (By(i,j,1) - pred_By(i,j))
 
-                Ey(i,j,1) = Ey(i,j,1) - coef_J * Jx(i,j,1) + &
+                Ey(i,j,1) = Ey(i,j,1) - coef_J * Jy(i,j,1) + &
                             coef_E_dz * (Bx(i,j,1) - pred_Bx(i,j)) - &
                             coef_E_dx * (Bz(i,j,1) - Bz(im,j,1))
 
-                Ez(i,j,1) = Ez(i,j,1) - coef_J * Jx(i,j,1) + &
+                Ez(i,j,1) = Ez(i,j,1) - coef_J * Jz(i,j,1) + &
                             coef_E_dx * (By(i,j,1) - By(im,j,1)) - &
                             coef_E_dy * (Bx(i,j,1) - Bx(i,jm,1))
             end do
@@ -245,11 +252,11 @@ contains
                                 coef_E_dy * (Bz(i,j,k) - Bz(i,jm,k)) - &
                                 coef_E_dz * (By(i,j,k) - By(i,j,k-1))
 
-                    Ey(i,j,k) = Ey(i,j,k) - coef_J * Jx(i,j,k) + &
+                    Ey(i,j,k) = Ey(i,j,k) - coef_J * Jy(i,j,k) + &
                                 coef_E_dz * (Bx(i,j,k) - Bx(i,j,k-1)) - &
                                 coef_E_dx * (Bz(i,j,k) - Bz(im,j,k))
                     
-                    Ez(i,j,k) = Ez(i,j,k) - coef_J * Jx(i,j,k) + &
+                    Ez(i,j,k) = Ez(i,j,k) - coef_J * Jz(i,j,k) + &
                                 coef_E_dx * (By(i,j,k) - By(im,j,k)) - &
                                 coef_E_dy * (Bx(i,j,k) - Bx(i,jm,k))
                 end do
