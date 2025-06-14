@@ -36,6 +36,15 @@ FDTD::FDTD(Parameters _parameters, FP _dt) :
         Jz(i) = 0.0;
     });
 
+    size_i_main[0] = 0;
+    size_i_main[1] = parameters.Ni;
+        
+    size_j_main[0] = 0;
+    size_j_main[1] = parameters.Nj;
+        
+    size_k_main[0] = 0;
+    size_k_main[1] = parameters.Nk;
+
     const FP cdt = FDTD_const::C * dt;
 
     coef_Ex = cdt / parameters.dx;
@@ -89,10 +98,6 @@ Field& FDTD::get_field(Component this_field) {
 }
 
 void FDTD::update_fields() {
-    const int size_i_main[2] = { 0, parameters.Ni };
-    const int size_j_main[2] = { 0, parameters.Nj };
-    const int size_k_main[2] = { 0, parameters.Nk };
-
     ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
     size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
     coef_Bx, coef_By, coef_Bz);

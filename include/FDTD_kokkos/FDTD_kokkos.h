@@ -11,6 +11,10 @@ protected:
     Field Ex, Ey, Ez;
     Field Bx, By, Bz;
 
+    int size_i_main[2];
+    int size_j_main[2];
+    int size_k_main[2];
+
     int Ni, Nj, Nk;
     FP dx, dy, dz, dt;
     FP current_coef;
