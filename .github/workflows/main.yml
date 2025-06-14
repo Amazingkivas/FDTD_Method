@@ -58,9 +58,12 @@ jobs:
           sudo apt-get install -y intel-oneapi-compiler-fortran
 
       - name: Set up Intel environment
+        shell: bash
         run: |
           source /opt/intel/oneapi/setvars.sh
-          echo "source /opt/intel/oneapi/setvars.sh" >> $GITHUB_ENV
+          echo "IFORT_CONFIGURED=1" >> $GITHUB_ENV
+          echo "PATH=$PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Compile Coarray program with ifort
         run: |
