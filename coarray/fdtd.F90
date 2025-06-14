@@ -267,10 +267,11 @@ contains
     !===============================================================
 subroutine print_full_E_slice()
     integer :: img, ik, ij
-    do ik = Ni/2-5, Ni/2+5
-        do ij = Nj/2-5, Nj/2+5
+    do ij = Nj/2-5, Nj/2+5
+        do ik = Ni/2-5, Ni/2+5
             img = ceiling(real(Nk/2+1) / real(k_local))
             write(*, '(F12.6)', advance='no')  Ex(ik,ij,Nk/2+1 - (img - 1) * k_local)[img]
+!            write(*, '(F12.6)', advance='no') next_Ex(ik, ij)
         end do
         print *
     end do
