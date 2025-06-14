@@ -57,27 +57,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y intel-oneapi-compiler-fortran
 
-      - name: Set up Intel environment
+      - name: Compile and Run Coarray program with ifort
         shell: bash
         run: |
           source /opt/intel/oneapi/setvars.sh
-          echo "source /opt/intel/oneapi/setvars.sh" >> ~/.bashrc
-          echo "PATH=$PATH" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
-      - name: Verify installation
-        shell: bash
-        run: |
+          echo "--- Verifying installation ---"
           which ifort
           ifort --version
 
-      - name: Compile Coarray program with ifort
-        run: |
-          source /opt/intel/oneapi/setvars.sh
+          echo "--- Compiling Coarray program ---"
           ifort -coarray /coarray/fdtd.F90 -o fdtd
 
-      - name: Run Coarray program
-        run: |
-          source /opt/intel/oneapi/setvars.sh
+          echo "--- Running Coarray program ---"
           export FOR_COARRAY_NUM_IMAGES=4
           ./fdtd
