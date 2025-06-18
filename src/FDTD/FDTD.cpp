@@ -60,7 +60,6 @@ void FDTD_openmp::FDTD::update_E() {
             applyPeriodicBoundary(j_pred_kj, Nj);
             j_pred_kj = j_pred_kj * Ni + index_k;
             int k_pred_kj = j * Ni + k_pred_k;
-            #pragma omp simd
             for (int i = begin_main_i; i < end_main_i; i++) {
                 int index = i + index_kj;
                 int i_pred = i - 1;
@@ -96,7 +95,6 @@ void FDTD_openmp::FDTD::update_B() {
             applyPeriodicBoundary(j_next_kj, Nj);
             j_next_kj = j_next_kj * Ni + index_k;
             int k_next_kj = j * Ni + k_next_k;
-            #pragma omp simd
             for (int i = begin_main_i; i < end_main_i; i++) {
                 int index = i + index_kj;
                 int i_next = i + 1;
