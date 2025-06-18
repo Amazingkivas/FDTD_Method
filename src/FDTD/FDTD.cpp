@@ -8,28 +8,15 @@ FDTD_openmp::FDTD::FDTD(Parameters _parameters, FP _dt)
 
     const int size = parameters.Nk * parameters.Nj * parameters.Ni;
 
-    Jx = Field(size);
-    Jy = Field(size);
-    Jz = Field(size);
-    Ex = Field(size);
-    Ey = Field(size);
-    Ez = Field(size);
-    Bx = Field(size);
-    By = Field(size);
-    Bz = Field(size);
-
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < size; i++) {
-       Jx[i] = 0.0;
-       Jy[i] = 0.0;
-       Jz[i] = 0.0;
-       Ex[i] = 0.0;
-       Ey[i] = 0.0;
-       Ez[i] = 0.0;
-       Bx[i] = 0.0;
-       By[i] = 0.0;
-       Bz[i] = 0.0;
-    }
+    Jx = Field(size, 0.0);
+    Jy = Field(size, 0.0);
+    Jz = Field(size, 0.0);
+    Ex = Field(size, 0.0);
+    Ey = Field(size, 0.0);
+    Ez = Field(size, 0.0);
+    Bx = Field(size, 0.0);
+    By = Field(size, 0.0);
+    Bz = Field(size, 0.0);
 
     Ni = parameters.Ni;
     Nj = parameters.Nj;

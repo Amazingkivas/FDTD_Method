@@ -13,28 +13,15 @@ FDTD::FDTD(Parameters _parameters, FP _dt) :
 
     const int size = parameters.Ni * parameters.Nj * parameters.Nk;
 
-    Jx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jx"), size);
-    Jy = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jy"), size);
-    Jz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Jz"), size);
-    Ex = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ex"), size);
-    Ey = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ey"), size);
-    Ez = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Ez"), size);
-    Bx = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bx"), size);
-    By = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "By"), size);
-    Bz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bz"), size);
-
-    Kokkos::parallel_for("FirstTouch", Kokkos::RangePolicy<>(0, size),
-        KOKKOS_LAMBDA(int i) {
-        Ex(i) = 0.0;
-        Ey(i) = 0.0;
-        Ez(i) = 0.0;
-        Bx(i) = 0.0;
-        By(i) = 0.0;
-        Bz(i) = 0.0;
-        Jx(i) = 0.0;
-        Jy(i) = 0.0;
-        Jz(i) = 0.0;
-    });
+    Jx = Field("Jx", size);
+    Jy = Field("Jy", size);
+    Jz = Field("Jz", size);
+    Ex = Field("Ex", size);
+    Ey = Field("Ey", size);
+    Ez = Field("Ez", size);
+    Bx = Field("Bx", size);
+    By = Field("By", size);
+    Bz = Field("Bz", size);
 
     size_i_main[0] = 0;
     size_i_main[1] = parameters.Ni;
