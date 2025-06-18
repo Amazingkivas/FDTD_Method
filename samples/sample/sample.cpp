@@ -8,7 +8,7 @@
 #include "test_FDTD.h"
 #include "FDTD_PML.h"
 
-#define __PML_TEST__
+//#define __PML_TEST__
 
 using namespace FDTD_openmp;
 

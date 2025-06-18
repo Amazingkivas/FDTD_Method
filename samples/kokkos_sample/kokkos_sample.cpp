@@ -10,7 +10,7 @@
 #include "FDTD_kokkos.h"
 #include "FDTD_PML_kokkos.h"
 
-#define __PML_TEST__
+//#define __PML_TEST__
 
 using namespace FDTD_kokkos;
 

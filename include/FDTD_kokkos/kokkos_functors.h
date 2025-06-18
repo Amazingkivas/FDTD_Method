@@ -15,7 +15,7 @@ private:
     int start_i, end_i;
     int Ni, Nj, Nk;
     FP current_coef;
-    FP coef_dx, coef_dy, coef_dz;
+    FP dx, dy, dz, dt;
 
     void applyPeriodicBoundary(int& i, int& j, int& k) const
     {
@@ -43,12 +43,12 @@ public:
         const FP& current_coef,
         const int& start_i, const int& end_i,
         const int& Ni, const int& Nj, const int& Nk,
-        const FP& coef_dx, const FP& coef_dy, const FP& coef_dz) :
+        const FP& dx, const FP& dy, const FP& dz, const FP& dt) :
         Ex(Ex), Ey(Ey), Ez(Ez), Bx(Bx), By(By), Bz(Bz),
         Jx(Jx), Jy(Jy), Jz(Jz), current_coef(current_coef),
         start_i(start_i), end_i(end_i),
         Ni(Ni), Nj(Nj), Nk(Nk),
-        coef_dx(coef_dx), coef_dy(coef_dy), coef_dz(coef_dz) {}
+        dx(dx), dy(dy), dz(dz), dt(dt) {}
 
     static void apply(
         Field& Ex, Field& Ey, Field& Ez,
@@ -57,12 +57,12 @@ public:
         const FP& current_coef,
         const int bounds_i[2], const int bounds_j[2], const int bounds_k[2],
         const int& Ni, const int& Nj, const int& Nk,
-        const FP& coef_dx, const FP& coef_dy, FP& coef_dz) {
+        const FP& dx, const FP& dy, const FP& dz, const FP& dt) {
         
         ComputeE_FieldFunctor functor(
             Ex, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz,
             current_coef, bounds_i[0], bounds_i[1],
-            Ni, Nj, Nk, coef_dx, coef_dy, coef_dz);
+            Ni, Nj, Nk, dx, dy, dz, dt);
 
         Kokkos::MDRangePolicy<Kokkos::Rank<3>> policy({bounds_k[0], bounds_j[0], bounds_i[0]},
                                                       {bounds_k[1], bounds_j[1], bounds_i[1]});
@@ -83,12 +83,12 @@ public:
         j_pred = i + j_pred * Ni + k * Ni * Nj;
         k_pred = i + j * Ni + k_pred * Ni * Nj;
 
-	    Ex[index] += current_coef * Jx[index] + coef_dy * (Bz[index] - Bz[j_pred]) -
-                               coef_dz * (By[index] - By[k_pred]);
-        Ey[index] += current_coef * Jy[index] + coef_dz * (Bx[index] - Bx[k_pred]) -
-                               coef_dx * (Bz[index] - Bz[i_pred]);
-        Ez[index] += current_coef * Jz[index] + coef_dx * (By[index] - By[i_pred]) -
-                               coef_dy * (Bx[index] - Bx[j_pred]);
+	    Ex[index] += current_coef * Jx[index] + FDTD_const::C * dt * ((Bz[index] - Bz[j_pred]) / dy -
+        (By[index] - By[k_pred]) / dz);
+        Ey[index] += current_coef * Jy[index] + FDTD_const::C * dt * ((Bx[index] - Bx[k_pred]) / dz -
+        (Bz[index] - Bz[i_pred]) / dx);
+        Ez[index] += current_coef * Jz[index] + FDTD_const::C * dt * ((By[index] - By[i_pred]) / dx -
+        (Bx[index] - Bx[j_pred]) / dy);
 }
 };
 
@@ -97,7 +97,7 @@ private:
     Field &Ex, &Ey, &Ez;
     Field &Bx, &By, &Bz;
     int Ni, Nj, Nk;
-    FP coef_dx, coef_dy, coef_dz;
+    FP dx, dy, dz, dt;
     int start_i, end_i;
 
     void applyPeriodicBoundary(int& i, int& j, int& k) const
@@ -123,22 +123,22 @@ public:
         Field& Bx, Field& By, Field& Bz,
         const int& start_i, const int& end_i,
         const int& Ni, const int& Nj, const int& Nk,
-        const FP& coef_dx, const FP& coef_dy, const FP& coef_dz) :
+        const FP& dx, const FP& dy, const FP& dz, const FP& dt) :
         Ex(Ex), Ey(Ey), Ez(Ez), Bx(Bx), By(By), Bz(Bz),
         Ni(Ni), Nj(Nj), Nk(Nk), start_i(start_i), end_i(end_i),
-        coef_dx(coef_dx), coef_dy(coef_dy), coef_dz(coef_dz) {}
+        dx(dx), dy(dy), dz(dz) {}
 
     static void apply(
         Field& Ex, Field& Ey, Field& Ez,
         Field& Bx, Field& By, Field& Bz,
         const int bounds_i[2], const int bounds_j[2], const int bounds_k[2],
         const int& Ni, const int& Nj, const int& Nk,
-        const FP& coef_dx, const FP& coef_dy, const FP& coef_dz) {
+        const FP& dx, const FP& dy, const FP& dz, const FP& dt) {
         
         ComputeB_FieldFunctor functor(
             Ex, Ey, Ez, Bx, By, Bz,
             bounds_i[0], bounds_i[1],
-            Ni, Nj, Nk, coef_dx, coef_dy, coef_dz);
+            Ni, Nj, Nk, dx, dy, dz, dt);
 
         Kokkos::MDRangePolicy<Kokkos::Rank<3>> policy({bounds_k[0], bounds_j[0], bounds_i[0]},
                                                       {bounds_k[1], bounds_j[1], bounds_i[1]});
@@ -159,12 +159,14 @@ public:
         j_next = i + j_next * Ni + k * Ni * Nj;
         k_next = i + j * Ni + k_next * Ni * Nj;
 
-        Bx[index] += coef_dz * (Ey[k_next] - Ey[index]) -
-                     coef_dy * (Ez[j_next] - Ez[index]);
-        By[index] += coef_dx * (Ez[i_next] - Ez[index]) -
-                     coef_dz * (Ex[k_next] - Ex[index]);
-        Bz[index] += coef_dy * (Ex[j_next] - Ex[index]) -
-                     coef_dx * (Ey[i_next] - Ey[index]);
+        Bx[index] += FDTD_const::C * dt / 2.0 * ((Ey[k_next] - Ey[index]) / dz -
+                     (Ez[j_next] - Ez[index]) / dy);
+
+        By[index] += FDTD_const::C * dt / 2.0 * ((Ez[i_next] - Ez[index]) / dx -
+                     (Ex[k_next] - Ex[index]) / dz);
+
+        Bz[index] += FDTD_const::C * dt / 2.0 * ((Ex[j_next] - Ex[index]) / dy -
+                     (Ey[i_next] - Ey[index]) / dx);
 }
 };
 

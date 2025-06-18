@@ -87,14 +87,14 @@ Field& FDTD::get_field(Component this_field) {
 void FDTD::update_fields() {
     ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
     size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
-    coef_Bx, coef_By, coef_Bz);
+    parameters.dx, parameters.dy, parameters.dz, dt);
 
     ComputeE_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
     Jx, Jy, Jz, current_coef,
     size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
-    coef_Ex, coef_Ey, coef_Ez);
+    parameters.dx, parameters.dy, parameters.dz, dt);
 
     ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
     size_i_main, size_j_main, size_k_main, Ni, Nj, Nk,
-    coef_Bx, coef_By, coef_Bz);
+    parameters.dx, parameters.dy, parameters.dz, dt);
 }

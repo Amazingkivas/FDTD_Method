@@ -48,69 +48,61 @@ FDTD_openmp::FDTD::FDTD(Parameters _parameters, FP _dt)
 }
 
 void FDTD_openmp::FDTD::update_E() {
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for collapse(3) schedule(static)
     for (int k = begin_main_k; k < end_main_k; k++) {
-        int index_k = k * Ni * Nj;
-        int k_pred_k = k - 1;
-        applyPeriodicBoundary(k_pred_k, Nk);
-        k_pred_k = k_pred_k * Ni * Nj;
         for (int j = begin_main_j; j < end_main_j; j++) {
-            int index_kj = j * Ni + index_k;
-            int j_pred_kj = j - 1;
-            applyPeriodicBoundary(j_pred_kj, Nj);
-            j_pred_kj = j_pred_kj * Ni + index_k;
-            int k_pred_kj = j * Ni + k_pred_k;
-            #pragma omp simd
             for (int i = begin_main_i; i < end_main_i; i++) {
-                int index = i + index_kj;
                 int i_pred = i - 1;
+                int j_pred = j - 1;
+                int k_pred = k - 1;
+
                 applyPeriodicBoundary(i_pred, Ni);
-                i_pred = i_pred + index_kj;
-                int j_pred = i + j_pred_kj;
-                int k_pred = i + k_pred_kj;
+                applyPeriodicBoundary(j_pred, Nj);
+                applyPeriodicBoundary(k_pred, Nk);
+
+                int index = i + j * Ni + k * Ni * Nj;
+                i_pred = i_pred + j * Ni + k * Ni * Nj;
+                j_pred = i + j_pred * Ni + k * Ni * Nj;
+                k_pred = i + j * Ni + k_pred * Ni * Nj;
 
                 Ex[index] += cur_coef * Jx[index] + 
-                                coef_E_dy * (Bz[index] - Bz[j_pred]) - 
-                                coef_E_dz * (By[index] - By[k_pred]);
+                FDTD_const::C * dt * ((Bz[index] - Bz[j_pred]) / dy -
+                (By[index] - By[k_pred]) / dz);
                 Ey[index] += cur_coef * Jx[index] + 
-                                coef_E_dz * (Bx[index] - Bx[k_pred]) - 
-                                coef_E_dx * (Bz[index] - Bz[i_pred]);
+                FDTD_const::C * dt * ((Bx[index] - Bx[k_pred]) / dz -
+                (Bz[index] - Bz[i_pred]) / dx);
                 Ez[index] += cur_coef * Jx[index] + 
-                                coef_E_dx * (By[index] - By[i_pred]) - 
-                                coef_E_dy * (Bx[index] - Bx[j_pred]);
+                FDTD_const::C * dt * ((By[index] - By[i_pred]) / dx -
+                (Bx[index] - Bx[j_pred]) / dy);
             }
         }
     }
 }
 
 void FDTD_openmp::FDTD::update_B() {
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for collapse(3) schedule(static)
     for (int k = begin_main_k; k < end_main_k; k++) {
-        int index_k = k * Ni * Nj;
-        int k_next_k = k + 1;
-        applyPeriodicBoundary(k_next_k, Nk);
-        k_next_k = k_next_k * Ni * Nj;
         for (int j = begin_main_j; j < end_main_j; j++) {
-            int index_kj = j * Ni + index_k;
-            int j_next_kj = j + 1;
-            applyPeriodicBoundary(j_next_kj, Nj);
-            j_next_kj = j_next_kj * Ni + index_k;
-            int k_next_kj = j * Ni + k_next_k;
-            #pragma omp simd
             for (int i = begin_main_i; i < end_main_i; i++) {
-                int index = i + index_kj;
                 int i_next = i + 1;
-                applyPeriodicBoundary(i_next, Ni);
-                i_next = i_next + index_kj;
-                int j_next = i + j_next_kj;
-                int k_next = i + k_next_kj;
+                int j_next = j + 1;
+                int k_next = k + 1;
 
-                Bx[index] += coef_B_dz * (Ey[k_next] - Ey[index]) - 
-                                   coef_B_dy * (Ez[j_next] - Ez[index]);
-                By[index] += coef_B_dx * (Ez[i_next] - Ez[index]) - 
-                                   coef_B_dz * (Ex[k_next] - Ex[index]);
-                Bz[index] += coef_B_dy * (Ex[j_next] - Ex[index]) - 
-                                   coef_B_dx * (Ey[i_next] - Ey[index]);
+                applyPeriodicBoundary(i_next, Ni);
+                applyPeriodicBoundary(j_next, Nj);
+                applyPeriodicBoundary(k_next, Nk);
+
+                int index = i + j * Ni + k * Ni * Nj;
+                i_next = i_next + j * Ni + k * Ni * Nj;
+                j_next = i + j_next * Ni + k * Ni * Nj;
+                k_next = i + j * Ni + k_next * Ni * Nj;
+
+                Bx[index] += FDTD_const::C * dt / 2.0 * ((Ey[k_next] - Ey[index]) / dz -
+                (Ez[j_next] - Ez[index]) / dy);
+                By[index] += FDTD_const::C * dt / 2.0 * ((Ez[i_next] - Ez[index]) / dx -
+                (Ex[k_next] - Ex[index]) / dz);
+                Bz[index] += FDTD_const::C * dt / 2.0 * ((Ex[j_next] - Ex[index]) / dy -
+                (Ey[i_next] - Ey[index]) / dx);
             }
         }
     }
