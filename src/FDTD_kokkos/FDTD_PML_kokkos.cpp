@@ -162,7 +162,7 @@ void FDTD_kokkos::FDTD_PML::update_fields() {
     int k_main[2] = { this->begin_main_k, this->end_main_k };
 
     ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
-        i_main, j_main, k_main, Ni, Nj, Nk, coef_Bx, coef_By, coef_Bz);
+        i_main, j_main, k_main, Ni, Nj, Nk, parameters.dx, parameters.dy, parameters.dz, dt);
 
     update_B_PML(size_i_part_from_start, size_j_solid, size_xy_lower_k_pml);
     update_B_PML(size_i_main, size_zx_lower_j_pml, size_k_main);
@@ -174,7 +174,7 @@ void FDTD_kokkos::FDTD_PML::update_fields() {
 
     ComputeE_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
         Jx, Jy, Jz, current_coef,
-        i_main, j_main, k_main, Ni, Nj, Nk, coef_Ex, coef_Ey, coef_Ez);
+        i_main, j_main, k_main, Ni, Nj, Nk, parameters.dx, parameters.dy, parameters.dz, dt);
 
     update_E_PML(size_i_part_from_start, size_j_solid, size_xy_lower_k_pml);
     update_E_PML(size_i_main, size_zx_lower_j_pml, size_k_main);
@@ -185,5 +185,5 @@ void FDTD_kokkos::FDTD_PML::update_fields() {
     update_E_PML(size_yz_upper_i_pml, size_j_solid, size_k_part_from_start);
 
     ComputeB_FieldFunctor::apply(Ex, Ey, Ez, Bx, By, Bz,
-        i_main, j_main, k_main, Ni, Nj, Nk, coef_Bx, coef_By, coef_Bz);
+        i_main, j_main, k_main, Ni, Nj, Nk, parameters.dx, parameters.dy, parameters.dz, dt);
 }

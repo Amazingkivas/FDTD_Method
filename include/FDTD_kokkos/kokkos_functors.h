@@ -126,7 +126,7 @@ public:
         const FP& dx, const FP& dy, const FP& dz, const FP& dt) :
         Ex(Ex), Ey(Ey), Ez(Ez), Bx(Bx), By(By), Bz(Bz),
         Ni(Ni), Nj(Nj), Nk(Nk), start_i(start_i), end_i(end_i),
-        dx(dx), dy(dy), dz(dz) {}
+        dx(dx), dy(dy), dz(dz), dt(dt) {}
 
     static void apply(
         Field& Ex, Field& Ey, Field& Ez,
