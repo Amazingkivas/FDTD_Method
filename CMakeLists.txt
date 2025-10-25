@@ -85,5 +85,5 @@ add_custom_target(create_kokkoscore ALL DEPENDS ${KOKKOS_CORE_LIB})
 find_package(Kokkos REQUIRED)
 
 add_subdirectory(project)
-add_subdirectory(test)
-add_subdirectory(samples)
+add_subdirectory(unit-tests)
+add_subdirectory(perf-tests)
