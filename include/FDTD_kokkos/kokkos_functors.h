@@ -25,7 +25,7 @@ private:
     Field &Ex, &Ey, &Ez;
     Field &Bx, &By, &Bz;
     Field &Jx, &Jy, &Jz;
-    int Ni, Nj, Nk;
+    int Ni, Nj, Nk, Nij;
     FP current_coef;
     FP coef_dx, coef_dy, coef_dz;
     
@@ -39,7 +39,7 @@ public:
         const FP& coef_dx, const FP& coef_dy, const FP& coef_dz) :
         Ex(Ex), Ey(Ey), Ez(Ez), Bx(Bx), By(By), Bz(Bz),
         Jx(Jx), Jy(Jy), Jz(Jz), current_coef(current_coef),
-        Ni(Ni), Nj(Nj), Nk(Nk),
+        Ni(Ni), Nj(Nj), Nk(Nk), Nij(Ni * Nj),
         coef_dx(coef_dx), coef_dy(coef_dy), coef_dz(coef_dz) {}
 
     static void apply(
@@ -63,19 +63,16 @@ public:
     }
     KOKKOS_INLINE_FUNCTION void operator()(const int& k, const int& j, const int& i) const {
 
-    const int index = i + j * Ni + k * Ni * Nj;
+    const int j_pred = (j == 0) ? (Nj - 1) : (j - 1);
+    const int k_pred = (k == 0) ? (Nk - 1) : (k - 1);
+    const int i_pred = (i == 0) ? (Ni - 1) : (i - 1);
 
-    int j_pred = j - 1;
-    int k_pred = k - 1;
-    int i_pred = i - 1;
+    const int jk_offset = j * Ni + k * Nij;
+    const int index = i + jk_offset;
 
-    applyPeriodicBoundary(k_pred, Nk);
-    applyPeriodicBoundary(j_pred, Nj);
-    applyPeriodicBoundary(i_pred, Ni);
-
-    const int i_pred_idx = i_pred + j * Ni + k * Ni * Nj;
-    const int j_pred_idx = i + j_pred * Ni + k * Ni * Nj;
-    const int k_pred_idx = i + j * Ni + k_pred * Ni * Nj;
+    const int i_pred_idx = i_pred + jk_offset;
+    const int j_pred_idx = i + j_pred * Ni + k * Nij;
+    const int k_pred_idx = i + j * Ni + k_pred * Nij;
 
     Ex[index] += current_coef * Jx[index] +
                  coef_dy * (Bz[index] - Bz[j_pred_idx]) -
@@ -93,7 +90,7 @@ class ComputeB_FieldFunctor :  public Base_Functor {
 private:
     Field &Ex, &Ey, &Ez;
     Field &Bx, &By, &Bz;
-    int Ni, Nj, Nk;
+    int Ni, Nj, Nk, Nij;
     FP coef_dx, coef_dy, coef_dz;
 public:
     ComputeB_FieldFunctor(
@@ -102,7 +99,7 @@ public:
         const int& Ni, const int& Nj, const int& Nk,
         const FP& coef_dx, const FP& coef_dy, const FP& coef_dz) :
         Ex(Ex), Ey(Ey), Ez(Ez), Bx(Bx), By(By), Bz(Bz),
-        Ni(Ni), Nj(Nj), Nk(Nk),
+        Ni(Ni), Nj(Nj), Nk(Nk), Nij(Ni * Nj),
         coef_dx(coef_dx), coef_dy(coef_dy), coef_dz(coef_dz) {}
 
     static void apply(
@@ -123,19 +120,16 @@ public:
         Kokkos::parallel_for("UpdateBField", policy, functor);
     }
     KOKKOS_INLINE_FUNCTION void operator()(const int& k, const int& j, const int& i) const {
-    const int index = i + j * Ni + k * Ni * Nj;
+    const int j_next = (j + 1 == Nj) ? 0 : (j + 1);
+    const int k_next = (k + 1 == Nk) ? 0 : (k + 1);
+    const int i_next = (i + 1 == Ni) ? 0 : (i + 1);
 
-    int j_next = j + 1;
-    int k_next = k + 1;
-    int i_next = i + 1;
+    const int jk_offset = j * Ni + k * Nij;
+    const int index = i + jk_offset;
 
-    applyPeriodicBoundary(k_next, Nk);
-    applyPeriodicBoundary(j_next, Nj);
-    applyPeriodicBoundary(i_next, Ni);
-
-    const int scalar_i_next_idx = i_next + j * Ni + k * Ni * Nj;
-    const int scalar_j_next_idx = i + j_next * Ni + k * Ni * Nj;
-    const int scalar_k_next_idx = i + j * Ni + k_next * Ni * Nj;
+    const int scalar_i_next_idx = i_next + jk_offset;
+    const int scalar_j_next_idx = i + j_next * Ni + k * Nij;
+    const int scalar_k_next_idx = i + j * Ni + k_next * Nij;
 
     Bx[index] += coef_dz * (Ey[scalar_k_next_idx] - Ey[index]) -
                  coef_dy * (Ez[scalar_j_next_idx] - Ez[index]);
