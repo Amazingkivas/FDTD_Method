@@ -10,8 +10,6 @@
 #include "FDTD_kokkos.h"
 #include "FDTD_PML_kokkos.h"
 
-#define __PML_TEST__
-
 using namespace FDTD_kokkos;
 
 
@@ -67,89 +65,89 @@ void spherical_wave(int n, int it, const std::string base_path = "../../PlotScri
     int max_j = static_cast<int>(floor((Ty / 4.0 - params.ay) / params.dy));
     int max_k = static_cast<int>(floor((Tz / 4.0 - params.az) / params.dz));
 
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int t = 0; t < cur_time; t++) {
-        for (int i = start_i; i < max_i; ++i) {
-            for (int j = start_j; j < max_j; ++j) {
-                for (int k = start_k; k < max_k; ++k) {
-                    int index = i + j * params.Ni + k * params.Ni * params.Nj;
-                    double value = cur_func(static_cast<double>(i) * params.dx,
-                                            static_cast<double>(j) * params.dy,
-                                            static_cast<double>(k) * params.dz,
-                                            static_cast<double>(t + 1) * cur_param.dt);
+    
+    int Ni = params.Ni;
+    int Nj = params.Nj;
+    int Nk = params.Nk;
+    double dx = params.dx;
+    double dy = params.dy;
+    double dz = params.dz;
+    double dt_cur = cur_param.dt;
 
-                    method.get_field(Component::JX)[index] = value;
-                    method.get_field(Component::JY)[index] = value;
-                    method.get_field(Component::JZ)[index] = value;
-                }
-            }
-        }
+    double T_ = cur_param.period;
+    double Tx_ = cur_param.period_x;
+    double Ty_ = cur_param.period_y;
+    double Tz_ = cur_param.period_z;
+
+    auto Jx = method.get_field(Component::JX);
+    auto Jy = method.get_field(Component::JY);
+    auto Jz = method.get_field(Component::JZ);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (int t = 0; t < cur_time; ++t) {
+        double time = (t + 1) * dt_cur;
+        
+        Kokkos::parallel_for("SetCurrent", 
+            Kokkos::MDRangePolicy<Kokkos::Rank<3>>({start_i, start_j, start_k}, 
+                                                    {max_i, max_j, max_k}),
+            KOKKOS_LAMBDA(int i, int j, int k) {
+                int idx = i + j * Ni + k * Ni * Nj;
+                double x = i * dx;
+                double y = j * dy;
+                double z = k * dz;
+                
+                double val = sin(2.0 * FDTD_const::PI * time / T_) *
+                            pow(cos(2.0 * FDTD_const::PI * x / Tx_), 2.0) *
+                            pow(cos(2.0 * FDTD_const::PI * y / Ty_), 2.0) *
+                            pow(cos(2.0 * FDTD_const::PI * z / Tz_), 2.0);
+                
+                Jx(idx) = val;
+                Jy(idx) = val;
+                Jz(idx) = val;
+            });
+        
+        Kokkos::fence();
         method.update_fields();
+        Kokkos::fence();
     }
     method.zeroed_currents();
+    Kokkos::fence();
     for (int t = cur_time; t < it; t++) {
+        Kokkos::parallel_for("SetCurrent", 
+            Kokkos::MDRangePolicy<Kokkos::Rank<3>>({start_i, start_j, start_k}, 
+                                                    {max_i, max_j, max_k}),
+            KOKKOS_LAMBDA(int i, int j, int k) {
+                int idx = i + j * Ni + k * Ni * Nj;
+                
+                Jx(idx) = 0.0;
+                Jy(idx) = 0.0;
+                Jz(idx) = 0.0;
+            });
         method.update_fields();
+        Kokkos::fence();
     }
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Execution time: " << elapsed.count() << " s" << std::endl;
 
-#ifdef __PML_TEST__
-    FDTD_kokkos::FDTD_PML pml_method(params, cur_param.dt, 0.2);
+    auto& Ex_device = method.get_field(Component::EX);
 
-    auto start_pml = std::chrono::high_resolution_clock::now();
-    for (int t = 0; t < cur_time; t++) {
-        for (int i = start_i; i < max_i; ++i) {
-            for (int j = start_j; j < max_j; ++j) {
-                for (int k = start_k; k < max_k; ++k) {
-                    int index = i + j * params.Ni + k * params.Ni * params.Nj;
-                    double value = cur_func(static_cast<double>(i) * params.dx,
-                                            static_cast<double>(j) * params.dy,
-                                            static_cast<double>(k) * params.dz,
-                                            static_cast<double>(t + 1) * cur_param.dt);
+    auto Ex_host = Kokkos::create_mirror_view(Ex_device);
 
-                    pml_method.get_field(Component::JX)[index] = value;
-                    pml_method.get_field(Component::JY)[index] = value;
-                    pml_method.get_field(Component::JZ)[index] = value;
-                }
-            }
-        }
-        pml_method.update_fields();
-    }
-    pml_method.zeroed_currents();
-    for (int t = cur_time; t < it; t++) {
-        pml_method.update_fields();
-    }
-    auto end_pml = std::chrono::high_resolution_clock::now();
+    Kokkos::deep_copy(Ex_host, Ex_device);
 
-    std::chrono::duration<double> elapsed_pml = end_pml - start_pml;
-    std::cout << "Execution time (PML): " << elapsed_pml.count() << " s" << std::endl;
-#endif //__PML_TEST__
-
-    int k = params.Nk/2;
+    int i = params.Nk / 2;
     for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
-        for (int i = params.Ni/2 - 5; i < params.Ni/2 + 5; i++) {
+        for (int k = params.Ni/2 - 5; k < params.Ni/2 + 5; k++) {
             int index = i + j * params.Ni + k * params.Ni * params.Nj;
             std::cout << std::setw(12) << std::fixed << std::setprecision(5) 
-                  << method.get_field(Component::EX)[index];
+                    << Ex_host(index);
         }
         std::cout << std::endl;
     }
     std::cout << std::endl;
-
-#ifdef __PML_TEST__
-    std::cout << "PML: \n" << std::endl;
-    for (int j = params.Nj/2 - 5; j < params.Nj/2 + 5; j++) {
-        for (int i = params.Ni/2 - 5; i < params.Ni/2 + 5; i++) {
-            int index = i + j * params.Ni + k * params.Ni * params.Nj;
-            std::cout << std::setw(12) << std::fixed << std::setprecision(5) 
-                  << pml_method.get_field(Component::EX)[index];
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-#endif //__PML_TEST__
 }
 
 int main(int argc, char* argv[]) {

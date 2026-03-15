@@ -23,18 +23,15 @@ FDTD::FDTD(Parameters _parameters, FP _dt) :
     By = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "By"), size);
     Bz = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bz"), size);
 
-    Kokkos::parallel_for("FirstTouch", Kokkos::RangePolicy<>(0, size),
-        KOKKOS_LAMBDA(int i) {
-        Ex(i) = 0.0;
-        Ey(i) = 0.0;
-        Ez(i) = 0.0;
-        Bx(i) = 0.0;
-        By(i) = 0.0;
-        Bz(i) = 0.0;
-        Jx(i) = 0.0;
-        Jy(i) = 0.0;
-        Jz(i) = 0.0;
-    });
+    Kokkos::deep_copy(Ex, 0.0);
+    Kokkos::deep_copy(Ey, 0.0);
+    Kokkos::deep_copy(Ez, 0.0);
+    Kokkos::deep_copy(Bx, 0.0);
+    Kokkos::deep_copy(By, 0.0);
+    Kokkos::deep_copy(Bz, 0.0);
+    Kokkos::deep_copy(Jx, 0.0);
+    Kokkos::deep_copy(Jy, 0.0);
+    Kokkos::deep_copy(Jz, 0.0);
 
     size_i_main[0] = 0;
     size_i_main[1] = parameters.Ni;
@@ -70,15 +67,9 @@ FDTD::FDTD(Parameters _parameters, FP _dt) :
 }
 
 void FDTD::zeroed_currents() {
-    Kokkos::parallel_for("ZeroJx", Jx.extent(0), KOKKOS_LAMBDA(const int i) {
-        Jx(i) = 0.0;
-    });
-    Kokkos::parallel_for("ZeroJy", Jx.extent(0), KOKKOS_LAMBDA(const int i) {
-        Jy(i) = 0.0;
-    });
-    Kokkos::parallel_for("ZeroJz", Jx.extent(0), KOKKOS_LAMBDA(const int i) {
-        Jz(i) = 0.0;
-    });
+    Kokkos::deep_copy(Jx, 0.0);
+    Kokkos::deep_copy(Jy, 0.0);
+    Kokkos::deep_copy(Jz, 0.0);
 }
 
 Field& FDTD::get_field(Component this_field) {

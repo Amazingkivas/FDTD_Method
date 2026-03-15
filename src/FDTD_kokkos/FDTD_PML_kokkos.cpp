@@ -44,29 +44,29 @@ FDTD_kokkos::FDTD_PML::FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent) 
     BsigmaY = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "BsigmaY"), size);
     BsigmaZ = Field(Kokkos::view_alloc(Kokkos::WithoutInitializing, "BsigmaZ"), size);
 
-    Kokkos::parallel_for("FirstTouchPML", Kokkos::RangePolicy<>(0, size),
-        KOKKOS_LAMBDA(int i) {
-        Exy(i) = 0.0;
-        Exz(i) = 0.0;
-        Eyx(i) = 0.0;
-        Eyz(i) = 0.0;
-        Ezx(i) = 0.0;
-        Ezy(i) = 0.0;
+    // Kokkos::parallel_for("FirstTouchPML", Kokkos::RangePolicy<>(0, size),
+    //     KOKKOS_LAMBDA(int i) {
+    //     Exy(i) = 0.0;
+    //     Exz(i) = 0.0;
+    //     Eyx(i) = 0.0;
+    //     Eyz(i) = 0.0;
+    //     Ezx(i) = 0.0;
+    //     Ezy(i) = 0.0;
 
-        Bxy(i) = 0.0;
-        Bxz(i) = 0.0;
-        Byx(i) = 0.0;
-        Byz(i) = 0.0;
-        Bzx(i) = 0.0;
-        Bzy(i) = 0.0;
+    //     Bxy(i) = 0.0;
+    //     Bxz(i) = 0.0;
+    //     Byx(i) = 0.0;
+    //     Byz(i) = 0.0;
+    //     Bzx(i) = 0.0;
+    //     Bzy(i) = 0.0;
 
-        EsigmaX(i) = 0.0;
-        EsigmaY(i) = 0.0;
-        EsigmaZ(i) = 0.0;
-        BsigmaX(i) = 0.0;
-        BsigmaY(i) = 0.0;
-        BsigmaZ(i) = 0.0;
-    });
+    //     EsigmaX(i) = 0.0;
+    //     EsigmaY(i) = 0.0;
+    //     EsigmaZ(i) = 0.0;
+    //     BsigmaX(i) = 0.0;
+    //     BsigmaY(i) = 0.0;
+    //     BsigmaZ(i) = 0.0;
+    // });
 
     pml_size_i = static_cast<int>(static_cast<FP>(_parameters.Ni) * pml_percent);
     pml_size_j = static_cast<int>(static_cast<FP>(_parameters.Nj) * pml_percent);
@@ -107,23 +107,23 @@ FDTD_kokkos::FDTD_PML::FDTD_PML(Parameters _parameters, FP _dt, FP pml_percent) 
 
     // Definition of functions for calculating the distance to the interface
     // ======================================================================
-    Function calc_distant_i_up = [=](int i, int j, int k) {
+    Function calc_distant_i_up = [=](uint16_t i, uint16_t j, uint16_t k) {
         return i + 1 + pml_size_i - _parameters.Ni;
     };
-    Function calc_distant_j_up = [=](int i, int j, int k) {
+    Function calc_distant_j_up = [=](uint16_t i, uint16_t j, uint16_t k) {
         return j + 1 + pml_size_j - _parameters.Nj;
     };
-    Function calc_distant_k_up = [=](int i, int j, int k) {
+    Function calc_distant_k_up = [=](uint16_t i, uint16_t j, uint16_t k) {
         return k + 1 + pml_size_k - _parameters.Nk;
     };
 
-    Function calc_distant_i_low = [=](int i, int j, int k) {
+    Function calc_distant_i_low = [=](uint16_t i, uint16_t j, uint16_t k) {
         return pml_size_i - i;
     };
-    Function calc_distant_j_low = [=](int i, int j, int k) {
+    Function calc_distant_j_low = [=](uint16_t i, uint16_t j, uint16_t k) {
         return pml_size_j - j;
     };
-    Function calc_distant_k_low = [=](int i, int j, int k) {
+    Function calc_distant_k_low = [=](uint16_t i, uint16_t j, uint16_t k) {
         return pml_size_k - k;
     };
     // ======================================================================
