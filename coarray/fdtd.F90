@@ -3,8 +3,8 @@ program fdtd_coarray_optimized
     implicit none
 
     ! Parameters
-    integer, parameter :: Ni = 32, Nj = 32, Nk = 32
-    integer, parameter :: num_iterations = 100
+    integer, parameter :: Ni = 512, Nj = 512, Nk = 512
+    integer, parameter :: num_iterations = 25
     real(8), parameter :: C = 3e10, PI = 3.14159265358
     real(8), parameter :: dx = C, dy = C, dz = C, dt = 0.2
     real(8), parameter :: coef_B_dx = C * dt / (2 * dx), coef_B_dy = C * dt / (2 * dy), coef_B_dz = C * dt / (2 * dz)
