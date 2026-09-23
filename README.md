@@ -34,7 +34,14 @@ This repository contains a C++ project with the main implementation of the metho
   ./kokkos_sample
   ```
 
+The OpenMP `sample` also includes an optional cloud-in-cell (CIC) interpolation
+example. It deposits a point current between grid nodes using triangular weights
+from its four neighbouring cells in the x-y plane. Enable it with:
+
+```
+FDTD_SAMPLE_MODE=interpolation ./sample
+```
+
 # Visualization
 
 ![](https://github.com/Amazingkivas/FDTD_Method/blob/main/animations/animation_Ez.gif)
-
