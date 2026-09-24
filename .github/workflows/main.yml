@@ -45,10 +45,10 @@ jobs:
           find ${PWD}/build -name kokkos_sample
           ${PWD}/bin/kokkos_sample 512 25
       
-      - name: Run sample
+      - name: Run CIC interpolation sample
         shell: bash
         run: |
-          ${PWD}/bin/sample 512 25
+          FDTD_SAMPLE_MODE=interpolation ${PWD}/bin/sample 512 25
 
       - name: Install Intel OneAPI (ifort)
         run: |
