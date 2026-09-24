@@ -1,5 +1,37 @@
 #include "FDTD.h"
 
+namespace {
+
+struct SpatialShift {
+    FP x;
+    FP y;
+    FP z;
+};
+
+SpatialShift yee_shift(FDTD_enums::Component component) {
+    using FDTD_enums::Component;
+
+    switch (component) {
+        case Component::EX:
+        case Component::JX: return {0.0, 0.5, 0.5};
+        case Component::EY:
+        case Component::JY: return {0.5, 0.0, 0.5};
+        case Component::EZ:
+        case Component::JZ: return {0.5, 0.5, 0.0};
+        case Component::BX: return {0.5, 0.0, 0.0};
+        case Component::BY: return {0.0, 0.5, 0.0};
+        case Component::BZ: return {0.0, 0.0, 0.5};
+        default: throw std::logic_error("ERROR: Invalid field component");
+    }
+}
+
+int periodic_index(int index, int size) {
+    int wrapped = index % size;
+    return wrapped < 0 ? wrapped + size : wrapped;
+}
+
+}
+
 FDTD_openmp::FDTD::FDTD(Parameters _parameters, FP _dt)
     : parameters(_parameters), dt(_dt) {
     if (parameters.Ni <= 0 || parameters.Nj <= 0 || parameters.Nk <= 0 || dt <= 0) {
@@ -148,6 +180,50 @@ FDTD_openmp::Field& FDTD_openmp::FDTD::get_field(Component this_field) {
         case Component::BZ: return Bz;
         default: throw std::logic_error("ERROR: Invalid field component");
     }
+}
+
+FP FDTD_openmp::FDTD::get_field_CIC(Component this_field, FP x, FP y, FP z) const {
+    const Field* field = nullptr;
+    switch (this_field) {
+        case Component::JX: field = &Jx; break;
+        case Component::JY: field = &Jy; break;
+        case Component::JZ: field = &Jz; break;
+        case Component::EX: field = &Ex; break;
+        case Component::EY: field = &Ey; break;
+        case Component::EZ: field = &Ez; break;
+        case Component::BX: field = &Bx; break;
+        case Component::BY: field = &By; break;
+        case Component::BZ: field = &Bz; break;
+        default: throw std::logic_error("ERROR: Invalid field component");
+    }
+
+    const SpatialShift shift = yee_shift(this_field);
+    const FP grid_x = (x - parameters.ax) / dx - shift.x;
+    const FP grid_y = (y - parameters.ay) / dy - shift.y;
+    const FP grid_z = (z - parameters.az) / dz - shift.z;
+    const int i0 = static_cast<int>(std::floor(grid_x));
+    const int j0 = static_cast<int>(std::floor(grid_y));
+    const int k0 = static_cast<int>(std::floor(grid_z));
+    const FP wx1 = grid_x - static_cast<FP>(i0);
+    const FP wy1 = grid_y - static_cast<FP>(j0);
+    const FP wz1 = grid_z - static_cast<FP>(k0);
+    const FP wx[2] = {1.0 - wx1, wx1};
+    const FP wy[2] = {1.0 - wy1, wy1};
+    const FP wz[2] = {1.0 - wz1, wz1};
+
+    FP value = 0.0;
+    for (int dk = 0; dk < 2; ++dk) {
+        const int k = periodic_index(k0 + dk, Nk);
+        for (int dj = 0; dj < 2; ++dj) {
+            const int j = periodic_index(j0 + dj, Nj);
+            for (int di = 0; di < 2; ++di) {
+                const int i = periodic_index(i0 + di, Ni);
+                const int index = i + j * Ni + k * Ni * Nj;
+                value += wx[di] * wy[dj] * wz[dk] * (*field)[index];
+            }
+        }
+    }
+    return value;
 }
 
 void FDTD_openmp::FDTD::update_fields() {

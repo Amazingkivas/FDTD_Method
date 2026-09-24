@@ -149,19 +149,13 @@ void spherical_wave(int n, int it, std::string base_path = "") {
 #endif //__PML_TEST__
 }
 
-// Deposits a point current located between grid nodes with cloud-in-cell (CIC)
-// interpolation.  The triangular CIC weights distribute the source over the
-// four adjacent cells in the x-y plane and sum to one.
-void interpolated_point_source(int n, int it) {
+// Demonstrates trilinear CIC interpolation of a Yee-grid field at an
+// arbitrary physical position. Each component is sampled with its own spatial
+// offset and therefore uses eight neighbouring grid values.
+void interpolated_field_example(int n, int) {
     if (n < 2) {
         throw std::invalid_argument("CIC interpolation requires at least two cells per axis");
     }
-
-    CurrentParameters cur_param {
-        8,
-        4,
-        0.2,
-    };
 
     double d = FDTD_const::C;
     double boundary = static_cast<double>(n) / 2.0 * d;
@@ -173,53 +167,35 @@ void interpolated_point_source(int n, int it) {
         d, d, d
     };
 
-    FDTD_openmp::FDTD method(params, cur_param.dt);
-    int source_time = std::min(
-        static_cast<int>(static_cast<double>(cur_param.period) / cur_param.dt), it);
+    FDTD_openmp::FDTD method(params, 0.2);
+    const double source_cell = static_cast<double>(n - 1) / 2.0;
+    const double x = params.ax + (source_cell + 0.15) * params.dx;
+    const double y = params.ay + (source_cell + 0.20) * params.dy;
+    const double z = params.az + (source_cell + 0.25) * params.dz;
+    const double expected = x + 2.0 * y + 3.0 * z;
 
-    // An off-node position makes all four CIC weights non-zero.
-    double source_x = params.ax +
-        (static_cast<double>(n - 2) / 2.0 + 0.35) * params.dx;
-    double source_y = params.ay +
-        (static_cast<double>(n - 2) / 2.0 + 0.65) * params.dy;
-    double grid_x = (source_x - params.ax) / params.dx;
-    double grid_y = (source_y - params.ay) / params.dy;
-    int i0 = static_cast<int>(std::floor(grid_x));
-    int j0 = static_cast<int>(std::floor(grid_y));
-    double wx1 = grid_x - static_cast<double>(i0);
-    double wy1 = grid_y - static_cast<double>(j0);
-    double wx0 = 1.0 - wx1;
-    double wy0 = 1.0 - wy1;
-    int k = params.Nk / 2;
-
-    auto index = [&params, k](int i, int j) {
-        return i + j * params.Ni + k * params.Ni * params.Nj;
+    const auto fill_linear_field = [&params](Field& field, double sx, double sy, double sz) {
+        for (int k = 0; k < params.Nk; ++k) {
+            for (int j = 0; j < params.Nj; ++j) {
+                for (int i = 0; i < params.Ni; ++i) {
+                    const int index = i + j * params.Ni + k * params.Ni * params.Nj;
+                    const double field_x = params.ax + (i + sx) * params.dx;
+                    const double field_y = params.ay + (j + sy) * params.dy;
+                    const double field_z = params.az + (k + sz) * params.dz;
+                    field[index] = field_x + 2.0 * field_y + 3.0 * field_z;
+                }
+            }
+        }
     };
 
-    std::cout << "Interpolation mode: CIC point source with weights "
-              << wx0 * wy0 << ", " << wx1 * wy0 << ", "
-              << wx0 * wy1 << ", " << wx1 * wy1 << std::endl;
+    fill_linear_field(method.get_field(Component::EX), 0.0, 0.5, 0.5);
+    fill_linear_field(method.get_field(Component::BX), 0.5, 0.0, 0.0);
 
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int t = 0; t < it; ++t) {
-        method.zeroed_currents();
-        if (t < source_time) {
-            double value = std::sin(2.0 * FDTD_const::PI *
-                                    static_cast<double>(t + 1) * cur_param.dt /
-                                    static_cast<double>(cur_param.period));
-            Field& current = method.get_field(Component::JX);
-            current[index(i0, j0)] += value * wx0 * wy0;
-            current[index(i0 + 1, j0)] += value * wx1 * wy0;
-            current[index(i0, j0 + 1)] += value * wx0 * wy1;
-            current[index(i0 + 1, j0 + 1)] += value * wx1 * wy1;
-        }
-        method.update_fields();
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Execution time (CIC interpolation): " << elapsed.count() << " s"
-              << std::endl;
+    std::cout << "CIC trilinear interpolation at (" << x << ", " << y << ", " << z
+              << "):\n  Ex = " << method.get_field_CIC(Component::EX, x, y, z)
+              << " (expected " << expected << ")\n  Bx = "
+              << method.get_field_CIC(Component::BX, x, y, z)
+              << " (expected " << expected << ")" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -233,7 +209,7 @@ int main(int argc, char* argv[]) {
         int N = 32;
         int Iterations = 100;
         if (use_interpolation) {
-            interpolated_point_source(N, Iterations);
+            interpolated_field_example(N, Iterations);
         } else {
             spherical_wave(N, Iterations, "../../");
         }
@@ -242,7 +218,7 @@ int main(int argc, char* argv[]) {
         int N = std::atoi(arguments[1]);
         int Iterations = std::atoi(arguments[2]);
         if (use_interpolation) {
-            interpolated_point_source(N, Iterations);
+            interpolated_field_example(N, Iterations);
         } else {
             spherical_wave(N, Iterations);
         }
