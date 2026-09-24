@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <cmath>
 #include <chrono>
+#include <cstdlib>
+#include <string>
 
 #include "test_FDTD.h"
 #include "FDTD_PML.h"
@@ -147,18 +149,79 @@ void spherical_wave(int n, int it, std::string base_path = "") {
 #endif //__PML_TEST__
 }
 
+// Demonstrates trilinear CIC interpolation of a Yee-grid field at an
+// arbitrary physical position. Each component is sampled with its own spatial
+// offset and therefore uses eight neighbouring grid values.
+void interpolated_field_example(int n, int) {
+    if (n < 2) {
+        throw std::invalid_argument("CIC interpolation requires at least two cells per axis");
+    }
+
+    double d = FDTD_const::C;
+    double boundary = static_cast<double>(n) / 2.0 * d;
+    Parameters params {
+        n, n, n,
+        -boundary, boundary,
+        -boundary, boundary,
+        -boundary, boundary,
+        d, d, d
+    };
+
+    FDTD_openmp::FDTD method(params, 0.2);
+    const double source_cell = static_cast<double>(n - 1) / 2.0;
+    const double x = params.ax + (source_cell + 0.15) * params.dx;
+    const double y = params.ay + (source_cell + 0.20) * params.dy;
+    const double z = params.az + (source_cell + 0.25) * params.dz;
+    const double expected = x + 2.0 * y + 3.0 * z;
+
+    const auto fill_linear_field = [&params](Field& field, double sx, double sy, double sz) {
+        for (int k = 0; k < params.Nk; ++k) {
+            for (int j = 0; j < params.Nj; ++j) {
+                for (int i = 0; i < params.Ni; ++i) {
+                    const int index = i + j * params.Ni + k * params.Ni * params.Nj;
+                    const double field_x = params.ax + (i + sx) * params.dx;
+                    const double field_y = params.ay + (j + sy) * params.dy;
+                    const double field_z = params.az + (k + sz) * params.dz;
+                    field[index] = field_x + 2.0 * field_y + 3.0 * field_z;
+                }
+            }
+        }
+    };
+
+    fill_linear_field(method.get_field(Component::EX), 0.0, 0.5, 0.5);
+    fill_linear_field(method.get_field(Component::BX), 0.5, 0.0, 0.0);
+
+    std::cout << "CIC trilinear interpolation at (" << x << ", " << y << ", " << z
+              << "):\n  Ex = " << method.get_field_CIC(Component::EX, x, y, z)
+              << " (expected " << expected << ")\n  Bx = "
+              << method.get_field_CIC(Component::BX, x, y, z)
+              << " (expected " << expected << ")" << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     std::ifstream source_fin;
     std::vector<char*> arguments(argv, argv + argc);
+    const char* sample_mode = std::getenv("FDTD_SAMPLE_MODE");
+    bool use_interpolation = sample_mode != nullptr &&
+        std::string(sample_mode) == "interpolation";
+
     if (argc == 1) {
         int N = 32;
         int Iterations = 100;
-        spherical_wave(N, Iterations, "../../");
+        if (use_interpolation) {
+            interpolated_field_example(N, Iterations);
+        } else {
+            spherical_wave(N, Iterations, "../../");
+        }
     }
     else if (argc == 3) {
         int N = std::atoi(arguments[1]);
         int Iterations = std::atoi(arguments[2]);
-        spherical_wave(N, Iterations);
+        if (use_interpolation) {
+            interpolated_field_example(N, Iterations);
+        } else {
+            spherical_wave(N, Iterations);
+        }
     }
     else {
         std::cout << "ERROR: Incorrect number of parameters" << std::endl;

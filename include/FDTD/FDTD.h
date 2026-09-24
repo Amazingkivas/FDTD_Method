@@ -36,6 +36,9 @@ public:
     FDTD(Parameters _parameters, double _dt);
 
     Field& get_field(Component this_field);
+    // Returns a field component at physical coordinates using trilinear CIC
+    // interpolation. Component-specific Yee-grid spatial offsets are applied.
+    FP get_field_CIC(Component this_field, FP x, FP y, FP z) const;
     virtual void update_fields();
     void zeroed_currents();
 };
